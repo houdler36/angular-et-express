@@ -1,46 +1,42 @@
 <div class="login-container">
-
-  <ng-container *ngIf="!isLoggedIn">
-    <div class="header-container">
-      <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
-      <h1 class="header-title">Sampan'Asa Loterana momba ny Fahasalamana</h1>
-      <img src="/images/Lutherrose.jpg" alt="Symbole Lutherrose" class="header-logo">
+   <div class="header-container">
+    <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
+    <h1 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h1>
+    <img src="/images/Lutherrose.jpg" alt="Symbole Lutherrose" class="header-logo">
+  </div>
+  <form (ngSubmit)="onSubmit()" *ngIf="!isLoggedIn">
+    <h2>Connexion</h2>
+    
+    <div class="form-group">
+      <label for="username">Nom d'utilisateur</label>
+      <input type="text" id="username" name="username" 
+             [(ngModel)]="form.username" required
+             [disabled]="isLoading">
     </div>
-
-    <form (ngSubmit)="onSubmit()">
-      <h2>Connexion:</h2>
-
-      <div class="form-group">
-        <label for="username">Nom d'utilisateur</label>
-        <input type="text" id="username" name="username"
-              [(ngModel)]="form.username" required
-              [disabled]="isLoading">
+    
+    <div class="form-group password-container">
+      <label for="password">Mot de passe</label>
+      <div class="password-input-wrapper">
+        <input [type]="showPassword ? 'text' : 'password'" 
+               id="password" name="password"
+               [(ngModel)]="form.password" required
+               [disabled]="isLoading">
+        <i class="material-icons" (click)="togglePasswordVisibility()"
+           [class.disabled]="isLoading">
+          {{ showPassword ? 'visibility_off' : 'visibility' }}
+        </i>
       </div>
-
-      <div class="form-group password-container">
-        <label for="password">Mot de passe</label>
-        <div class="password-input-wrapper">
-          <input [type]="showPassword ? 'text' : 'password'"
-                id="password" name="password"
-                [(ngModel)]="form.password" required
-                [disabled]="isLoading">
-          <i class="material-icons" (click)="togglePasswordVisibility()"
-             [class.disabled]="isLoading">
-            {{ showPassword ? 'visibility_off' : 'visibility' }}
-          </i>
-        </div>
-      </div>
-
-      <button type="submit" [disabled]="isLoading || !form.username || !form.password">
-        <span *ngIf="!isLoading">Se connecter</span>
-        <span *ngIf="isLoading">Connexion en cours...</span>
-      </button>
-
-      <div *ngIf="isLoginFailed" class="alert alert-danger">
-        {{ errorMessage }}
-      </div>
-    </form>
-  </ng-container>
+    </div>
+    
+    <button type="submit" [disabled]="isLoading">
+      <span *ngIf="!isLoading">Se connecter</span>
+      
+    </button>
+    
+    <div *ngIf="isLoginFailed" class="alert alert-danger">
+      {{ errorMessage }}
+    </div>
+  </form>
 
   <div *ngIf="isLoggedIn" class="logged-in-message">
     <p>Vous êtes déjà connecté. Redirection en cours...</p>
