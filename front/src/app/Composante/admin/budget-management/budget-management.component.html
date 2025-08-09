@@ -1,0 +1,72 @@
+<h1>Gestion des budgets</h1>
+<p>Ajoutez un nouveau budget et suivez ses montants annuels et trimestriels.</p>
+<hr class="divider">
+
+<form (ngSubmit)="addBudget()" class="form-container">
+  <h2>Ajouter un nouveau budget</h2>
+  <div class="form-group">
+    <label for="codeBudget">Code du budget</label>
+    <input id="codeBudget" type="text" [(ngModel)]="newBudget.code_budget" name="code_budget" required>
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <input id="description" type="text" [(ngModel)]="newBudget.description" name="description" required>
+  </div>
+  <div class="form-group">
+    <label for="anneeFiscale">Année fiscale</label>
+    <input id="anneeFiscale" type="number" [(ngModel)]="newBudget.annee_fiscale" name="annee_fiscale" required>
+  </div>
+  <div class="form-group">
+    <label for="budgetAnnuel">Budget annuel</label>
+    <input id="budgetAnnuel" type="number" [(ngModel)]="newBudget.budget_annuel" name="budget_annuel" required>
+  </div>
+  <div class="form-group">
+    <label for="budget1trimestre">Budget 1er Trimestre</label>
+    <input id="budget1trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_1" name="budget_trimestre_1">
+  </div>
+  <div class="form-group">
+    <label for="budget2trimestre">Budget 2e Trimestre</label>
+    <input id="budget2trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_2" name="budget_trimestre_2">
+  </div>
+  <div class="form-group">
+    <label for="budget3trimestre">Budget 3e Trimestre</label>
+    <input id="budget3trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_3" name="budget_trimestre_3">
+  </div>
+  <div class="form-group">
+    <label for="budget4trimestre">Budget 4e Trimestre</label>
+    <input id="budget4trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_4" name="budget_trimestre_4">
+  </div>
+  <button type="submit">Ajouter le budget</button>
+</form>
+
+<hr class="divider">
+
+<h2>Liste des budgets de l'année {{ currentYear }}</h2>
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Code du budget</th>
+        <th>Description</th> <th>Année fiscale</th>
+        <th>Budget annuel</th>
+        <th>Budget T1</th>
+        <th>Budget T2</th>
+        <th>Budget T3</th>
+        <th>Budget T4</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let budget of budgetsAffiches">
+        <td>{{ budget.id_budget }}</td>
+        <td>{{ budget.code_budget }}</td>
+        <td>{{ budget.description }}</td> <td>{{ budget.annee_fiscale }}</td>
+        <td>{{ budget.budget_annuel | currency:'EUR':'symbol':'1.2-2' }}</td>
+        <td>{{ budget.budget_trimestre_1 | currency:'EUR':'symbol':'1.2-2' }}</td>
+        <td>{{ budget.budget_trimestre_2 | currency:'EUR':'symbol':'1.2-2' }}</td>
+        <td>{{ budget.budget_trimestre_3 | currency:'EUR':'symbol':'1.2-2' }}</td>
+        <td>{{ budget.budget_trimestre_4 | currency:'EUR':'symbol':'1.2-2' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

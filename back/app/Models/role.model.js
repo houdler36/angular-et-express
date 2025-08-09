@@ -1,13 +1,13 @@
 // app/models/role.model.js
-module.exports = (sequelize, Sequelize) => { // <-- Changez 'DataTypes' en 'Sequelize'
+module.exports = (sequelize, DataTypes) => { // <-- Correction ici: utilisez DataTypes
   const Role = sequelize.define("roles", { // Il est courant de nommer la table au pluriel et le modèle au singulier
     id: { // Ajoutez un ID si votre modèle de rôle en a un
-      type: Sequelize.INTEGER,
+      type: DataTypes.INTEGER, // <-- Correction ici: utilisez DataTypes.INTEGER
       primaryKey: true,
       autoIncrement: true
     },
     name: {
-      type: Sequelize.STRING, // <-- Utilisez Sequelize.STRING
+      type: DataTypes.STRING, // <-- Correction ici: utilisez DataTypes.STRING
       unique: true,
       allowNull: false
     }

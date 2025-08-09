@@ -1,1 +1,160 @@
 /* You can add global styles to this file, and also import other style files */
+/* src/styles.scss */
+
+/* Importer une police si vous le souhaitez (exemple Google Fonts) */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+
+/* Réinitialisation de base */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Roboto', sans-serif;
+  background-color: #f4f6f9; 
+  color: #333;
+  line-height: 1.6;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Styles pour le conteneur principal */
+.main-content {
+  padding: 20px;
+  max-width: 1200px; /* Largeur maximale pour le contenu */
+  margin: 20px auto; /* Centre le contenu horizontalement avec un espacement */
+  background-color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Légère ombre pour un effet de profondeur */
+  border-radius: 10px; /* Coins arrondis */
+}
+
+/* Styles des boutons génériques */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; /* Espacement entre l'icône et le texte */
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &.primary {
+    background-color: #3f51b5; 
+    color: white;
+    &:hover {
+      background-color: #303f9f;
+    }
+  }
+
+  &.secondary {
+    background-color: #e0e0e0; 
+    color: #333;
+    border: 1px solid #ccc;
+    &:hover {
+      background-color: #d0d0d0;
+    }
+  }
+
+  &.danger {
+    background-color: #f44336; 
+    &:hover {
+      background-color: #d32f2f;
+    }
+  }
+
+  &.success {
+    background-color: #4caf50; 
+    color: white;
+    &:hover {
+      background-color: #388e3c;
+    }
+  }
+}
+
+/* Styles des formulaires */
+.form-group {
+  margin-bottom: 15px;
+
+  label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #3f51b5;
+      box-shadow: 0 0 0 2px rgba(63, 81, 181, 0.2);
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+}
+
+.form-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Styles des tableaux */
+.table-container {
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+
+  th, td {
+    padding: 12px 15px;
+    border: 1px solid #eee;
+    text-align: left;
+  }
+
+  th {
+    background-color: #e8eaf6; /* Bleu clair pour les en-têtes*/
+    color: #3f51b5;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f9f9f9; /* Lignes paires légèrement grisées*/
+  }
+
+  tr:hover {
+    background-color: #eef2f7; /* Effet au survol*/
+  }
+}
+
+/* Icones (nécessite Font Awesome installé) */
+/* Pour Font Awesome: npm install @fortawesome/fontawesome-free */
+/* Et ajoutez 'node_modules/@fortawesome/fontawesome-free/css/all.min.css' dans angular.json sous "styles" */

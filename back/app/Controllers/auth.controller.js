@@ -2,7 +2,7 @@ const db = require("../Models");
 const User = db.user; // Assurez-vous que votre modèle User est correctement défini
 const bcrypt = require("bcryptjs"); // Pour le hachage des mots de passe
 const jwt = require("jsonwebtoken"); // Pour la génération de tokens JWT
-const config = require("../Config/auth.config"); // Votre fichier de configuration JWT
+const config = require("../config/auth.config");// Votre fichier de configuration JWT
 
 // --- Fonction d'inscription (Sign-up) ---
 exports.signup = async (req, res) => {

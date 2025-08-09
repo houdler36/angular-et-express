@@ -1,0 +1,77 @@
+<!--
+ user-management.component.html
+ Ce fichier gère l'affichage du composant de gestion des utilisateurs.
+ Il contient un formulaire pour créer un nouvel utilisateur et un tableau pour afficher les utilisateurs existants.
+-->
+<div class="page-container">
+ <h1 class="page-title">Gestion des Utilisateurs</h1>
+
+ <!-- Formulaire d'ajout d'utilisateur -->
+ <div class="form-container">
+  <h2 class="form-title">Ajouter un nouvel utilisateur</h2>
+  <form (ngSubmit)="createUser()">
+   <!-- Champ Nom -->
+   <div class="form-group">
+    <label for="name">Nom</label>
+    <input type="text" id="name" [(ngModel)]="newUser.username" name="name" required>
+   </div>
+   <!-- Champ Email -->
+   <div class="form-group">
+    <label for="email">Email</label>
+    <input type="email" id="email" [(ngModel)]="newUser.email" name="email" required>
+   </div>
+   <!-- Champ Mot de passe -->
+   <div class="form-group">
+    <label for="password">Mot de passe</label>
+    <input type="password" id="password" [(ngModel)]="newUser.password" name="password" required>
+   </div>
+   <!-- Champ Rôle -->
+   <div class="form-group">
+    <label for="role">Rôle</label>
+    <input type="text" id="role" [(ngModel)]="newUser.role" name="role" required>
+   </div>
+
+   <!-- Sélection des journaux avec une liste déroulante multiple -->
+   <div class="form-group">
+    <label for="journals">Accès aux journaux</label>
+    <select id="journals" [(ngModel)]="newUser.journalIds" name="journals" multiple required>
+     <option *ngFor="let journal of journals" [value]="journal.id_journal">
+      {{ journal.nom_journal }}
+     </option>
+    </select>
+   </div>
+
+   <div class="divider"></div>
+
+   <!-- Bouton de soumission -->
+   <button type="submit">
+    Créer l'utilisateur
+   </button>
+  </form>
+ </div>
+
+ <!-- Tableau de la liste des utilisateurs -->
+ <div class="table-container">
+  <h2 class="table-title">Liste des utilisateurs</h2>
+  <table>
+   <thead>
+    <tr>
+     <th>ID</th>
+     <th>Nom</th>
+     <th>Email</th>
+     <th>Rôle</th>
+     <th>Accès aux journaux</th>
+    </tr>
+   </thead>
+   <tbody>
+    <tr *ngFor="let user of users">
+     <td>{{ user.id }}</td>
+     <td>{{ user.username}}</td>
+     <td>{{ user.email }}</td>
+     <td>{{ user.role }}</td>
+     <td>{{ getJournalNamesForUser(user) }}</td>
+    </tr>
+   </tbody>
+  </table>
+ </div>
+</div>

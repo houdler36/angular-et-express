@@ -1,0 +1,74 @@
+<div class="dashboard-container">
+  <h2>Bienvenue sur votre Tableau de Bord !</h2>
+  <p>Accédez rapidement à vos statistiques et actions principales.</p>
+
+  <div class="dashboard-stats">
+    <div class="stat-card">
+      <h3>Total des demandes</h3>
+      <p class="stat-value">{{ totalDemandes }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>En attente</h3>
+      <p class="stat-value pending">{{ demandesEnAttente }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Approuvées</h3>
+      <p class="stat-value approved">{{ demandesApprouvees }}</p>
+    </div>
+    <div class="stat-card">
+      <h3>Rejetées</h3>
+      <p class="stat-value rejected">{{ demandesRejetees }}</p>
+    </div>
+  </div>
+
+  <div class="dashboard-actions">
+    <button class="btn primary" routerLink="/demandes/new">
+      <i class="fas fa-plus-circle"></i> Nouvelle Demande
+    </button>
+    <button class="btn secondary" routerLink="/demandes">
+      <i class="fas fa-list"></i> Voir toutes mes demandes
+    </button>
+  </div>
+
+  <h3>Vos dernières demandes</h3>
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Montant</th>
+          <th>Statut</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="lastDemandes.length === 0 && !errorMessage">
+          <td colspan="5">Aucune demande récente à afficher.</td>
+        </tr>
+        <tr *ngFor="let demande of lastDemandes">
+          <td>{{ demande.title }}</td>
+          <td>{{ demande.amount | currency:'USD':'symbol':'1.2-2':'fr' }}</td>
+          <td>
+            <span [ngClass]="{
+              'status-badge': true,
+              'status-pending': demande.status === 'Pending',
+              'status-approved': demande.status === 'Approved',
+              'status-rejected': demande.status === 'Rejected'
+            }">
+              {{ demande.status }}
+            </span>
+          </td>
+          <td>{{ demande.expectedDate | date:'shortDate' }}</td> <td>
+            <button class="btn btn-sm secondary" [routerLink]="['/demandes', demande.id]">
+              <i class="fas fa-eye"></i> Voir
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="errorMessage">
+            <td colspan="5" class="text-center text-danger">Erreur : {{ errorMessage }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

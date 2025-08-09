@@ -1,0 +1,58 @@
+/src/app/Composante/user/demande-list/demande-list.component.html
+
+<div class="demande-list-container">
+  <h2>Mes Demandes de Dépense</h2>
+
+  <div class="list-header-actions">
+    <button class="btn primary" routerLink="/demandes/new">
+      <i class="fas fa-plus-circle"></i> Créer une Nouvelle Demande
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Titre</th>
+          <th>Montant</th>
+          <th>Statut</th>
+          <th>Date de soumission</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="demandes.length === 0">
+          <td colspan="6">Aucune demande trouvée. <a routerLink="/demandes/new">Créez-en une nouvelle !</a></td>
+        </tr>
+        <tr *ngFor="let demande of demandes">
+          <td>{{ demande.id }}</td>
+          <td>{{ demande.title }}</td>
+          <td>{{ demande.amount | currency:'USD':'symbol':'1.2-2':'fr' }}</td>
+          <td>
+            <span [ngClass]="{
+              'status-badge': true,
+              'status-pending': demande.status === 'Pending',
+              'status-approved': demande.status === 'Approved',
+              'status-rejected': demande.status === 'Rejected'
+            }">
+              {{ demande.status }}
+            </span>
+          </td>
+          <td>{{ demande.createdAt | date:'short' }}</td>
+          <td class="action-buttons">
+            <button class="btn btn-sm secondary" [routerLink]="['/demandes', demande.id]">
+              <i class="fas fa-eye"></i> Voir
+            </button>
+            <button class="btn btn-sm primary" *ngIf="demande.status === 'Pending'" [routerLink]="['/demandes/edit', demande.id]">
+              <i class="fas fa-edit"></i> Modifier
+            </button>
+            <button class="btn btn-sm danger" *ngIf="demande.status === 'Pending'" (click)="deleteDemande(demande.id)">
+              <i class="fas fa-trash-alt"></i> Supprimer
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

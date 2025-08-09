@@ -1,0 +1,101 @@
+/* src/app/Composante/user/dashboard-user/dashboard-user.component.scss */
+
+.dashboard-container {
+  text-align: center;
+  padding: 30px;
+
+  h2 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 2.2em;
+  }
+
+  p {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.1em;
+  }
+
+  .dashboard-stats {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 25px;
+    margin-bottom: 50px;
+
+    .stat-card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      flex: 1;
+      min-width: 220px;
+      max-width: 280px;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: default;
+
+      &:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      h3 {
+        color: #555;
+        font-size: 1.2em;
+        margin-bottom: 15px;
+      }
+
+      .stat-value {
+        font-size: 3.5em;
+        font-weight: 700;
+        color: #3f51b5; // Couleur principale
+
+        &.pending { color: #ff9800; } // Orange pour en attente
+        &.approved { color: #4caf50; } // Vert pour approuvé
+        &.rejected { color: #f44336; } // Rouge pour rejeté
+      }
+    }
+  }
+
+  .dashboard-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 50px;
+
+    .btn {
+      padding: 15px 30px;
+      font-size: 1.1em;
+      border-radius: 8px;
+    }
+  }
+
+  h3 {
+    text-align: left;
+    color: #444;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+  }
+
+  .table-container {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden; /* Assure que les coins arrondis sont respectés pour le tableau */
+  }
+
+  .status-badge {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: white;
+    font-size: 0.9em;
+
+    &.status-pending { background-color: #ff9800; }
+    &.status-approved { background-color: #4caf50; }
+    &.status-rejected { background-color: #f44336; }
+  }
+}

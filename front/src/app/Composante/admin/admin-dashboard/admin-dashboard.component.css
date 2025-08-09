@@ -1,0 +1,161 @@
+/* Fichier: src/app/Composante/admin/admin-dashboard/admin-dashboard.component.css */
+
+.flex-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: #bfc3cb;
+  font-family: 'Inter', sans-serif; /* Utilisation d'une police moderne */
+  color: #1f2937;
+  
+  
+}
+
+/* Styles améliorés pour la barre latérale */
+.sidebar {
+  width: 280px; /* Largeur légèrement augmentée */
+  background: linear-gradient(180deg, #bab8c4, #f9f9fb); /* Dégradé de fond subtil */
+  padding: 24px;
+  box-shadow: 2px 0 10px rgba(253, 250, 250, 0.884); /* Ombre plus prononcée */
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease; /* Transition pour la responsivité */
+}
+
+/* Styles pour le conteneur de l'en-tête de la barre latérale */
+.header-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 40px; /* Marge augmentée pour l'espacement */
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-logo {
+  width: 70px; /* Taille légèrement augmentée pour le logo */
+  height: auto;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Ombre plus visible */
+}
+
+.header-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937; /* Couleur de texte plus foncée */
+  margin-top: 15px;
+  line-height: 1.2;
+}
+
+.sidebar nav {
+  flex-grow: 1;
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  border-radius: 12px; /* Coins plus arrondis */
+  color: #4b5563;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease; /* Transition pour les effets de survol */
+  cursor: pointer;
+}
+
+.sidebar a:hover {
+  background-color: #eef2ff; /* Couleur de survol plus claire */
+  color: #4338ca;
+  transform: translateX(5px); /* Déplacement subtil au survol */
+}
+
+/* Style pour le lien actif */
+.sidebar a.active {
+  background-color: #4f46e5;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); /* Ombre pour l'état actif */
+  border-left: 5px solid #3b82f6; /* Marqueur visuel de la page active */
+  transform: translateX(0); /* Annuler la transformation de survol */
+}
+
+.sidebar a.active svg {
+  stroke: #fff;
+}
+
+.sidebar a svg {
+  margin-right: 15px;
+  transition: all 0.3s ease;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.card {
+  background-color: #ffffff;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.stat-card {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.stat-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.stat-card .stat-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: #312e81;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 80px;
+    padding: 16px;
+  }
+  
+  .hidden-mobile {
+    display: none;
+  }
+
+  .header-title {
+    display: none;
+  }
+
+  .header-logo {
+    margin-bottom: 16px;
+  }
+  
+  .sidebar a {
+    justify-content: center;
+    text-align: center;
+    padding: 10px 0;
+  }
+
+  .sidebar a svg {
+    margin-right: 0;
+  }
+}

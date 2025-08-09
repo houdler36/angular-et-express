@@ -1,0 +1,405 @@
+<!-- src/app/demande-form/demande-form.component.html -->
+
+<div class="form-background">
+  <div class="form-container">
+    <h1 class="form-title">Formulaire de Demande</h1>
+
+    <!-- Messages de succès ou d'erreur -->
+    <div *ngIf="successMessage" class="alert alert-success">
+      <svg
+        class="alert-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+          clip-rule="evenodd"
+        />
+      </svg>
+      <p class="alert-message">{{ successMessage }}</p>
+    </div>
+
+    <div *ngIf="errorMessage" class="alert alert-error">
+      <svg
+        class="alert-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 20 20"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+          clip-rule="evenodd"
+        />
+      </svg>
+      <p class="alert-message">{{ errorMessage }}</p>
+    </div>
+
+    <form [formGroup]="demandeForm" (ngSubmit)="onSubmit()" class="form">
+      <!-- Section principale -->
+      <div class="form-grid">
+        <!-- Type de demande -->
+        <div class="form-group">
+          <label for="type" class="form-label">Type de demande</label>
+          <select id="type" formControlName="type" class="form-input">
+            <option value="DED">DED</option>
+            <option value="Recette">Recette</option>
+          </select>
+        </div>
+
+        <!-- Date de la demande -->
+        <div class="form-group">
+          <label for="date" class="form-label" [class.text-red-500]="isInvalid('date')">Date de la demande</label>
+          <input
+            type="date"
+            id="date"
+            formControlName="date"
+            [class.invalid]="isInvalid('date')"
+            class="form-input"
+          />
+          <div *ngIf="isInvalid('date')" class="form-error">
+            La date est requise.
+          </div>
+        </div>
+
+        <!-- Journal -->
+        <div class="form-group">
+          <label for="journal" class="form-label" [class.text-red-500]="isInvalid('journal')">Journal</label>
+          <select
+            id="journal"
+            formControlName="journal"
+            [class.invalid]="isInvalid('journal')"
+            class="form-input"
+          >
+            <option [ngValue]="null" disabled>Sélectionner un journal</option>
+            <option *ngFor="let j of journals" [ngValue]="j.id_journal">
+              {{ j.nom_journal }}
+            </option>
+          </select>
+          <div *ngIf="isInvalid('journal')" class="form-error">
+            Le journal est requis.
+          </div>
+        </div>
+
+        <!-- Motif -->
+        <div class="form-group">
+          <label for="motif" class="form-label" [class.text-red-500]="isInvalid('motif')">Motif</label>
+          <input
+            type="text"
+            id="motif"
+            formControlName="motif"
+            [class.invalid]="isInvalid('motif')"
+            class="form-input"
+          />
+          <div *ngIf="isInvalid('motif')" class="form-error">
+            Le motif est requis.
+          </div>
+        </div>
+
+        <!-- Responsable PJ -->
+        <div class="form-group">
+          <label for="respPj" class="form-label" [class.text-red-500]="isInvalid('respPj')">Responsable PJ</label>
+          <select
+            id="respPj"
+            formControlName="respPj"
+            [class.invalid]="isInvalid('respPj')"
+            class="form-input"
+          >
+            <option [ngValue]="null" disabled>Sélectionner un responsable</option>
+            <option *ngFor="let p of personnes" [ngValue]="p.id">{{ p.nom }}</option>
+          </select>
+          <div *ngIf="isInvalid('respPj')" class="form-error">
+            Le responsable est requis.
+          </div>
+        </div>
+
+        <!-- Pièce jointe -->
+        <div class="form-group">
+          <label for="pjStatus" class="form-label" [class.text-red-500]="isInvalid('pjStatus')">Pièce jointe</label>
+          <select id="pjStatus" formControlName="pjStatus" class="form-input">
+            <option value="oui">Oui</option>
+            <option value="pas encore">Pas encore</option>
+          </select>
+        </div>
+
+        <!-- Date PJ (conditionnel) -->
+        <div
+          *ngIf="demandeForm.get('pjStatus')?.value === 'pas encore'"
+          class="form-group"
+        >
+          <label for="datePj" class="form-label" [class.text-red-500]="isInvalid('datePj')">Date prévue pour la PJ</label>
+          <input
+            type="date"
+            id="datePj"
+            formControlName="datePj"
+            [class.invalid]="isInvalid('datePj')"
+            class="form-input"
+          />
+          <div *ngIf="isInvalid('datePj')" class="form-error">
+            La date est requise.
+          </div>
+        </div>
+      </div>
+
+      <!-- Détails de la demande -->
+      <div class="details-section">
+        <h2 class="details-title">Détails de la demande</h2>
+
+        <div formArrayName="details" class="details-list">
+          <div
+            *ngFor="let detail of details.controls; let i = index"
+            [formGroupName]="i"
+            class="detail-item"
+          >
+            <div class="detail-header">
+              <h3 class="detail-title" [class.text-red-500]="details.controls[i].invalid">Détail {{ i + 1 }}</h3>
+              <button
+                type="button"
+                (click)="removeDetail(i)"
+                class="btn-remove-detail"
+                aria-label="Supprimer ce détail"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="icon-remove"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.013 21H7.987a2 2 0 01-1.92-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Nature du détail -->
+            <div class="form-group">
+              <label [for]="'nature-' + i" class="form-label" [class.text-red-500]="isDetailInvalid(i, 'nature')">Nature</label>
+              <select
+                [id]="'nature-' + i"
+                formControlName="nature"
+                [class.invalid]="isDetailInvalid(i, 'nature')"
+                class="form-input"
+              >
+                <option [ngValue]="null" disabled>Sélectionner la nature</option>
+                <option value="appro">Appro</option>
+                <option value="charge">Charge</option>
+                <option value="produits">Produits</option>
+                <option value="autre">Autre</option>
+              </select>
+              <div *ngIf="isDetailInvalid(i, 'nature')" class="form-error">
+                La nature est requise.
+              </div>
+            </div>
+
+            <!-- Bénéficiaire -->
+            <div class="form-group">
+              <label [for]="'beneficiaire-' + i" class="form-label" [class.text-red-500]="isDetailInvalid(i, 'beneficiaire')">Bénéficiaire</label>
+              <input
+                type="text"
+                [id]="'beneficiaire-' + i"
+                formControlName="beneficiaire"
+                [class.invalid]="isDetailInvalid(i, 'beneficiaire')"
+                class="form-input"
+              />
+              <div *ngIf="isDetailInvalid(i, 'beneficiaire')" class="form-error">
+                Le bénéficiaire est requis.
+              </div>
+            </div>
+
+            <!-- Nif existe ? -->
+            <div class="form-group">
+              <label class="form-label" [class.text-red-500]="isDetailInvalid(i, 'nifExiste')">Nif existe ?</label>
+              <div class="radio-group">
+                <label class="radio-item">
+                  <input
+                    type="radio"
+                    [id]="'nif-oui-' + i"
+                    name="nifExiste"
+                    value="oui"
+                    formControlName="nifExiste"
+                  />
+                  Oui
+                </label>
+                <label class="radio-item">
+                  <input
+                    type="radio"
+                    [id]="'nif-non-' + i"
+                    name="nifExiste"
+                    value="non"
+                    formControlName="nifExiste"
+                  />
+                  Non
+                </label>
+              </div>
+              <div *ngIf="isDetailInvalid(i, 'nifExiste')" class="form-error">
+                Ce champ est requis.
+              </div>
+            </div>
+
+            <!-- NIF et STAT (conditionnels) -->
+            <div
+              *ngIf="detail.get('nifExiste')?.value === 'oui'"
+              class="nif-stat-group"
+            >
+              <div class="form-group">
+                <label [for]="'nif-' + i" class="form-label" [class.text-red-500]="isDetailInvalid(i, 'nif')">NIF</label>
+                <input
+                  type="text"
+                  [id]="'nif-' + i"
+                  formControlName="nif"
+                  [class.invalid]="isDetailInvalid(i, 'nif')"
+                  class="form-input"
+                />
+                <div *ngIf="isDetailInvalid(i, 'nif')" class="form-error">
+                  Le NIF est requis.
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label [for]="'stat-' + i" class="form-label" [class.text-red-500]="isDetailInvalid(i, 'stat')">STAT</label>
+                <input
+                  type="text"
+                  [id]="'stat-' + i"
+                  formControlName="stat"
+                  [class.invalid]="isDetailInvalid(i, 'stat')"
+                  class="form-input"
+                />
+                <div *ngIf="isDetailInvalid(i, 'stat')" class="form-error">
+                  Le STAT est requis.
+                </div>
+              </div>
+            </div>
+
+            <!-- Libellé -->
+            <div class="form-group">
+              <label [for]="'libelle-' + i" class="form-label" [class.text-red-500]="isDetailInvalid(i, 'libelle')">Libellé</label>
+              <input
+                type="text"
+                [id]="'libelle-' + i"
+                formControlName="libelle"
+                [class.invalid]="isDetailInvalid(i, 'libelle')"
+                class="form-input"
+              />
+              <div *ngIf="isDetailInvalid(i, 'libelle')" class="form-error">
+                Le libellé est requis.
+              </div>
+            </div>
+
+            <!-- Montant -->
+            <div class="form-group">
+              <label [for]="'montant-' + i" class="form-label" [class.text-red-500]="isDetailInvalid(i, 'montant')">Montant</label>
+              <input
+                type="number"
+                [id]="'montant-' + i"
+                formControlName="montant"
+                [class.invalid]="isDetailInvalid(i, 'montant')"
+                class="form-input"
+              />
+              <div *ngIf="isDetailInvalid(i, 'montant')" class="form-error">
+                Le montant doit être un nombre positif.
+              </div>
+            </div>
+
+            <!-- Code budgétaire, Budget dispo annuel & trimestriel -->
+            <ng-container
+              *ngIf="
+                detail.get('nature')?.value === 'charge' ||
+                detail.get('nature')?.value === 'produits'
+              "
+            >
+              <div class="form-group">
+                <label [for]="'codeBudgetaire-' + i" class="form-label" [class.text-red-500]="isDetailInvalid(i, 'codeBudgetaire')">
+                  Code Budgétaire
+                </label>
+                <input
+                  type="text"
+                  [id]="'codeBudgetaire-' + i"
+                  formControlName="codeBudgetaire"
+                  [class.invalid]="isDetailInvalid(i, 'codeBudgetaire')"
+                  class="form-input"
+                />
+                <div *ngIf="isDetailInvalid(i, 'codeBudgetaire')" class="form-error">
+                  Le code budgétaire est requis.
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label [for]="'budgetAnnuel-' + i" class="form-label">
+                  Budget dispo annuel
+                </label>
+                <input
+                  type="number"
+                  [id]="'budgetAnnuel-' + i"
+                  formControlName="budgetAnnuel"
+                  readonly
+                  class="form-input readonly"
+                />
+              </div>
+
+              <div class="form-group">
+                <label [for]="'budgetTrimestriel-' + i" class="form-label">
+                  Budget dispo trimestriel
+                </label>
+                <input
+                  type="number"
+                  [id]="'budgetTrimestriel-' + i"
+                  formControlName="budgetTrimestriel"
+                  readonly
+                  class="form-input readonly"
+                />
+              </div>
+            </ng-container>
+
+            <!-- Numéro de compte -->
+            <ng-container
+              *ngIf="
+                detail.get('nature')?.value === 'appro' ||
+                detail.get('nature')?.value === 'autre'
+              "
+            >
+              <div class="form-group">
+                <label [for]="'numeroCompte-' + i" class="form-label">
+                  Numéro de compte
+                </label>
+                <input
+                  type="text"
+                  [id]="'numeroCompte-' + i"
+                  formControlName="numeroCompte"
+                  class="form-input"
+                />
+              </div>
+            </ng-container>
+          </div>
+        </div>
+
+        <button type="button" (click)="addDetail()" class="btn-add-detail">
+          Ajouter un détail
+        </button>
+      </div>
+
+      <!-- Total et bouton de soumission -->
+      <div class="form-footer">
+        <div class="total-amount">
+          Montant Total: {{ totalAmount | number: '1.2-2' }} Ar
+        </div>
+        <button
+          type="submit"
+          [disabled]="demandeForm.invalid"
+          class="btn-submit"
+        >
+          Soumettre la demande
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+s

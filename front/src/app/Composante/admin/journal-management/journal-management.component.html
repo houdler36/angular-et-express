@@ -1,0 +1,59 @@
+<h1>Gestion des journaux</h1>
+<p>Ajoutez un nouveau journal et associez-y un ou plusieurs budgets.</p>
+<hr class="divider">
+
+<form (ngSubmit)="addJournal()" class="form-container">
+  <h2>Ajouter un nouveau journal</h2>
+  <div class="form-group">
+    <label for="nomjournal">Nom du journal</label>
+    <input id="nomjournal" type="text" [(ngModel)]="newJournal.nom_journal" name="nom_journal" required>
+  </div>
+  <div class="form-group">
+    <label for="nomProjet">Nom du projet</label>
+    <input id="nomProjet" type="text" [(ngModel)]="newJournal.nom_projet" name="nom_projet" required>
+  </div>
+  
+  <div class="form-group">
+    <label for="budgets">Sélectionner les budgets</label>
+    <select id="budgets" [(ngModel)]="selectedBudgetIds" name="budgets" multiple required>
+      <option *ngFor="let budget of budgetsDisponibles" [value]="budget.id_budget">
+        {{ budget.code_budget }} ({{ budget.description }})
+      </option>
+    </select>
+  </div>
+
+  <button type="submit">Ajouter le journal</button>
+</form>
+
+<hr class="divider">
+
+<h2>Détails des journaux et budgets associés</h2>
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom du journal</th>
+        <th>Nom de projet</th>
+        <th>Budgets associés</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let journal of journals">
+        <td>{{ journal.id_journal }}</td>
+        <td>{{ journal.nom_journal }}</td>
+        <td>{{ journal.nom_projet }}</td>
+       <td>
+  <ul *ngIf="journal.budgets && journal.budgets.length > 0">
+    <li *ngFor="let budget of journal.budgets">
+      {{ budget.code_budget }} ({{ budget.annee_fiscale }})
+    </li>
+  </ul>
+  <span *ngIf="!journal.budgets || journal.budgets.length === 0">
+    Aucun budget associé
+  </span>
+</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

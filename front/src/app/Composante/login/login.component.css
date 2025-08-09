@@ -6,7 +6,7 @@
   margin: 2rem auto;
   padding: 2rem;
   border-radius: 10px;
-  background-color: #ffffff;
+  background-color: #e5eaea;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -72,9 +72,9 @@ h2 {
 }
 
 .form-group input {
-  width: 96%;
+  width: 98%;
   padding: 0.8rem 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid #000000;
   border-radius: 6px;
   font-size: 1rem;
   transition: all 0.3s ease;

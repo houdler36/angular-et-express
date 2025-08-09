@@ -1,17 +1,10 @@
-// models/user.js
+// app/models/user.model.js
 
-const bcrypt = require('bcrypt'); // Assurez-vous d'avoir bcrypt pour la vérification du mot de passe
+// Utilisez bcryptjs pour la cohérence avec auth.controller.js
+const bcrypt = require('bcryptjs'); // <-- Correction ici
 
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define("User", {
-    // Le champ 'id' est généralement ajouté automatiquement par Sequelize
-    // si vous ne le définissez pas explicitement comme clé primaire auto-incrémentée.
-    // Si vous souhaitez être explicite, vous pouvez l'ajouter ici :
-    // id: {
-    //   type: DataTypes.INTEGER,
-    //   primaryKey: true,
-    //   autoIncrement: true
-    // },
     username: {
       type: DataTypes.STRING,
       unique: true,
@@ -42,28 +35,23 @@ module.exports = (sequelize, DataTypes) => {
       defaultValue: 'user',
       allowNull: false
     }
-    // Le champ isActive a été supprimé d'ici
-    // isActive: {
-    //   type: DataTypes.BOOLEAN,
-    //   defaultValue: true
-    // }
   }, {
-    timestamps: false, // Active createdAt et updatedAt (qui seront automatiquement gérés par Sequelize)
-    paranoid: true,   // Active deletedAt (soft delete), qui sera aussi automatiquement géré
-    tableName: 'users', // Nom explicite de la table
+    timestamps: false, // Désactive createdAt et updatedAt (si vous ne les voulez pas)
+    paranoid: true,    // Active deletedAt (soft delete) si vous le souhaitez
+    tableName: 'users', // Nom explicite de la table dans la base de données
     defaultScope: {
-      attributes: { exclude: ['password'] } // Exclut le mot de passe par défaut
+      attributes: { exclude: ['password'] } // Exclut le mot de passe par défaut lors des requêtes find
     },
     scopes: {
       withPassword: {
-        attributes: {} // Inclut le mot de passe quand nécessaire
+        attributes: {} // Inclut le mot de passe quand le scope 'withPassword' est utilisé
       }
     }
   });
 
-  // Méthodes d'instance (sans middleware)
-  // Assurez-vous que 'bcrypt' est bien importé en haut du fichier si vous utilisez cette méthode.
+  // Méthodes d'instance pour vérifier le mot de passe
   User.prototype.verifyPassword = function(password) {
+    // Utilisez bcryptjs.compareSync pour la cohérence
     return bcrypt.compareSync(password, this.password);
   };
 

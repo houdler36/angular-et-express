@@ -1,3 +1,5 @@
+
+//middleware/verifySignup.js
 const db = require("../Models");
 
 const checkDuplicateUsernameOrEmail = async (req, res, next) => {
