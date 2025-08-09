@@ -1,6 +1,6 @@
 // generate_hash.js
 const bcrypt = require('bcryptjs'); // Assurez-vous que 'bcryptjs' est installé (npm install bcryptjs)
-const passwordToHash = 'admin'; // Le mot de passe en texte clair que vous voulez utiliser
+const passwordToHash = 'Houlder38'; // Le mot de passe en texte clair que vous voulez utiliser
 const saltRounds = 8; // Cela doit correspondre au coût dans vos hachages ($2a$08$)
 
 bcrypt.hash(passwordToHash, saltRounds, function(err, hash) {
