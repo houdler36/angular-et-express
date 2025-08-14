@@ -1,10 +1,15 @@
 <div class="app-container">
   <!-- Barre de navigation -->
   <nav *ngIf="isLoggedIn" class="navbar">
-    <span class="welcome-message">Bienvenue {{currentUser?.username}} ({{currentUser?.role}})</span>
-    <button (click)="logout()" class="logout-btn">Déconnexion</button>
-  </nav>
-
+    <div class="navbar-left">
+        <span class="welcome-message">
+            <i class="fas fa-user-circle"></i> Bienvenue {{currentUser?.username}} ({{currentUser?.role}})
+        </span>
+    </div>
+    <button (click)="logout()" class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i> Déconnexion
+    </button>
+</nav>
   <!-- Contenu principal -->
   <main>
     <router-outlet></router-outlet>

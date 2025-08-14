@@ -1,45 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
-import { of } from 'rxjs';
-
-// Modèle de données pour la demande, basé sur votre structure originale
-interface Demande {
-  type: 'DED' | 'Recette';
-  date: string;
-  journal: number | null;
-  motif: string;
-  respPj: number | null;
-  pjStatus: 'oui' | 'pas encore';
-  datePj?: string | null;
-  details: DemandeDetail[];
-}
-
-interface DemandeDetail {
-  nature: 'appro' | 'charge' | 'produits' | 'autre';
-  beneficiaire: string;
-  nifExiste: 'oui' | 'non';
-  nif?: string;
-  stat?: string;
-  libelle: string;
-  montant: number;
-  numeroCompte?: string;
-  codeBudgetaire?: string;
-  budgetAnnuel?: number;
-  budgetTrimestriel?: number;
-}
-
-// Service fictif pour les appels API
-class DemandeService {
-  submit(demande: Demande) {
-    console.log('Envoi de la demande à l\'API:', demande);
-    return of({ ...demande, id: Math.floor(Math.random() * 1000) });
-  }
-}
-
-// Données factices pour les listes déroulantes
-const JOURNALS = [{ id_journal: 1, nom_journal: 'Journal de Caisse' }, { id_journal: 2, nom_journal: 'Journal de Banque' }];
-const PERSONNES = [{ id: 1, nom: 'Jean Dupont' }, { id: 2, nom: 'Marie Dubois' }];
+import { DemandeService } from '../../../services/demande.service';
+import { TokenStorageService } from '../../../services/token-storage.service';
 
 @Component({
   selector: 'app-demande-form',
@@ -53,155 +16,183 @@ export class DemandeFormComponent implements OnInit {
   totalAmount = 0;
   successMessage: string | null = null;
   errorMessage: string | null = null;
+  showModal = false; // Nouvelle propriété pour contrôler la visibilité du modal
 
-  journals = JOURNALS;
-  personnes = PERSONNES;
+  journals: any[] = [];
+  personnes: any[] = [];
+  budgetsParJournal: any[] = [];
+  currentUserId: number | null = null;
 
-  private demandeService = new DemandeService();
-
-  constructor(private fb: FormBuilder) {
-    // Initialisation du formulaire principal
+  constructor(
+    private fb: FormBuilder,
+    private demandeService: DemandeService,
+    private tokenStorageService: TokenStorageService
+  ) {
     this.demandeForm = this.fb.group({
       type: ['DED'],
       date: [new Date().toISOString().substring(0, 10), Validators.required],
-      journal: [null, Validators.required],
+      journal_id: [null, Validators.required],
       motif: ['', Validators.required],
-      respPj: [null, Validators.required],
-      pjStatus: ['oui'],
-      datePj: [null],
-      details: this.fb.array([this.createDetail()]) // Initialise avec un détail par défaut
+      responsible_pj_id: [null, Validators.required],
+      pj_status: ['oui'],
+      expected_justification_date: [null],
+      details: this.fb.array([this.createDetail()])
     });
   }
 
   ngOnInit(): void {
-    // Souscription pour la validation conditionnelle du champ `datePj`
-    this.demandeForm.get('pjStatus')?.valueChanges.subscribe(value => {
-      const datePjControl = this.demandeForm.get('datePj');
-      if (value === 'pas encore') {
-        datePjControl?.setValidators(Validators.required);
-      } else {
-        datePjControl?.clearValidators();
-      }
-      datePjControl?.updateValueAndValidity();
+    const user = this.tokenStorageService.getUser();
+    if (user && user.id) {
+      this.currentUserId = user.id;
+    }
+
+    this.demandeService.getJournals().subscribe({
+      next: (data: any[]) => this.journals = data,
+      error: err => console.error('Erreur lors de la récupération des journaux', err)
     });
 
-    // Souscription pour recalculer le total si un détail est ajouté/supprimé
+    this.demandeService.getPersonnes().subscribe({
+      next: (data: any[]) => this.personnes = data,
+      error: err => console.error('Erreur lors de la récupération des personnes', err)
+    });
+
+    this.demandeForm.get('pj_status')?.valueChanges.subscribe(value => {
+      const control = this.demandeForm.get('expected_justification_date');
+      if (value === 'pas encore') {
+        control?.setValidators(Validators.required);
+      } else {
+        control?.clearValidators();
+        control?.setValue(null); // Réinitialiser la valeur si non requise
+      }
+      control?.updateValueAndValidity();
+    });
+
     this.demandeForm.get('details')?.valueChanges.subscribe(() => {
       this.calculateTotal();
     });
+
+    this.demandeForm.get('journal_id')?.valueChanges.subscribe(journalId => {
+      this.onJournalChange(journalId);
+    });
   }
 
-  // Accesseur pour le FormArray des détails
   get details(): FormArray {
     return this.demandeForm.get('details') as FormArray;
   }
 
-  // Crée un nouveau FormGroup pour un détail de la demande
   createDetail(): FormGroup {
     const detailFormGroup = this.fb.group({
       nature: [null, Validators.required],
       beneficiaire: ['', Validators.required],
-      nifExiste: ['non'],
+      nif_exists: ['non'],
       nif: [''],
       stat: [''],
       libelle: ['', Validators.required],
-      montant: [0, [Validators.required, Validators.min(0)]],
-      numeroCompte: [''],
-      codeBudgetaire: [''],
-      budgetAnnuel: [{ value: 0, disabled: true }],
-      budgetTrimestriel: [{ value: 0, disabled: true }],
+      amount: [0, [Validators.required, Validators.min(0.01)]],
+      account_number: [''],
+      code_budget: [null],
+      annual_budget: [{ value: 0, disabled: true }],
+      quarterly_budget: [{ value: 0, disabled: true }],
     });
 
-    // Gère la validation des champs conditionnels en fonction de la nature
+    detailFormGroup.get('code_budget')?.valueChanges.subscribe(code => {
+      const selectedBudget = this.budgetsParJournal.find(b => b.code_budget === code);
+      if (selectedBudget) {
+        detailFormGroup.get('annual_budget')?.setValue(selectedBudget.budget_annuel);
+        detailFormGroup.get('quarterly_budget')?.setValue(selectedBudget.budget_trimestre_1);
+      } else {
+        detailFormGroup.get('annual_budget')?.setValue(0);
+        detailFormGroup.get('quarterly_budget')?.setValue(0);
+      }
+    });
+
     detailFormGroup.get('nature')?.valueChanges.subscribe(nature => {
-      const codeBudgetaireControl = detailFormGroup.get('codeBudgetaire');
-      const numeroCompteControl = detailFormGroup.get('numeroCompte');
-      
-      codeBudgetaireControl?.clearValidators();
-      numeroCompteControl?.clearValidators();
+      const codeBudgetControl = detailFormGroup.get('code_budget');
+      const accountNumberControl = detailFormGroup.get('account_number');
+      const annualBudgetControl = detailFormGroup.get('annual_budget');
+      const quarterlyBudgetControl = detailFormGroup.get('quarterly_budget');
+
+      codeBudgetControl?.clearValidators();
+      accountNumberControl?.clearValidators();
+      codeBudgetControl?.setValue(null);
+      accountNumberControl?.setValue(null);
+      annualBudgetControl?.setValue(0);
+      quarterlyBudgetControl?.setValue(0);
 
       if (nature === 'charge' || nature === 'produits') {
-        codeBudgetaireControl?.setValidators(Validators.required);
+        codeBudgetControl?.setValidators(Validators.required);
       } else if (nature === 'appro' || nature === 'autre') {
-        numeroCompteControl?.setValidators(Validators.required);
+        accountNumberControl?.setValidators(Validators.required);
       }
-      
-      codeBudgetaireControl?.updateValueAndValidity();
-      numeroCompteControl?.updateValueAndValidity();
+      codeBudgetControl?.updateValueAndValidity();
+      accountNumberControl?.updateValueAndValidity();
     });
 
-    // Gère la validation des champs NIF/STAT en fonction de `nifExiste`
-    detailFormGroup.get('nifExiste')?.valueChanges.subscribe(nifExiste => {
+    detailFormGroup.get('nif_exists')?.valueChanges.subscribe(value => {
       const nifControl = detailFormGroup.get('nif');
       const statControl = detailFormGroup.get('stat');
-      
-      nifControl?.clearValidators();
-      statControl?.clearValidators();
-
-      if (nifExiste === 'oui') {
+      if (value === 'oui') {
         nifControl?.setValidators(Validators.required);
         statControl?.setValidators(Validators.required);
       } else {
+        nifControl?.clearValidators();
+        statControl?.clearValidators();
         nifControl?.setValue('');
         statControl?.setValue('');
       }
-
       nifControl?.updateValueAndValidity();
       statControl?.updateValueAndValidity();
-    });
-
-    // Simule la récupération du budget lors du changement de `codeBudgetaire`
-    detailFormGroup.get('codeBudgetaire')?.valueChanges.subscribe(code => {
-      const nature = detailFormGroup.get('nature')?.value;
-      if (code && nature && (nature === 'charge' || nature === 'produits')) {
-        this.fetchBudgets(detailFormGroup, code);
-      }
     });
 
     return detailFormGroup;
   }
 
-  // Ajoute un nouveau détail au FormArray
   addDetail(): void {
     this.details.push(this.createDetail());
   }
 
-  // Supprime un détail du FormArray
-  removeDetail(i: number): void {
-    this.details.removeAt(i);
+  removeDetail(index: number): void {
+    this.details.removeAt(index);
   }
 
-  // Calcule le montant total des détails
   calculateTotal(): void {
     let total = 0;
     this.details.controls.forEach(control => {
-      const montantValue = control.get('montant')?.value;
-      if (montantValue !== null && montantValue !== undefined) {
-        total += parseFloat(montantValue);
+      const value = control.get('amount')?.value;
+      if (value !== null && value !== undefined && !isNaN(value)) {
+        total += parseFloat(value);
       }
     });
     this.totalAmount = total;
   }
 
-  // Simule la récupération des budgets
-  fetchBudgets(detailFormGroup: FormGroup, code: string): void {
-    console.log(`Simuler la récupération des budgets pour le code: ${code}`);
-    // Données factices
-    detailFormGroup.get('budgetAnnuel')?.setValue(10000);
-    detailFormGroup.get('budgetTrimestriel')?.setValue(2500);
-  }
-
-  // Vérifie la validité d'un champ
   isInvalid(controlName: string): boolean | undefined {
     const control = this.demandeForm.get(controlName);
     return control?.invalid && (control?.touched || control?.dirty);
   }
 
-  // Vérifie la validité d'un champ dans un détail
-  isDetailInvalid(i: number, controlName: string): boolean | undefined {
-    const detailGroup = this.details.at(i);
+  isDetailInvalid(index: number, controlName: string): boolean | undefined {
+    const detailGroup = this.details.at(index);
     const control = detailGroup?.get(controlName);
     return control?.invalid && (control?.touched || control?.dirty);
+  }
+
+  onJournalChange(journalId: number): void {
+    if (journalId) {
+      this.demandeService.getBudgetsByJournalId(journalId).subscribe({
+        next: (data: any[]) => {
+          this.budgetsParJournal = data;
+          this.details.clear();
+          this.addDetail();
+        },
+        error: err => {
+          console.error('Erreur lors de la récupération des budgets', err);
+          this.budgetsParJournal = [];
+        }
+      });
+    } else {
+      this.budgetsParJournal = [];
+    }
   }
 
   onSubmit(): void {
@@ -209,15 +200,50 @@ export class DemandeFormComponent implements OnInit {
     this.details.controls.forEach(detail => detail.markAllAsTouched());
 
     if (this.demandeForm.valid) {
-      console.log('Formulaire soumis avec succès:', this.demandeForm.value);
-      this.successMessage = 'Demande soumise avec succès !';
-      this.errorMessage = null;
-      // Ajoutez ici votre logique d'envoi à l'API via le service
-      // this.demandeService.submit(this.demandeForm.value).subscribe(...);
+      const dataToSend = {
+        userId: this.currentUserId,
+        ...this.demandeForm.value,
+        montant_total: this.totalAmount
+      };
+
+      console.log('Objet demande en cours d\'envoi:', dataToSend);
+
+      this.demandeService.createDemande(dataToSend).subscribe({
+        next: () => {
+          this.successMessage = 'Demande soumise avec succès !';
+          this.errorMessage = null;
+          this.showModal = true; // Afficher le modal de succès
+          this.resetForm();
+        },
+        error: err => {
+          console.error('Erreur lors de la soumission :', err);
+          this.errorMessage = err.message || 'Une erreur est survenue lors de la soumission.';
+          this.successMessage = null;
+          this.showModal = true; // Afficher le modal d'erreur
+        }
+      });
     } else {
       this.errorMessage = 'Veuillez remplir correctement tous les champs obligatoires.';
       this.successMessage = null;
-      console.error('Le formulaire est invalide.');
+      this.showModal = true; // Afficher le modal d'erreur
+      console.error('Formulaire invalide');
     }
+  }
+
+  resetForm(): void {
+    this.demandeForm.reset({
+      type: 'DED',
+      date: new Date().toISOString().substring(0, 10),
+      pj_status: 'oui',
+    });
+    this.details.clear();
+    this.addDetail();
+    this.totalAmount = 0;
+  }
+
+  closeModal(): void {
+    this.showModal = false;
+    this.successMessage = null;
+    this.errorMessage = null;
   }
 }

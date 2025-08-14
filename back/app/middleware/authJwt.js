@@ -2,10 +2,8 @@ const jwt = require("jsonwebtoken");
 const config = require("../config/auth.config");
 const db = require("../Models");
 const User = db.user;
-// Le modèle Role n'est pas nécessaire ici si le rôle est directement sur l'utilisateur
-// const Role = db.role; 
 
-verifyToken = (req, res, next) => {
+const verifyToken = (req, res, next) => {
   let token = req.headers["authorization"];
 
   if (!token) {
@@ -27,11 +25,10 @@ verifyToken = (req, res, next) => {
   });
 };
 
-// CORRECTION MAJEURE ICI : Vérifie directement la propriété 'role' de l'utilisateur
-isAdmin = (req, res, next) => {
+const isAdmin = (req, res, next) => {
   User.findByPk(req.userId)
     .then(user => {
-      if (user && user.role === "admin") { // Accède directement à user.role
+      if (user && user.role === "admin") {
         next();
         return;
       }
@@ -42,11 +39,10 @@ isAdmin = (req, res, next) => {
     });
 };
 
-// CORRECTION MAJEURE ICI : Vérifie directement la propriété 'role' de l'utilisateur
-isUser = (req, res, next) => {
+const isUser = (req, res, next) => {
   User.findByPk(req.userId)
     .then(user => {
-      if (user && user.role === "user") { // Accède directement à user.role
+      if (user && user.role === "user") {
         next();
         return;
       }
@@ -57,15 +53,10 @@ isUser = (req, res, next) => {
     });
 };
 
-// CORRECTION MAJEURE ICI : Vérifie directement la propriété 'role' de l'utilisateur
-isApproverOrAdminOrRhOrDafOrCaissier = (req, res, next) => {
+const isApproverOrAdminOrRhOrDafOrCaissier = (req, res, next) => {
   User.findByPk(req.userId)
     .then(user => {
-      if (user && (user.role === "approver" ||
-                   user.role === "admin" ||
-                   user.role === "rh" ||
-                   user.role === "daf" ||
-                   user.role === "caissier")) {
+      if (user && ["approver", "admin", "rh", "daf", "caissier"].includes(user.role)) {
         next();
         return;
       }
@@ -76,11 +67,9 @@ isApproverOrAdminOrRhOrDafOrCaissier = (req, res, next) => {
     });
 };
 
-const authJwt = {
-  verifyToken: verifyToken,
-  isAdmin: isAdmin,
-  isUser: isUser,
-  isApproverOrAdminOrRhOrDafOrCaissier: isApproverOrAdminOrRhOrDafOrCaissier
+module.exports = {
+  verifyToken,
+  isAdmin,
+  isUser,
+  isApproverOrAdminOrRhOrDafOrCaissier
 };
-
-module.exports = authJwt;

@@ -8,6 +8,6 @@ export interface Demande {
   pjStatus: 'oui' | 'pas encore'; // Statut de la pièce jointe
   respPjId?: number; // ID du responsable de la pièce jointe, optionnel
   status: 'en attente' | 'approuvée' | 'rejetée' | string; // Statut de la demande
-  montantTotal?: number; // Montant total, optionnel pour la soumission
+  montant_total?: number; // Montant total, optionnel pour la soumission
   description?: string; // Description de la demande, optionnel
 }

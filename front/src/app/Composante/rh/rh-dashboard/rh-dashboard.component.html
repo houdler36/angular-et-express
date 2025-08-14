@@ -1,0 +1,34 @@
+
+
+<div class="flex-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="header-container">
+      <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
+      <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
+    </div>
+    <nav>
+      <a role="button" [class.active]="currentView === 'dashboard'" (click)="setCurrentView('dashboard')">
+        <i class="fas fa-tachometer-alt"></i>
+        Tableau de Bord RH
+      </a>
+      <a role="button" [class.active]="currentView === 'validation'" (click)="setCurrentView('validation')">
+        <i class="fas fa-check-circle"></i>
+        Validation RH
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <section *ngIf="currentView === 'dashboard'">
+      <h1>Tableau de Bord RH</h1>
+      <p>Statistiques, données et informations sur la gestion RH.</p>
+      <!-- Ajoute ici des widgets ou données pertinentes -->
+    </section>
+
+    <section *ngIf="currentView === 'validation'">
+      <app-validation-rh></app-validation-rh>
+    </section>
+  </main>
+</div>

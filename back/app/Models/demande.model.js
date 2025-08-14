@@ -1,3 +1,5 @@
+// app/models/demande.model.js
+// Définition du modèle 'Demande' pour la table 'demandes'
 const demandeModel = (sequelize, Sequelize) => {
     const Demande = sequelize.define("demande", {
         // La colonne 'id' est la clé primaire, auto-incrémentée
@@ -11,7 +13,7 @@ const demandeModel = (sequelize, Sequelize) => {
             type: Sequelize.INTEGER,
             allowNull: false,
         },
-        // 'type' est une énumération avec une valeur par défaut
+        // 'type' est une énumération des types de demandes (synchronisé avec le SQL dump)
         type: {
             type: Sequelize.ENUM('DED', 'Recette'),
             defaultValue: 'DED',
@@ -32,18 +34,18 @@ const demandeModel = (sequelize, Sequelize) => {
             type: Sequelize.DATEONLY,
             allowNull: true,
         },
-        // 'pj_status' est une énumération avec une valeur par défaut
+        // 'pj_status' est une énumération, peut être nulle
         pj_status: {
             type: Sequelize.ENUM('oui', 'pas encore'),
             defaultValue: 'pas encore',
             allowNull: true,
         },
-        // 'resp_pj_id' est la clé étrangère du responsable, peut être nulle
+        // 'resp_pj_id' est la clé étrangère du responsable (synchronisé avec le SQL dump)
         resp_pj_id: {
             type: Sequelize.INTEGER,
             allowNull: true,
         },
-        // 'status' est une chaîne de caractères avec une valeur par défaut
+        // 'status' est une chaîne de caractères (synchronisé avec le SQL dump)
         status: {
             type: Sequelize.STRING,
             defaultValue: 'en attente',
@@ -61,9 +63,9 @@ const demandeModel = (sequelize, Sequelize) => {
             allowNull: true,
         },
     }, {
-        // Important: La table SQL n'a pas de colonnes `createdAt` ou `updatedAt`.
-        // On désactive donc la gestion des timestamps pour éviter les erreurs de colonnes inconnues.
+        // Désactive les timestamps pour les tables qui n'ont pas les colonnes 'createdAt' et 'updatedAt'
         timestamps: false,
+        // Spécifie le nom de la table
         tableName: 'demandes'
     });
 

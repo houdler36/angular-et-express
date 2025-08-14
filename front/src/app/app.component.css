@@ -1,4 +1,10 @@
 /* Styles de base */
+:root {
+  --primary-color: #0a4a89;
+  --secondary-color: #d32f2f;
+  --text-color-light: white;
+}
+
 .app-container {
   min-height: 100vh;
   display: flex;
@@ -7,30 +13,54 @@
 
 /* Barre de navigation */
 .navbar {
-  background-color: #1976d2;
-  color: white;
-  padding: 1rem;
+  background-color: cornflowerblue;
+  color: var(--text-color-light);
+  padding: 1rem 2rem; /* Augmentation du padding pour plus d'espace */
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .welcome-message {
   font-size: 1.2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* Espace entre l'icône et le texte */
+}
+
+/* Icône de l'utilisateur */
+.welcome-message i {
+  font-size: 1.5rem;
 }
 
 .logout-btn {
-  background-color: #d32f2f;
-  color: white;
+  background-color: var(--secondary-color);
+  color: var(--text-color-light);
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .logout-btn:hover {
   background-color: #b71c1c;
+}
+
+/* Icône du bouton de déconnexion */
+.logout-btn i {
+  font-size: 1rem;
 }
 
 /* Contenu principal */
@@ -44,5 +74,10 @@ main {
   .navbar {
     flex-direction: column;
     gap: 1rem;
+    padding: 1rem;
+  }
+
+  .welcome-message {
+    font-size: 1rem;
   }
 }

@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+// src/app/Composante/user/dashboard-user/dashboard-user.component.ts
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { DemandeService } from '../../../services/demande.service';
+import { DemandeUpdateService } from '../../../services/demande-update.service';
 import { Demande } from '../../../models/demande';
 
 @Component({
@@ -9,33 +12,53 @@ import { Demande } from '../../../models/demande';
   templateUrl: './dashboard-user.component.html',
   styleUrls: ['./dashboard-user.component.scss'],
   standalone: true,
-  imports: [RouterModule, CommonModule]
+  imports: [
+    RouterModule,
+    CommonModule
+  ]
 })
-export class DashboardUserComponent implements OnInit {
+export class DashboardUserComponent implements OnInit, OnDestroy {
   totalDemandes: number = 0;
   demandesEnAttente: number = 0;
   demandesApprouvees: number = 0;
   demandesRejetees: number = 0;
-
+  
+  demandeStats: { status: string, count: number }[] = [];
   lastDemandes: Demande[] = [];
   errorMessage: string = '';
+  private updateSubscription!: Subscription;
 
-  constructor(private demandeService: DemandeService) { }
+  constructor(
+    private demandeService: DemandeService,
+    private demandeUpdateService: DemandeUpdateService
+  ) { }
 
   ngOnInit(): void {
     this.loadDemandes();
     this.loadDemandeStats();
+
+    this.updateSubscription = this.demandeUpdateService.demandeUpdated$.subscribe(() => {
+      console.log('Notification de mise à jour reçue. Rafraîchissement des statistiques...');
+      this.loadDemandeStats();
+      this.loadDemandes();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.updateSubscription) {
+      this.updateSubscription.unsubscribe();
+    }
   }
 
   loadDemandes(): void {
     console.log("Chargement des dernières demandes...");
     this.demandeService.getAllDemandes().subscribe({
       next: (data: Demande[]) => {
-        this.lastDemandes = data.slice(0, 4);
+        this.lastDemandes = data;
         console.log("Demandes chargées :", this.lastDemandes);
       },
       error: (err) => {
-        this.errorMessage = 'Erreur lors du chargement des demandes : ' + (err.error.message || err.message);
+        this.errorMessage = 'Erreur lors du chargement des demandes : ' + (err.error?.message || err.message);
         console.error(this.errorMessage, err);
       }
     });
@@ -44,27 +67,42 @@ export class DashboardUserComponent implements OnInit {
   loadDemandeStats(): void {
     console.log("Chargement des statistiques de demandes...");
     this.demandeService.getDemandeStats().subscribe({
-      next: (stats: { status: string, total: number }[]) => { // Le type est maintenant un tableau d'objets {status, total}
-        // Réinitialiser les totaux avant de les recalculer
+      next: (stats) => {
+        console.log("Statistiques reçues du backend :", stats);
+        
         this.totalDemandes = 0;
         this.demandesEnAttente = 0;
         this.demandesApprouvees = 0;
         this.demandesRejetees = 0;
+        
+        // Correction : Itérer sur les clés de l'objet "stats"
+        if (stats) {
+          Object.keys(stats).forEach(status => {
+            const count = stats[status];
+            this.totalDemandes += count;
 
-        // Parcourir le tableau de statistiques et agréger les totaux
-        stats.forEach(stat => {
-          this.totalDemandes += stat.total; // Somme de tous les totaux pour le total général
+            switch (status.toLowerCase()) {
+              case 'en attente':
+              case 'en_attente':
+              case 'pending':
+                this.demandesEnAttente = count;
+                break;
+              case 'validé':
+              case 'approuvée':
+              case 'approuvé':
+              case 'approved':
+                this.demandesApprouvees = count;
+                break;
+              case 'refusé':
+              case 'rejetée':
+              case 'rejected':
+                this.demandesRejetees = count;
+                break;
+            }
+          });
+        }
 
-          if (stat.status === 'Pending') {
-            this.demandesEnAttente = stat.total;
-          } else if (stat.status === 'Approved') {
-            this.demandesApprouvees = stat.total;
-          } else if (stat.status === 'Rejected') {
-            this.demandesRejetees = stat.total;
-          }
-          // Ajoutez d'autres conditions si vous avez d'autres statuts
-        });
-        console.log("Statistiques chargées et agrégées :", {
+        console.log("Statistiques agrégées :", {
           totalDemandes: this.totalDemandes,
           demandesEnAttente: this.demandesEnAttente,
           demandesApprouvees: this.demandesApprouvees,
@@ -72,7 +110,7 @@ export class DashboardUserComponent implements OnInit {
         });
       },
       error: (err) => {
-        this.errorMessage = 'Erreur lors du chargement des statistiques : ' + (err.error.message || err.message);
+        this.errorMessage = 'Erreur lors du chargement des statistiques : ' + (err.error?.message || err.message);
         console.error(this.errorMessage, err);
       }
     });

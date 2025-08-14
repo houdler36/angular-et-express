@@ -1,77 +1,85 @@
-<!--
- user-management.component.html
- Ce fichier gère l'affichage du composant de gestion des utilisateurs.
- Il contient un formulaire pour créer un nouvel utilisateur et un tableau pour afficher les utilisateurs existants.
--->
-<div class="page-container">
- <h1 class="page-title">Gestion des Utilisateurs</h1>
+<div class="user-management">
 
- <!-- Formulaire d'ajout d'utilisateur -->
- <div class="form-container">
-  <h2 class="form-title">Ajouter un nouvel utilisateur</h2>
-  <form (ngSubmit)="createUser()">
-   <!-- Champ Nom -->
-   <div class="form-group">
-    <label for="name">Nom</label>
-    <input type="text" id="name" [(ngModel)]="newUser.username" name="name" required>
-   </div>
-   <!-- Champ Email -->
-   <div class="form-group">
-    <label for="email">Email</label>
-    <input type="email" id="email" [(ngModel)]="newUser.email" name="email" required>
-   </div>
-   <!-- Champ Mot de passe -->
-   <div class="form-group">
-    <label for="password">Mot de passe</label>
-    <input type="password" id="password" [(ngModel)]="newUser.password" name="password" required>
-   </div>
-   <!-- Champ Rôle -->
-   <div class="form-group">
-    <label for="role">Rôle</label>
-    <input type="text" id="role" [(ngModel)]="newUser.role" name="role" required>
-   </div>
+  <!-- Message -->
+  <div *ngIf="message" class="alert" [class.error]="isError" [class.success]="!isError">
+    {{ message }}
+  </div>
 
-   <!-- Sélection des journaux avec une liste déroulante multiple -->
-   <div class="form-group">
-    <label for="journals">Accès aux journaux</label>
-    <select id="journals" [(ngModel)]="newUser.journalIds" name="journals" multiple required>
-     <option *ngFor="let journal of journals" [value]="journal.id_journal">
-      {{ journal.nom_journal }}
-     </option>
-    </select>
-   </div>
+  <!-- Bouton Ajouter -->
+  <div class="header">
+    <h2>Gestion des utilisateurs</h2>
+    <button class="btn-primary" (click)="openModal()">+ Ajouter un utilisateur</button>
+  </div>
 
-   <div class="divider"></div>
-
-   <!-- Bouton de soumission -->
-   <button type="submit">
-    Créer l'utilisateur
-   </button>
-  </form>
- </div>
-
- <!-- Tableau de la liste des utilisateurs -->
- <div class="table-container">
-  <h2 class="table-title">Liste des utilisateurs</h2>
-  <table>
-   <thead>
-    <tr>
-     <th>ID</th>
-     <th>Nom</th>
-     <th>Email</th>
-     <th>Rôle</th>
-     <th>Accès aux journaux</th>
-    </tr>
-   </thead>
-   <tbody>
-    <tr *ngFor="let user of users">
-     <td>{{ user.id }}</td>
-     <td>{{ user.username}}</td>
-     <td>{{ user.email }}</td>
-     <td>{{ user.role }}</td>
-     <td>{{ getJournalNamesForUser(user) }}</td>
-    </tr>
-   </tbody>
+  <!-- Tableau des utilisateurs -->
+  <table class="user-table" *ngIf="users.length > 0; else noUsers">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Email</th>
+        <th>Rôle</th>
+        <th>Journaux</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let user of users">
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.role }}</td>
+        <td>{{ getJournalNamesForUser(user) }}</td>
+      </tr>
+    </tbody>
   </table>
- </div>
+
+  <ng-template #noUsers>
+    <p class="empty">Aucun utilisateur trouvé.</p>
+  </ng-template>
+
+  <!-- POP-UP AJOUT UTILISATEUR -->
+  <div class="modal-backdrop" *ngIf="showAddUserModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Ajouter un utilisateur</h3>
+        <button class="close-btn" (click)="closeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <label>Nom :</label>
+        <input type="text" [(ngModel)]="newUser.username" placeholder="Nom complet">
+
+        <label>Email :</label>
+        <input type="email" [(ngModel)]="newUser.email" placeholder="Adresse email">
+
+        <label>Mot de passe :</label>
+        <input type="password" [(ngModel)]="newUser.password" placeholder="Mot de passe">
+
+        <label>Rôle :</label>
+        <select [(ngModel)]="newUser.role" required>
+  <option value="">-- Sélectionner --</option>
+  <option value="user">Utilisateur</option>
+  <option value="admin">Admin</option>
+  <option value="approver">Approver</option>
+  <option value="rh">RH</option>
+  <option value="daf">DAF</option>
+  <option value="caissier">Caissier</option>
+  
+</select>
+
+        <label>Journaux :</label>
+        <div class="checkbox-group">
+          <div *ngFor="let journal of journals">
+            <input type="checkbox" 
+                   (change)="onJournalChange($event, journal.id_journal)">
+            {{ journal.nom_journal }}
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeModal()">Annuler</button>
+        <button class="btn-primary" (click)="createUser()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
 </div>

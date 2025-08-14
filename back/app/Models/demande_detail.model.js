@@ -1,3 +1,4 @@
+// app/models/demande_detail.model.js
 const demandeDetailsModel = (sequelize, Sequelize) => {
     const DemandeDetails = sequelize.define("demande_details", {
         // La colonne 'id' est la clé primaire, auto-incrémentée
@@ -21,17 +22,17 @@ const demandeDetailsModel = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             allowNull: false,
         },
+        // Correction : le nom de la colonne doit être 'amount' pour correspondre à la BDD
+        amount: {
+            type: Sequelize.DECIMAL(10, 2),
+            allowNull: false,
+        },
         // 'beneficiaire' est une chaîne de caractères
         beneficiaire: {
             type: Sequelize.STRING,
             allowNull: false,
         },
-        // 'amount' est un décimal, ce qui correspond à un montant
-        amount: {
-            type: Sequelize.DECIMAL(10, 2),
-            allowNull: false,
-        },
-        // 'nif_exists' est un ENUM, comme défini dans le SQL
+        // 'nif_exists' est un ENUM
         nif_exists: {
             type: Sequelize.ENUM('oui', 'non'),
             allowNull: false,
@@ -42,7 +43,7 @@ const demandeDetailsModel = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             allowNull: true,
         },
-        // 'budget_id' est la colonne budgétaire, pas 'code_budgetaire'
+        // Clé étrangère pour la table budget
         budget_id: {
             type: Sequelize.INTEGER,
             allowNull: true,
@@ -54,7 +55,7 @@ const demandeDetailsModel = (sequelize, Sequelize) => {
             defaultValue: 'en attente',
         },
     }, {
-        // Désactiver les timestamps 'createdAt' et 'updatedAt' pour correspondre à la base de données
+        // Désactiver les timestamps 'createdAt' et 'updatedAt'
         timestamps: false,
         // On s'assure que le modèle utilise le bon nom de table
         tableName: 'demande_details'

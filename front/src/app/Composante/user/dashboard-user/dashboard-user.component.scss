@@ -1,21 +1,23 @@
-/* src/app/Composante/user/dashboard-user/dashboard-user.component.scss */
-
 .dashboard-container {
-  text-align: center;
+  min-height: 100vh;
   padding: 30px;
+  background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
+  font-family: 'Poppins', sans-serif;
 
   h2 {
-    color: #333;
-    margin-bottom: 15px;
-    font-size: 2.2em;
+    color: #2c3e50;
+    font-weight: 700;
+    font-size: 2.5em;
+    margin-bottom: 10px;
   }
 
   p {
-    color: #666;
-    margin-bottom: 30px;
+    color: #555;
     font-size: 1.1em;
+    margin-bottom: 40px;
   }
 
+  /* Statistiques */
   .dashboard-stats {
     display: flex;
     justify-content: center;
@@ -24,40 +26,40 @@
     margin-bottom: 50px;
 
     .stat-card {
-      background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      padding: 30px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      padding: 25px;
       flex: 1;
       min-width: 220px;
-      max-width: 280px;
+      max-width: 260px;
       text-align: center;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
-      cursor: default;
 
       &:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transform: translateY(-6px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
       }
 
       h3 {
-        color: #555;
         font-size: 1.2em;
-        margin-bottom: 15px;
+        color: #555;
+        margin-bottom: 10px;
       }
 
       .stat-value {
-        font-size: 3.5em;
+        font-size: 3em;
         font-weight: 700;
-        color: #3f51b5; // Couleur principale
 
-        &.pending { color: #ff9800; } // Orange pour en attente
-        &.approved { color: #4caf50; } // Vert pour approuvé
-        &.rejected { color: #f44336; } // Rouge pour rejeté
+        &.pending { color: #ff9800; }
+        &.approved { color: #4caf50; }
+        &.rejected { color: #f44336; }
       }
     }
   }
 
+  /* Boutons */
   .dashboard-actions {
     display: flex;
     justify-content: center;
@@ -65,34 +67,70 @@
     margin-bottom: 50px;
 
     .btn {
-      padding: 15px 30px;
-      font-size: 1.1em;
+      padding: 12px 25px;
+      font-size: 1.05em;
       border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+
+      &.primary {
+        background-color: #3f51b5;
+        color: white;
+      }
+
+      &.secondary {
+        background-color: #9e9e9e;
+        color: white;
+      }
+
+      &:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+      }
     }
   }
 
-  h3 {
-    text-align: left;
-    color: #444;
-    margin-bottom: 20px;
-    font-size: 1.8em;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
-  }
-
+  /* Tableau */
   .table-container {
-    background-color: #ffffff;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    overflow: hidden; /* Assure que les coins arrondis sont respectés pour le tableau */
+    background-color: white;
+    border-radius: 12px;
+    overflow-x: auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+
+      th, td {
+        padding: 12px 15px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #3f51b5;
+        color: white;
+        font-weight: 600;
+      }
+
+      tbody tr {
+        border-bottom: 1px solid #ddd;
+
+        &:hover {
+          background-color: #f5f5f5;
+        }
+      }
+    }
   }
 
+  /* Badges de statut */
   .status-badge {
-    padding: 5px 10px;
-    border-radius: 5px;
+    padding: 6px 12px;
+    border-radius: 20px;
     font-weight: bold;
+    font-size: 0.85em;
     color: white;
-    font-size: 0.9em;
 
     &.status-pending { background-color: #ff9800; }
     &.status-approved { background-color: #4caf50; }

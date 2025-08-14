@@ -47,8 +47,10 @@
           <td colspan="5">Aucune demande récente à afficher.</td>
         </tr>
         <tr *ngFor="let demande of lastDemandes">
-          <td>{{ demande.title }}</td>
-          <td>{{ demande.amount | currency:'USD':'symbol':'1.2-2':'fr' }}</td>
+          <!-- Correction 1: Utilisation de `demande.description` pour le Titre -->
+          <td>{{ demande.description }}</td>
+          <!-- Correction 2: Utilisation de `demande.montantTotal` avec le pipe `currency` pour le Montant -->
+          <td>{{ demande.montant_total | currency:'Ariary':'symbol':'1.2-2':'fr' }}</td>
           <td>
             <span [ngClass]="{
               'status-badge': true,
@@ -59,14 +61,16 @@
               {{ demande.status }}
             </span>
           </td>
-          <td>{{ demande.expectedDate | date:'shortDate' }}</td> <td>
+          <!-- Correction 3: Utilisation de `demande.date` pour la Date -->
+          <td>{{ demande.date }}</td>
+          <td>
             <button class="btn btn-sm secondary" [routerLink]="['/demandes', demande.id]">
               <i class="fas fa-eye"></i> Voir
             </button>
           </td>
         </tr>
         <tr *ngIf="errorMessage">
-            <td colspan="5" class="text-center text-danger">Erreur : {{ errorMessage }}</td>
+          <td colspan="5" class="text-center text-danger">Erreur : {{ errorMessage }}</td>
         </tr>
       </tbody>
     </table>

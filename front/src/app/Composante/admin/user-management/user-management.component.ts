@@ -1,136 +1,152 @@
-// Fichier: C:\Users\WINDOWS 10\Desktop\Houlder\front\src\app\components\user-management\user-management.component.ts
+// Fichier: src/app/components/user-management/user-management.component.ts
 
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { UserService } from '../../../services/user.service'; // Correction de l'import : Utilisation de UserService
+import { UserService } from '../../../services/user.service';
 
 // Définition des interfaces
 interface Journal {
- id_journal: number; // Correction: le nom de la colonne est id_journal
- nom_journal: string; // Correction: le nom de la colonne est nom_journal
+  id_journal: number;
+  nom_journal: string;
 }
 
 interface User {
- id: number;
- username: string;
- email: string;
- role: string;
- journals: Journal[];
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+  journals: Journal[];
 }
 
 @Component({
- selector: 'app-user-management',
- standalone: true,
- imports: [CommonModule, FormsModule],
- templateUrl: './user-management.component.html',
- styleUrls: ['./user-management.component.css']
+  selector: 'app-user-management',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './user-management.component.html',
+  styleUrls: ['./user-management.component.css']
 })
 export class UserManagementComponent implements OnInit {
 
- // Initialisation de l'objet newUser avec journalIds comme tableau vide
- newUser: any = {
-  username: '',
-  email: '',
-  password: '',
-  role: '',
-  journalIds: []
- };
+  // --- Contrôle de la modale ---
+  showAddUserModal = false;
 
- journals: Journal[] = [];
- users: User[] = [];
-
- message: string = '';
- isError: boolean = false;
-
- constructor(
-  private userService: UserService // Correction: Utilisation de UserService
- ) { }
-
- ngOnInit(): void {
-  this.loadJournals();
-  this.loadUsers();
- }
-
- // --- Méthodes API ---
-
- loadJournals(): void {
-  this.userService.getJournalsList().subscribe({ // Correction: Utilisation de la méthode getJournalsList()
-   next: data => {
-    this.journals = data;
-   },
-   error: err => {
-    console.error('Erreur lors du chargement des journaux :', err);
-    this.setMessage('Erreur lors du chargement des journaux.', true);
-   }
-  });
- }
-
- loadUsers(): void {
-  this.userService.getUsersList().subscribe({
-   next: data => {
-    this.users = data;
-   },
-   error: err => {
-    console.error('Erreur lors du chargement des utilisateurs :', err);
-    this.setMessage('Erreur lors du chargement des utilisateurs.', true);
-   }
-  });
- }
-
- createUser(): void {
-  this.userService.createAdminUser(this.newUser).subscribe({
-   next: res => {
-    console.log('Réponse du back-end :', res);
-    this.setMessage('Utilisateur créé avec succès !', false);
-    this.loadUsers();
-    this.resetForm();
-   },
-   error: err => {
-    console.error('Erreur lors de la création de l\'utilisateur :', err);
-    this.setMessage('Erreur lors de la création de l\'utilisateur : ' + err.error.message, true);
-   }
-  });
- }
-
- // --- Fonctions utilitaires ---
-
- onJournalChange(event: Event, id_journal: number): void { // Correction: le nom de la variable est id_journal
-  const isChecked = (event.target as HTMLInputElement).checked;
-  if (isChecked) {
-   if (!this.newUser.journalIds.includes(id_journal)) { // Correction: le nom de la variable est id_journal
-    this.newUser.journalIds.push(id_journal); // Correction: le nom de la variable est id_journal
-   }
-  } else {
-   const index = this.newUser.journalIds.indexOf(id_journal); // Correction: le nom de la variable est id_journal
-   if (index > -1) {
-    this.newUser.journalIds.splice(index, 1);
-   }
-  }
- }
-
- resetForm(): void {
-  this.newUser = {
-   username: '',
-   email: '',
-   password: '',
-   role: '',
-   journalIds: []
+  // --- Données du formulaire ---
+  newUser: any = {
+    username: '',
+    email: '',
+    password: '',
+    role: '',
+    journalIds: []
   };
-  this.message = '';
-  this.isError = false;
- }
 
- setMessage(message: string, isError: boolean): void {
-  this.message = message;
-  this.isError = isError;
-  setTimeout(() => {
-   this.message = '';
-  }, 5000);
- }
+  journals: Journal[] = [];
+  users: User[] = [];
 
- getJournalNamesForUser(user: User): string {
-  const journalNames = user.journals.map(journal => journal.nom_journal); // Correction: le nom de la propriété est nom_journal
-  return journalNames.join(', ');
- }
+  // --- Messages utilisateur ---
+  message: string = '';
+  isError: boolean = false;
+
+  constructor(private userService: UserService) { }
+
+  ngOnInit(): void {
+    this.loadJournals();
+    this.loadUsers();
+  }
+
+  // --- API ---
+  loadJournals(): void {
+    this.userService.getJournalsList().subscribe({
+      next: data => {
+        this.journals = data;
+      },
+      error: err => {
+        console.error('Erreur lors du chargement des journaux :', err);
+        this.setMessage('Erreur lors du chargement des journaux.', true);
+      }
+    });
+  }
+
+  loadUsers(): void {
+    this.userService.getUsersList().subscribe({
+      next: data => {
+        this.users = data;
+      },
+      error: err => {
+        console.error('Erreur lors du chargement des utilisateurs :', err);
+        this.setMessage('Erreur lors du chargement des utilisateurs.', true);
+      }
+    });
+  }
+
+  createUser(): void {
+    if (!this.newUser.username || !this.newUser.email || !this.newUser.password || !this.newUser.role) {
+      this.setMessage('Veuillez remplir tous les champs obligatoires.', true);
+      return;
+    }
+
+    this.userService.createAdminUser(this.newUser).subscribe({
+      next: res => {
+        console.log('Utilisateur créé :', res);
+        this.setMessage('Utilisateur créé avec succès !', false);
+        this.loadUsers();
+        this.resetForm();
+        this.closeModal();
+      },
+      error: err => {
+        console.error('Erreur lors de la création de l\'utilisateur :', err);
+        this.setMessage('Erreur lors de la création : ' + (err.error?.message || 'Inconnue'), true);
+      }
+    });
+  }
+
+  // --- Gestion des journaux sélectionnés ---
+  onJournalChange(event: Event, id_journal: number): void {
+    const isChecked = (event.target as HTMLInputElement).checked;
+    if (isChecked) {
+      if (!this.newUser.journalIds.includes(id_journal)) {
+        this.newUser.journalIds.push(id_journal);
+      }
+    } else {
+      const index = this.newUser.journalIds.indexOf(id_journal);
+      if (index > -1) {
+        this.newUser.journalIds.splice(index, 1);
+      }
+    }
+  }
+
+  // --- Utilitaires ---
+  resetForm(): void {
+    this.newUser = {
+      username: '',
+      email: '',
+      password: '',
+      role: '',
+      journalIds: []
+    };
+    this.message = '';
+    this.isError = false;
+  }
+
+  setMessage(message: string, isError: boolean): void {
+    this.message = message;
+    this.isError = isError;
+    setTimeout(() => {
+      this.message = '';
+    }, 5000);
+  }
+
+  getJournalNamesForUser(user: User): string {
+    return user.journals.map(j => j.nom_journal).join(', ');
+  }
+
+  // --- Modale ---
+  openModal(): void {
+    this.resetForm();
+    this.showAddUserModal = true;
+  }
+
+  closeModal(): void {
+    this.showAddUserModal = false;
+  }
 }

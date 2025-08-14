@@ -1,0 +1,80 @@
+<section>
+  <h3>Demandes à valider</h3>
+  <p *ngIf="loadingAValider">Chargement des demandes...</p>
+
+  <div *ngIf="!loadingAValider && demandesAValider.length > 0">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nom</th>
+          <th>Type</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let demande of demandesAValider">
+          <td>{{ demande.id }}</td>
+          <td>{{ demande.nom }}</td>
+          <td>{{ demande.type }}</td>
+          <td [ngClass]="{
+             'status-validée': demande.status === 'approuvée',
+             'status-en-attente': demande.status === 'en attente',
+             'status-en-validation': demande.status === 'en validation',
+             'status-rejetée': demande.status === 'rejetée'
+          }">
+            {{ demande.status }}
+          </td>
+          <td>
+           
+           <button class="valider" (click)="valider(demande.id)">Valider</button>
+            <button class="refuser" (click)="refuser(demande.id)">Refuser</button>
+            <button class="details" (click)="voirDetails(demande.id)">Détails</button>
+          
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p *ngIf="!loadingAValider && demandesAValider.length === 0">Aucune demande à valider.</p>
+</section>
+
+<section>
+  <h3>Demandes finalisées</h3>
+  <p *ngIf="loadingFinalisees">Chargement des demandes...</p>
+
+  <div *ngIf="!loadingFinalisees && demandesFinalisees.length > 0">
+    <table>
+      <thead class="green-header">
+        <tr>
+          <th>ID</th>
+          <th>Nom</th>
+          <th>Type</th>
+          <th>Statut</th>
+          <th>Commentaire</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let demande of demandesFinalisees">
+          <td>{{ demande.id }}</td>
+          <td>{{ demande.nom }}</td>
+          <td>{{ demande.type }}</td>
+          <td [ngClass]="{
+             'status-validée': demande.status === 'Validée',
+             'status-en-attente': demande.status === 'En attente',
+             'status-rejetée': demande.status === 'Rejetée'
+           }">
+            {{ demande.status }}s
+          </td>
+          <td>{{ demande.commentaire || '-' }}</td>
+          <td>
+            <button class="details" (click)="voirDetails(demande.id)">Détails</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p *ngIf="!loadingFinalisees && demandesFinalisees.length === 0">Aucune demande finalisée.</p>
+</section>

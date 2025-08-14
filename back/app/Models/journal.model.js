@@ -1,10 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
   const Journal = sequelize.define('journal', {
-    // Définissez id_journal comme clé primaire
     id_journal: {
       type: DataTypes.INTEGER,
-      primaryKey: true, // <-- Indique à Sequelize que c'est la clé primaire
-      autoIncrement: true // <-- Indique que c'est une colonne auto-incrémentée
+      primaryKey: true,
+      autoIncrement: true
     },
     nom_journal: {
       type: DataTypes.STRING,
@@ -15,8 +14,26 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     }
   }, {
-    // Cela empêche Sequelize de créer une colonne 'id' et de mettre le nom de la table au pluriel
     freezeTableName: true
   });
+
+  // Association Many-to-Many avec User via JournalValider
+  Journal.associate = (models) => {
+    Journal.belongsToMany(models.User, {
+      through: models.JournalValider,
+      foreignKey: 'journal_id',
+      otherKey: 'user_id',
+      as: 'valideurs'
+    });
+
+    // Si tu as une association avec Budget (exemple)
+    Journal.belongsToMany(models.Budget, {
+      through: 'journal_budgets', // adapte le nom si différent
+      foreignKey: 'journal_id',
+      otherKey: 'id_budget',
+      as: 'budgets'
+    });
+  };
+
   return Journal;
 };

@@ -101,25 +101,26 @@ export class LoginComponent implements OnInit {
     this.isLoading = false;
   }
 
-  private redirectBasedOnUserRoles(roles: string[]): void {
-    let targetRoute = '/dashboard';
+private redirectBasedOnUserRoles(roles: string[]): void {
+  let targetRoute = '/dashboard';
 
-    if (roles.includes('admin')) {
-      targetRoute = '/admin'; // Changement ici pour correspondre à routes.ts
-    } else if (roles.includes('rh')) {
-      targetRoute = '/rh-dashboard';
-    } else if (roles.includes('daf')) {
-      targetRoute = '/daf-dashboard';
-    } else if (roles.includes('caissier')) {
-      targetRoute = '/caissier-dashboard';
-    }
+  if (roles.includes('admin')) {
+    targetRoute = '/admin';
+  } else if (roles.includes('rh')) {
+    targetRoute = '/rh/dashboard';  // <-- corrige ici le chemin
+  } else if (roles.includes('daf')) {
+    targetRoute = '/daf-dashboard';
+  } else if (roles.includes('caissier')) {
+    targetRoute = '/caissier-dashboard';
+  }
 
-    console.log(`[LoginComponent] Final redirect target route: ${targetRoute}`);
-    
-    this.ngZone.run(() => {
-      this.router.navigate([targetRoute]);
-    });
-  }
+  console.log(`[LoginComponent] Final redirect target route: ${targetRoute}`);
+
+  this.ngZone.run(() => {
+    this.router.navigate([targetRoute]);
+  });
+}
+
 
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;

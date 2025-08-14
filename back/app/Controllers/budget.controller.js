@@ -62,3 +62,26 @@ exports.findAll = async (req, res) => {
     });
   }
 };
+
+// Nouvelle fonction pour trouver un budget par son code
+exports.findByCode = (req, res) => {
+    const codeBudget = req.query.code; // Récupère le paramètre 'code' de l'URL
+    
+    Budget.findOne({
+        where: { code_budget: codeBudget }
+    })
+    .then(data => {
+        if (data) {
+            res.send(data);
+        } else {
+            res.status(404).send({
+                message: `Impossible de trouver un Budget avec le code=${codeBudget}.`
+            });
+        }
+    })
+    .catch(err => {
+        res.status(500).send({
+            message: "Erreur lors de la récupération du Budget avec le code=" + codeBudget
+        });
+    });
+};

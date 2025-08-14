@@ -39,19 +39,19 @@ export class DemandeListComponent implements OnInit {
     });
   }
 
-  deleteDemande(id: number): void {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette demande ?')) {
-      this.demandeService.deleteDemande(String(id)).subscribe({ // Assurez-vous que l'ID est une chaîne si le service s'attend à une chaîne
-        next: () => {
-          this.demandes = this.demandes.filter(d => d.id !== id);
-          alert('Demande supprimée avec succès !');
-          this.errorMessage = '';
-        },
-        error: (err) => {
-          console.error("Erreur lors de la suppression de la demande :", err);
-          this.errorMessage = 'Erreur lors de la suppression de la demande. Vous n\'avez peut-être pas les permissions ou la demande n\'existe pas.';
-        }
-      });
-    }
+ deleteDemande(id: number): void {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cette demande ?')) {
+    this.demandeService.deleteDemande(id).subscribe({
+      next: () => {
+        this.demandes = this.demandes.filter(d => d.id !== id);
+        alert('Demande supprimée avec succès !');
+        this.errorMessage = '';
+      },
+      error: (err) => {
+        console.error("Erreur lors de la suppression de la demande :", err);
+        this.errorMessage = 'Erreur lors de la suppression de la demande. Vous n\'avez peut-être pas les permissions ou la demande n\'existe pas.';
+      }
+    });
   }
+}
 }

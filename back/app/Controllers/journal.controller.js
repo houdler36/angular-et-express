@@ -1,86 +1,86 @@
 const db = require('../Models');
 const Journal = db.journal;
 const Budget = db.budget;
+const User = db.user;
 
-// Créer et sauvegarder un nouveau journal avec ses budgets
+// Créer un journal avec budgets et valideurs
 exports.create = async (req, res) => {
-  // Valider la requête
-  if (!req.body.nom_journal || !req.body.nom_projet) {
-    res.status(400).send({
-      message: "Le nom du journal et le nom du projet ne peuvent pas être vides !"
-    });
-    return;
+  const { nom_journal, nom_projet, budgetIds, valideurs } = req.body;
+
+  if (!nom_journal || !nom_projet) {
+    return res.status(400).send({ message: "Nom du journal et nom du projet requis." });
   }
 
-  const { nom_journal, nom_projet, budgetIds } = req.body;
-
-  // --- LOG 1 : Vérifie les données reçues du frontend ---
-  console.log('--- Début de la création du journal ---');
-  console.log('Données reçues du frontend (nom_journal, nom_projet, budgetIds):', { nom_journal, nom_projet, budgetIds });
-
   try {
-    // Créer le journal
     const newJournal = await Journal.create({ nom_journal, nom_projet });
-    console.log('Journal créé avec succès. ID du journal:', newJournal.id_journal);
 
-    // Associer les budgets, si des IDs sont fournis
     if (budgetIds && budgetIds.length > 0) {
-      // --- LOG 2 : Vérifie les IDs de budgets que nous allons rechercher ---
-      console.log('Des budgetIds ont été fournis. Recherche des budgets avec les IDs:', budgetIds);
-
-      const budgets = await Budget.findAll({
-        where: { id_budget: budgetIds }
-      });
-
-      // --- LOG 3 : Vérifie les budgets trouvés dans la base de données ---
-      console.log('Budgets trouvés dans la base de données:', budgets.map(b => b.id_budget)); // Affiche seulement les IDs pour la clarté
-
+      const budgets = await Budget.findAll({ where: { id_budget: budgetIds } });
       if (budgets.length > 0) {
         await newJournal.setBudgets(budgets);
-        console.log('Association des budgets au journal réussie.');
-      } else {
-        console.log('Aucun budget correspondant trouvé pour les IDs fournis. Aucune association effectuée.');
       }
-    } else {
-      console.log('Aucun budgetId fourni. Aucune association de budget effectuée.');
     }
 
-    // Récupérer le journal avec ses budgets associés pour la réponse
-    const journalWithBudgets = await Journal.findByPk(newJournal.id_journal, {
-      include: [{
-        model: Budget,
-        as: 'budgets',
-        through: { attributes: [] } // Exclure les colonnes de la table de liaison
-      }]
-    });
-    console.log('Journal créé et récupéré avec budgets associés pour la réponse:', journalWithBudgets.toJSON()); // Affiche l'objet complet
+    if (valideurs && valideurs.length > 0) {
+      for (const v of valideurs) {
+        await db.journalValider.create({
+          journal_id: newJournal.id_journal,
+          user_id: v.user_id,
+          ordre: v.ordre || 1,
+          statut: 'en attente',
+          date_validation: null,
+          commentaire: null,
+        });
+      }
+    }
 
-    res.status(201).send(journalWithBudgets);
-    console.log('--- Fin de la création du journal (succès) ---');
-  } catch (err) {
-    console.error('--- Erreur lors de la création du journal ---');
-    console.error('Message d\'erreur:', err.message);
-    res.status(500).send({
-      message: err.message || "Une erreur est survenue lors de la création du journal."
+    // Récupérer le journal complet avec budgets ET valideurs
+    const journalFull = await Journal.findByPk(newJournal.id_journal, {
+      include: [
+        {
+          model: Budget,
+          as: 'budgets',
+          through: { attributes: [] }
+        },
+        {
+          model: User,
+          as: 'valideurs',
+          through: {
+            attributes: ['ordre', 'statut', 'date_validation', 'commentaire']
+          }
+        }
+      ]
     });
-    console.error('--- Fin de la création du journal (échec) ---');
+
+    res.status(201).send(journalFull);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message || "Erreur création journal." });
   }
 };
 
-// Récupérer tous les journaux avec leurs budgets associés
+// Récupérer tous les journaux avec budgets et valideurs
 exports.findAll = async (req, res) => {
   try {
     const journals = await Journal.findAll({
-      include: [{
-        model: Budget,
-        as: 'budgets',
-        through: { attributes: [] }
-      }]
+      include: [
+        {
+          model: Budget,
+          as: 'budgets',
+          through: { attributes: [] }
+        },
+        {
+          model: User,
+          as: 'valideurs',
+          through: {
+            attributes: ['ordre', 'statut', 'date_validation', 'commentaire']
+          }
+        }
+      ]
     });
     res.status(200).send(journals);
   } catch (err) {
-    res.status(500).send({
-      message: err.message || "Une erreur est survenue lors de la récupération des journaux."
-    });
+    console.error(err);
+    res.status(500).send({ message: err.message || "Erreur récupération journaux." });
   }
 };

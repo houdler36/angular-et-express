@@ -1,29 +1,29 @@
-// src/app/services/journal-api.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-const baseUrl = 'http://localhost:8081/api';
+const baseUrl = 'http://localhost:8081/api/journals';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root'
 })
 export class JournalApiService {
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {}
 
-  getAllBudgets(): Observable<any[]> {
-    // Récupère tous les budgets
-    return this.http.get<any[]>(`${baseUrl}/budgets/all`);
-  }
+  getAllBudgets(): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:8081/api/budgets/all`);
+  }
 
-  createJournal(data: any): Observable<any> {
-    // Crée un nouveau journal et l'associe à des budgets
-    return this.http.post(`${baseUrl}/journals`, data);
-  }
+  getAllRhUsers(): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:8081/api/users/admin/rh-users`);
+  }
 
-  getAllJournals(): Observable<any[]> {
-    // Récupère tous les journaux avec leurs budgets associés
-    return this.http.get<any[]>(`${baseUrl}/journals`);
-  }
+  createJournal(data: any): Observable<any> {
+    return this.http.post(baseUrl, data);
+  }
+
+  getAllJournals(): Observable<any[]> {
+    return this.http.get<any[]>(`${baseUrl}/all`);
+  }
 }

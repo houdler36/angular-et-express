@@ -1,7 +1,6 @@
 <div class="container mx-auto p-6 bg-white shadow-lg rounded-lg max-w-4xl my-8">
   <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Détails de la Demande #{{ demande?.id }}</h2>
 
-  <!-- Messages d'alerte/succès -->
   <div *ngIf="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
     <strong class="font-bold">Erreur !</strong>
     <span class="block sm:inline">{{ errorMessage }}</span>
@@ -13,60 +12,87 @@
 
   <div *ngIf="demande">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-      <!-- Informations générales -->
       <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
         <h3 class="text-xl font-semibold text-gray-700 mb-3">Informations générales</h3>
         <div class="space-y-2">
-          <p><span class="font-medium text-gray-600">Titre:</span> <span class="text-gray-900">{{ demande.title }}</span></p>
+          <p><span class="font-medium text-gray-600">Type:</span> <span class="text-gray-900">{{ demande.type }}</span></p>
           <p><span class="font-medium text-gray-600">Statut:</span>
             <span [ngClass]="{
               'px-2 py-1 rounded-full text-xs font-semibold': true,
-              'bg-yellow-100 text-yellow-800': demande.status === 'Pending',
-              'bg-green-100 text-green-800': demande.status === 'Approved',
-              'bg-red-100 text-red-800': demande.status === 'Rejected'
+              'bg-yellow-100 text-yellow-800': demande.status === 'en attente',
+              'bg-green-100 text-green-800': demande.status === 'approuvée',
+              'bg-red-100 text-red-800': demande.status === 'rejetée'
             }">
               {{ demande.status }}
             </span>
           </p>
-          <p><span class="font-medium text-gray-600">Montant:</span> <span class="text-gray-900">{{ demande.amount | currency:'USD':'symbol':'1.2-2':'fr' }}</span></p>
-          <p><span class="font-medium text-gray-600">Catégorie:</span> <span class="text-gray-900">{{ demande.category }}</span></p>
-          <p><span class="font-medium text-gray-600">Date prévue:</span> <span class="text-gray-900">{{ demande.expectedDate | date:'fullDate' }}</span></p>
-          <p><span class="font-medium text-gray-600">Soumise le:</span> <span class="text-gray-900">{{ demande.createdAt | date:'short' }}</span></p>
-          <p *ngIf="demande.user"><span class="font-medium text-gray-600">Soumise par:</span> <span class="text-gray-900">{{ demande.user.username }}</span></p>
+          <p><span class="font-medium text-gray-600">Montant total:</span> <span class="text-gray-900">{{ demande.montant_total | currency:'USD':'symbol':'1.2-2':'fr' }}</span></p>
+          <p><span class="font-medium text-gray-600">Date de la demande:</span> <span class="text-gray-900">{{ demande.date | date:'fullDate' }}</span></p>
+          <p><span class="font-medium text-gray-600">Date de justification:</span> <span class="text-gray-900">{{ demande.expected_justification_date | date:'fullDate' }}</span></p>
         </div>
       </div>
 
-      <!-- Description et Justification -->
       <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
-        <h3 class="text-xl font-semibold text-gray-700 mb-3">Description et Justification</h3>
+        <h3 class="text-xl font-semibold text-gray-700 mb-3">Description</h3>
         <div class="space-y-2">
           <p><span class="font-medium text-gray-600">Description:</span> <span class="text-gray-900">{{ demande.description }}</span></p>
-          <p><span class="font-medium text-gray-600">Justification:</span> <span class="text-gray-900">{{ demande.justification }}</span></p>
         </div>
       </div>
     </div>
 
-    <!-- Détails de la demande (si présents) -->
+     <ng-container *ngIf="demande.journal?.validations as validations">
+    <div *ngIf="validations && validations.length > 0" class="bg-gray-50 p-4 rounded-lg shadow-sm mb-6">
+      <h3 class="text-xl font-semibold text-gray-700 mb-3">Ordre de validation</h3>
+      <div class="space-y-4">
+        <div *ngFor="let validation of validations; let i = index" class="flex items-center">
+          <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-white mr-4"
+               [ngClass]="{
+                 'bg-green-500': validation.statut === 'approuvé',
+                 'bg-red-500': validation.statut === 'rejeté',
+                 'bg-yellow-500': validation.statut === 'en attente'
+               }">
+            {{ i + 1 }}
+          </div>
+          <div>
+            <p class="font-medium text-gray-900">{{ validation.user?.username || 'Utilisateur inconnu' }}</p>
+            <p class="text-sm text-gray-600">
+              Statut:
+              <span [ngClass]="{
+                'text-green-600': validation.statut === 'approuvé',
+                'text-red-600': validation.statut === 'rejeté',
+                'text-yellow-600': validation.statut === 'en attente'
+              }">
+                {{ validation.statut }}
+              </span>
+              <span *ngIf="validation.date_validation"> le {{ validation.date_validation | date:'short' }}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
     <div *ngIf="demande.details && demande.details.length > 0" class="bg-gray-50 p-4 rounded-lg shadow-sm mb-6">
       <h3 class="text-xl font-semibold text-gray-700 mb-3">Détails de la demande</h3>
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-100">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Désignation</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Libellé</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nature</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bénéficiaire</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NIF</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">STAT</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Utilisateur Concerné</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
             </tr>
           </thead>
           <tbody class="bg-white divide-y divide-gray-200">
             <tr *ngFor="let detail of demande.details">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ detail.designation }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ detail.libelle }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ detail.nature }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ detail.beneficiaire }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ detail.amount | currency:'USD':'symbol':'1.2-2':'fr' }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ detail.nif }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ detail.stat }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ detail.concernedUserId }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ detail.nif_exists }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ detail.status_detail }}</td>
             </tr>
           </tbody>
         </table>
@@ -74,18 +100,14 @@
     </div>
 
 
-    <!-- Pièces jointes -->
     <div class="bg-gray-50 p-4 rounded-lg shadow-sm mb-6">
       <h3 class="text-xl font-semibold text-gray-700 mb-3">Pièces jointes</h3>
-      <p *ngIf="!demande.attachments || demande.attachments.length === 0" class="text-gray-600">Aucune pièce jointe.</p>
-      <ul *ngIf="demande.attachments && demande.attachments.length > 0" class="list-disc list-inside text-gray-900">
-        <li *ngFor="let attachment of demande.attachments">
-          <a [href]="attachment.url" target="_blank" class="text-indigo-600 hover:underline">{{ attachment.name }}</a>
-        </li>
+      <p *ngIf="demande.pj_status === 'pas encore'" class="text-gray-600">Aucune pièce jointe.</p>
+      <ul *ngIf="demande.pj_status === 'oui'" class="list-disc list-inside text-gray-900">
+        <li>Pièce jointe disponible (URL à définir)</li>
       </ul>
     </div>
 
-    <!-- Historique / Commentaires -->
     <div class="bg-gray-50 p-4 rounded-lg shadow-sm mb-6" *ngIf="demande.comments && demande.comments.length > 0">
       <h3 class="text-xl font-semibold text-gray-700 mb-3">Historique / Commentaires</h3>
       <div *ngFor="let comment of demande.comments" class="border-b border-gray-200 last:border-b-0 py-3">
@@ -96,20 +118,18 @@
       </div>
     </div>
 
-    <!-- Actions de la demande -->
     <div class="flex flex-wrap justify-center gap-4 mt-8">
-      <button class="btn-secondary" routerLink="/demandes">
+      <button class="btn-secondary" routerLink="/rh/validation">
         <i class="fas fa-arrow-left mr-2"></i> Retour à la liste
       </button>
 
-      <ng-container *ngIf="demande.status === 'Pending'">
+      <ng-container *ngIf="demande.status === 'en attente'">
         <button class="btn-primary" (click)="editDemande()">
           <i class="fas fa-edit mr-2"></i> Modifier
         </button>
         <button class="btn-danger" (click)="openDeleteConfirmModal()">
           <i class="fas fa-trash-alt mr-2"></i> Supprimer
         </button>
-        <!-- Boutons d'approbation/rejet (pour les rôles appropriés) -->
         <button class="btn-success" (click)="approveDemande()">
           <i class="fas fa-check-circle mr-2"></i> Approuver
         </button>
@@ -118,18 +138,17 @@
         </button>
       </ng-container>
 
-      <ng-container *ngIf="demande.status === 'Approved'">
+      <ng-container *ngIf="demande.status === 'approuvée'">
         <span class="text-green-600 font-semibold text-lg"><i class="fas fa-check-circle mr-2"></i> Cette demande a été approuvée.</span>
       </ng-container>
 
-      <ng-container *ngIf="demande.status === 'Rejected'">
+      <ng-container *ngIf="demande.status === 'rejetée'">
         <span class="text-red-600 font-semibold text-lg"><i class="fas fa-times-circle mr-2"></i> Cette demande a été rejetée.</span>
       </ng-container>
     </div>
 
   </div>
 
-  <!-- Messages de chargement/erreur si la demande n'est pas chargée -->
   <div *ngIf="!demande && demandeId" class="text-center text-gray-600 py-8">
     <p class="loading-message">Chargement des détails de la demande...</p>
   </div>
@@ -138,7 +157,6 @@
     <button class="btn-secondary mt-4" routerLink="/demandes">Retour à la liste</button>
   </div>
 
-  <!-- Modale de confirmation de suppression -->
   <div *ngIf="showDeleteConfirmModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
       <h3 class="text-lg font-bold text-gray-800 mb-4">Confirmer la suppression</h3>
@@ -150,7 +168,6 @@
     </div>
   </div>
 
-  <!-- Modale de rejet de la demande -->
   <div *ngIf="showRejectModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
     <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
       <h3 class="text-lg font-bold text-gray-800 mb-4">Rejeter la demande</h3>
@@ -167,5 +184,3 @@
     </div>
   </div>
 </div>
-
-<!-- Styles CSS de base pour les boutons et badges (à ajouter à votre demande-detail.component.scss) -->

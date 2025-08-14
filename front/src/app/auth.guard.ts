@@ -1,4 +1,3 @@
-// src/app/auth.guard.ts
 import { Injectable, inject } from '@angular/core';
 import {
   CanActivateFn,
@@ -20,37 +19,43 @@ export const AuthGuardService: CanActivateFn = (
 
   // Si l'utilisateur n'est pas connecté
   if (!isUserLoggedIn) {
-    // Redirige vers la page de connexion s'il tente d'accéder à une route protégée
     if (!state.url.includes('/login') && !state.url.includes('/register')) {
       router.navigate(['/login']);
       return false;
     }
-    // Autorise l'accès aux pages de connexion et d'inscription
-    return true;
+    return true; // autorise accès à login et register
   }
 
   // Si l'utilisateur est connecté
-  // Bloque l'accès aux pages de connexion et d'inscription
+  // Bloque accès à login et register
   if (state.url.includes('/login') || state.url.includes('/register')) {
     router.navigate(['/dashboard']);
     return false;
   }
-  
-  // Vérification de l'accès basé sur le rôle pour la route d'administration
-  if (state.url.startsWith('/admin')) {
-    const userRole = authService.getUserRole();
-    const isUserAdmin = userRole === 'admin';
 
-    // Autorise l'accès si le rôle est 'admin'
-    if (isUserAdmin) {
+  // Récupère le rôle utilisateur en minuscules
+  const userRole = authService.getUserRole();
+
+  // Gestion accès pour admin
+  if (state.url.startsWith('/admin')) {
+    if (userRole === 'admin') {
       return true;
     } else {
-      // Sinon, redirige vers le tableau de bord utilisateur
       router.navigate(['/dashboard']);
       return false;
     }
   }
 
-  // Autorise l'accès à toutes les autres routes protégées si l'utilisateur est connecté
+  // Gestion accès pour RH
+  if (state.url.startsWith('/rh')) {
+    if (userRole === 'rh') {
+      return true;
+    } else {
+      router.navigate(['/dashboard']);
+      return false;
+    }
+  }
+
+  // Autorise toutes les autres routes si connecté
   return true;
 };
