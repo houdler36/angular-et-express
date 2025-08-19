@@ -1,51 +1,114 @@
-<div class="card table-card">
-  <h2>Liste des journaux</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Nom journal</th>
-        <th>Nom projet</th>
-        <th>Budgets associés</th>
-        <th>Valideurs RH associés</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let journal of journals">
-        <td>{{ journal.id_journal }}</td>
-        <td>{{ journal.nom_journal }}</td>
-        <td>{{ journal.nom_projet }}</td>
-        <td>
-          <ul *ngIf="journal.budgets?.length > 0">
-            <li *ngFor="let b of journal.budgets">
-              {{ b.code_budget }} ({{ b.annee_fiscale }})
-            </li>
-          </ul>
-          <span *ngIf="!journal.budgets || journal.budgets.length === 0">
-            Aucun budget associé
-          </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-          <ul *ngIf="getValideursRH(journal).length > 0">
-            <li *ngFor="let v of getValideursRH(journal)">
-              {{ v.username }}
-              <span *ngIf="v.ordre">(ordre: {{ v.ordre }})</span>
-            </li>
-          </ul>
-          <span *ngIf="getValideursRH(journal).length === 0">
-            Aucun valideur RH associé
-          </span>
-        </td>
-        <td>
-          <a href="javascript:void(0)" class="action-btn edit-btn" (click)="editJournal(journal)" title="Modifier">
-            <i class="fas fa-pencil-alt"></i>
-          </a>
-          <a href="javascript:void(0)" class="action-btn delete-btn" (click)="deleteJournal(journal.id_journal)" title="Supprimer">
-            <i class="fas fa-trash-alt"></i>
-          </a>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+<div class="container-vertical">
+
+  <!-- Formulaire création / édition -->
+  <div class="card form-card">
+    <h3>{{ isEditMode ? 'Modifier le Journal' : 'Créer un nouveau Journal' }}</h3>
+    <form (ngSubmit)="isEditMode ? updateJournal() : addJournal()">
+      <!-- Nom du journal -->
+      <div>
+        <label for="nom_journal">Nom du Journal</label>
+        <input type="text" id="nom_journal" [(ngModel)]="newJournal.nom_journal" name="nom_journal" required>
+      </div>
+
+      <!-- Nom du projet -->
+      <div>
+        <label for="nom_projet">Nom du Projet</label>
+        <input type="text" id="nom_projet" [(ngModel)]="newJournal.nom_projet" name="nom_projet" required>
+      </div>
+
+      <!-- Budgets -->
+      <div>
+        <label for="budgets">Budgets</label>
+        <select id="budgets" multiple [(ngModel)]="selectedBudgetIds" name="budgets">
+          <option *ngFor="let budget of budgetsDisponibles" [value]="budget.id_budget">{{ budget.description }}</option>
+        </select>
+      </div>
+
+      <!-- Valideurs -->
+      <div>
+        <label>Valideurs (ordre)</label>
+        <ul>
+          <li *ngFor="let valideur of valideursDisponibles"
+              (click)="toggleValideur(valideur, $event)"
+              [class.selected]="isValideurSelected(valideur.id)">
+            {{ valideur.username }}
+          </li>
+        </ul>
+      </div>
+
+      <div *ngIf="selectedValideurs.length > 0">
+        <strong>Ordre de validation :</strong>
+        <ul>
+          <li *ngFor="let item of selectedValideurs">{{ item.ordre }} - {{ getValideurName(item.user_id) }}</li>
+        </ul>
+      </div>
+
+      <div>
+        <button type="submit">{{ isEditMode ? 'Mettre à jour' : 'Créer' }}</button>
+        <button type="button" *ngIf="isEditMode" (click)="cancelEdit()">Annuler</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Liste des journaux -->
+  <div class="card table-card">
+    <h3>Liste des Journaux</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nom journal</th>
+          <th>Nom projet</th>
+          <th>Budgets</th>
+          <th>Valideurs</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let journal of journals">
+          <td>{{ journal.id_journal }}</td>
+          <td>{{ journal.nom_journal }}</td>
+          <td>{{ journal.nom_projet }}</td>
+          <td class="px-6 py-4 whitespace-nowrap">
+     <ul class="budget-list">
+    <li *ngFor="let budget of journal.budgets">
+      {{ budget.description }}
+    </li>
+  </ul>
+</td>
+
+<td class="px-6 py-4 whitespace-nowrap">
+  <ul class="valideur-list">
+    <li *ngFor="let valideur of journal.valideurs">
+      {{ valideur.ordre }} - {{ valideur.username }}
+    </li>
+  </ul>
+</td>
+
+          <td>
+            <button (click)="editJournal(journal)" class="edit-btn action-btn" title="Modifier">
+              ✎
+            </button>
+            <button (click)="deleteJournal(journal.id_journal)" class="delete-btn action-btn" title="Supprimer">
+              ✖
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal -->
+  <div *ngIf="isModalVisible" class="modal-overlay">
+    <div class="modal-content">
+      <span class="modal-close-btn" (click)="hideModal()">×</span>
+      <div class="modal-icon" [ngClass]="{'success-icon': isSuccess, 'error-icon': !isSuccess}">
+        {{ isSuccess ? '✔' : '✖' }}
+      </div>
+      <div class="modal-title">{{ isSuccess ? 'Succès !' : 'Erreur !' }}</div>
+      <div class="modal-message">{{ modalMessage }}</div>
+      <button (click)="hideModal()">OK</button>
+    </div>
+  </div>
+
 </div>

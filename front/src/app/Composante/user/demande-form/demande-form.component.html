@@ -35,10 +35,11 @@
 
         <div class="form-group">
           <label for="respPj" class="form-label" [class.text-red-500]="isInvalid('responsible_pj_id')">Responsable PJ</label>
-          <select id="respPj" formControlName="responsible_pj_id" [class.invalid]="isInvalid('responsible_pj_id')" class="form-input">
-            <option [ngValue]="null" disabled>Sélectionner un responsable</option>
-            <option *ngFor="let p of personnes" [ngValue]="p.id">{{ p.nom }}</option>
-          </select>
+          <select id="respPj" formControlName="resp_pj_id" [class.invalid]="isInvalid('resp_pj_id')" class="form-input">
+  <option [ngValue]="null" disabled>Sélectionner un responsable</option>
+  <option *ngFor="let p of personnes" [ngValue]="p.id">{{ p.nom }}</option>
+</select>
+
           <div *ngIf="isInvalid('responsible_pj_id')" class="form-error">Le responsable est requis.</div>
         </div>
 

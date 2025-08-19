@@ -130,6 +130,50 @@ exports.getJournals = async (req, res) => {
     res.status(500).send({ message: "Erreur lors de la récupération des journaux." });
   }
 };
+// Mettre à jour un utilisateur existant
+exports.updateUser = async (req, res) => {
+  try {
+    const { username, email, password, role, journalIds } = req.body;
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
+    // Mettre à jour les champs
+    user.username = username || user.username;
+    user.email = email || user.email;
+    if (password) user.password = bcrypt.hashSync(password, 8);
+    user.role = role || user.role;
+
+    await user.save();
+
+    // Mettre à jour les journaux associés si fournis
+    if (Array.isArray(journalIds)) {
+      const journals = await Journal.findAll({
+        where: { id_journal: { [Op.in]: journalIds } }
+      });
+      await user.setJournals(journals);
+    }
+
+    res.status(200).json({ message: "Utilisateur mis à jour avec succès.", user });
+  } catch (error) {
+    console.error("Erreur lors de updateUser :", error);
+    res.status(500).json({ message: "Erreur lors de la mise à jour de l’utilisateur." });
+  }
+};
+
+// Supprimer un utilisateur
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
+    await user.destroy();
+    res.status(200).json({ message: "Utilisateur supprimé avec succès." });
+  } catch (error) {
+    console.error("Erreur lors de deleteUser :", error);
+    res.status(500).json({ message: "Erreur lors de la suppression de l’utilisateur." });
+  }
+};
+
 
 // Fonctions de test d'accès
 exports.allAccess = (req, res) => res.status(200).send("Public Content.");

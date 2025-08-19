@@ -134,6 +134,35 @@ exports.findOne = async (req, res) => {
         res.status(500).send({ message: "Erreur lors de la récupération de la demande." });
     }
 };
+// Récupérer toutes les demandes de l'utilisateur connecté
+exports.findAllUserDemandes = async (req, res) => {
+  try {
+    const userId = req.userId; // récupéré depuis le middleware d’authentification
+    if (!userId) return res.status(401).json({ message: "Utilisateur non authentifié." });
+
+    const demandes = await db.demande.findAll({
+      where: { userId }, // filtre par utilisateur
+      include: [
+        { model: db.user, attributes: ['id', 'username'], as: 'user' },
+        { model: db.demande_detail, as: 'details' },
+        {
+          model: db.journal,
+          as: 'journal',
+          include: [
+            { model: db.journalValider, as: 'validationsConfig', include: [{ model: db.user, as: 'user' }] }
+          ]
+        }
+      ],
+      order: [['date', 'DESC']]
+    });
+
+    res.status(200).json(demandes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur lors de la récupération des demandes", error: err.message });
+  }
+};
+
 
 // --- Mise à jour d'une demande ─────────────────────────────────────────
 exports.update = async (req, res) => {

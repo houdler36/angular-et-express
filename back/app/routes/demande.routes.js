@@ -38,9 +38,7 @@ router.put('/:id/refuser', verifyToken, demandeController.refuserDemande);
 
 // ─── Routes générales ────────────────────────────────────
 
-// Si tu veux récupérer toutes les demandes de l’utilisateur connecté,
-// tu peux utiliser la route `/avalider` ou créer une fonction spécifique dans le controller.
-// Pour l'instant, on redirige `/` vers les demandes finalisées
-router.get('/', verifyToken, demandeController.getDemandesFinalisees);
+// J'ai corrigé cette ligne pour qu'elle renvoie toutes les demandes de l'utilisateur.
+router.get('/', verifyToken, demandeController.findAllUserDemandes);
 
 module.exports = router;

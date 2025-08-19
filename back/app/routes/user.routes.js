@@ -22,39 +22,17 @@ router.get(
   controller.isApproverOrAdminOrRhOrDafOrCaissierBoard
 );
 
-// Route pour récupérer tous les utilisateurs (accessible uniquement admin)
-router.get(
-  "/admin/users",
-  [authJwt.verifyToken, authJwt.isAdmin],
-  controller.getAllUsers
-);
+// Routes utilisateurs
+router.get("/admin/users", [authJwt.verifyToken, authJwt.isAdmin], controller.getAllUsers);
+router.get("/admin/rh-users", [authJwt.verifyToken, authJwt.isAdmin], controller.getAllRhUsers);
+router.get("/admin/users/:id", [authJwt.verifyToken, authJwt.isAdmin], controller.getUserById);
+router.post("/admin/create-user", [authJwt.verifyToken, authJwt.isAdmin], controller.createAdminUser);
 
-// Route pour récupérer uniquement les utilisateurs RH (accessible uniquement admin)
-router.get(
-  "/admin/rh-users",
-  [authJwt.verifyToken, authJwt.isAdmin],
-  controller.getAllRhUsers
-);
-
-// Route pour récupérer un utilisateur par ID (admin uniquement)
-router.get(
-  "/admin/users/:id",
-  [authJwt.verifyToken, authJwt.isAdmin],
-  controller.getUserById
-);
-
-// Route pour créer un utilisateur admin
-router.post(
-  "/admin/create-user",
-  [authJwt.verifyToken, authJwt.isAdmin],
-  controller.createAdminUser
-);
+// **Nouvelles routes pour mise à jour et suppression**
+router.put("/admin/users/:id", [authJwt.verifyToken, authJwt.isAdmin], controller.updateUser);
+router.delete("/admin/users/:id", [authJwt.verifyToken, authJwt.isAdmin], controller.deleteUser);
 
 // Route pour récupérer tous les journaux (protégé, pas forcément admin)
-router.get(
-  "/journals",
-  [authJwt.verifyToken],
-  controller.getJournals
-);
+router.get("/journals", [authJwt.verifyToken], controller.getJournals);
 
 module.exports = router;

@@ -28,16 +28,17 @@ export class DemandeFormComponent implements OnInit {
     private demandeService: DemandeService,
     private tokenStorageService: TokenStorageService
   ) {
-    this.demandeForm = this.fb.group({
-      type: ['DED'],
-      date: [new Date().toISOString().substring(0, 10), Validators.required],
-      journal_id: [null, Validators.required],
-      motif: ['', Validators.required],
-      responsible_pj_id: [null, Validators.required],
-      pj_status: ['oui'],
-      expected_justification_date: [null],
-      details: this.fb.array([this.createDetail()])
-    });
+   this.demandeForm = this.fb.group({
+  type: ['DED'],
+  date: [new Date().toISOString().substring(0, 10), Validators.required],
+  journal_id: [null, Validators.required],
+  motif: ['', Validators.required],
+  resp_pj_id: [null, Validators.required], // <- changer ici
+  pj_status: ['oui'],
+  expected_justification_date: [null],
+  details: this.fb.array([this.createDetail()])
+});
+
   }
 
   ngOnInit(): void {

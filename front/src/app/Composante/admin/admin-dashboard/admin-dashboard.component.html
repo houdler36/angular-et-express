@@ -17,12 +17,12 @@
         </svg>
         <span class="hidden-mobile">Utilisateurs</span>
       </a>
-      <a role="button" [class.active]="activePage === 'RH'" (click)="setActivePage('RH')">
+      <a role="button" [class.active]="activePage === 'personne'" (click)="setActivePage('personne')">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
           <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
           <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
         </svg>
-        <span class="hidden-mobile">RH</span>
+        <span class="hidden-mobile">Responsable</span>
       </a>
       <a role="button" [class.active]="activePage === 'Caissier'" (click)="setActivePage('Caissier')">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
@@ -79,10 +79,7 @@
       </div>
       <app-user-management *ngIf="activePage === 'Users'"></app-user-management>
 
-      <div *ngIf="activePage === 'RH'">
-        <h1>Ressources Humaines</h1>
-        <p>Cette section est pour la gestion des employés et des salaires.</p>
-      </div>
+     
       <div *ngIf="activePage === 'Caissier'">
         <h1>Caissier</h1>
         <p>Gérez les transactions, les paiements et les rapports de caisse ici.</p>
@@ -91,7 +88,7 @@
         <h1>Direction Administrative et Financière</h1>
         <p>Consultez les rapports financiers et la gestion budgétaire.</p>
       </div>
-      
+      <app-personne *ngIf="activePage === 'personne'"></app-personne>
       <app-budget-management *ngIf="activePage === 'budget'"></app-budget-management>
       <app-journal-management *ngIf="activePage === 'Journal'"></app-journal-management>
     </div>

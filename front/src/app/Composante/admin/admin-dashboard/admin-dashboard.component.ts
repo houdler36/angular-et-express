@@ -4,11 +4,12 @@ import { CommonModule } from '@angular/common';
 import { UserManagementComponent } from '../user-management/user-management.component';
 import { JournalManagementComponent } from '../journal-management/journal-management.component';
 import { BudgetManagementComponent } from '../budget-management/budget-management.component';
+import { PersonneCrudComponent } from '../personne/personne.component'
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, UserManagementComponent, JournalManagementComponent, BudgetManagementComponent],
+  imports: [CommonModule, UserManagementComponent, JournalManagementComponent, BudgetManagementComponent, PersonneCrudComponent],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.css']
 })

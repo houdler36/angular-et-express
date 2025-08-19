@@ -19,6 +19,7 @@
         <th>Email</th>
         <th>Rôle</th>
         <th>Journaux</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -27,6 +28,10 @@
         <td>{{ user.email }}</td>
         <td>{{ user.role }}</td>
         <td>{{ getJournalNamesForUser(user) }}</td>
+        <td>
+          <button class="action-btn edit-btn" (click)="openModal(user)">✎</button>
+          <button class="action-btn delete-btn" (click)="confirmDeleteUser(user)">✖</button>
+        </td>
       </tr>
     </tbody>
   </table>
@@ -35,23 +40,22 @@
     <p class="empty">Aucun utilisateur trouvé.</p>
   </ng-template>
 
-  <!-- Modale d'ajout utilisateur -->
+  <!-- Modale AJOUT / MODIFICATION -->
   <div class="modal-backdrop" *ngIf="showAddUserModal">
     <div class="modal">
       <div class="modal-header">
-        <h3>Ajouter un utilisateur</h3>
+        <h3>{{ isEditMode ? 'Modifier un utilisateur' : 'Ajouter un utilisateur' }}</h3>
         <button class="close-btn" (click)="closeModal()">×</button>
       </div>
-
       <div class="modal-body">
         <label>Nom :</label>
-        <input type="text" [(ngModel)]="newUser.username" placeholder="Nom complet">
+        <input type="text" [(ngModel)]="newUser.username" placeholder="Nom complet" required>
 
         <label>Email :</label>
-        <input type="email" [(ngModel)]="newUser.email" placeholder="Adresse email">
+        <input type="email" [(ngModel)]="newUser.email" placeholder="Adresse email" required>
 
         <label>Mot de passe :</label>
-        <input type="password" [(ngModel)]="newUser.password" placeholder="Mot de passe">
+        <input type="password" [(ngModel)]="newUser.password" placeholder="Mot de passe" [required]="!isEditMode">
 
         <label>Rôle :</label>
         <select [(ngModel)]="newUser.role" required>
@@ -68,15 +72,34 @@
         <div class="checkbox-group">
           <div *ngFor="let journal of journals">
             <input type="checkbox" 
+                   [checked]="newUser.journalIds.includes(journal.id_journal)"
                    (change)="onJournalChange($event, journal.id_journal)">
             {{ journal.nom_journal }}
           </div>
         </div>
       </div>
-
       <div class="modal-footer">
         <button class="btn-secondary" (click)="closeModal()">Annuler</button>
-        <button class="btn-primary" (click)="createUser()">Enregistrer</button>
+        <button class="btn-primary" (click)="createOrUpdateUser()">
+          {{ isEditMode ? 'Mettre à jour' : 'Enregistrer' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modale CONFIRMATION SUPPRESSION -->
+  <div class="modal-backdrop" *ngIf="showConfirmDeleteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Confirmation</h3>
+        <button class="close-btn" (click)="closeConfirmModal()">×</button>
+      </div>
+      <div class="modal-body">
+        Êtes-vous sûr de vouloir supprimer l'utilisateur "{{ selectedUser?.username }}" ?
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeConfirmModal()">Annuler</button>
+        <button class="btn-primary" (click)="deleteUser()">Supprimer</button>
       </div>
     </div>
   </div>

@@ -1,184 +1,55 @@
 /* Container vertical */
-.container-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 20px;
-}
+.container-vertical { display: flex; flex-direction: column; gap: 20px; padding: 20px; }
 
 /* Cartes */
-.card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-  padding: 20px;
-}
+.card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
 
 /* Formulaire */
-.form-card {
-  max-width: 1000px;
-}
+form div { margin-bottom: 15px; }
+label { font-weight: 600; display: block; margin-bottom: 5px; }
+input, select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
 
-form div {
-  margin-bottom: 15px;
-}
-
-label {
-  font-weight: 600;
-  display: block;
-  margin-bottom: 5px;
-}
-
-input, select {
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-}
-
-button {
-  background: #3498db;
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  width: 100%;
-}
-
-button:hover {
-  background: #2980b9;
-}
+/* Boutons */
+button { cursor: pointer; border-radius: 6px; padding: 8px 12px; border: none; background: #3498db; color: white; }
+button:hover { background: #2980b9; }
 
 /* Tableau */
-.table-card {
-  overflow-x: auto;
-}
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 10px; border-bottom: 1px solid #ddd; }
+tbody tr:hover { background: #f4f8ff; }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
+/* Listes */
+ul { list-style: none; padding: 0; margin: 0; }
+li.selected { background-color: #a5b4fc; }
 
-thead {
-  background: #3498db;
-  color: white;
-}
+/* Actions icônes */
+.action-btn { background: transparent; border: none; cursor: pointer; margin: 0 2px; font-size: 1rem; }
+.edit-btn { color: #3498db; } .edit-btn:hover { color: #1d4ed8; }
+.delete-btn { color: #e74c3c; } .delete-btn:hover { color: #c0392b; }
 
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-}
-
-tbody tr:hover {
-  background: #f4f8ff;
-}
-
-/* Listes dans les cellules */
-td ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-td ul li {
-  background: #ecf0f1;
-  padding: 4px 6px;
-  border-radius: 4px;
+/* Modal */
+.modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:50; }
+.modal-content { background:white; padding:1.5rem; border-radius:0.5rem; text-align:center; position:relative; width: 90%; max-width:400px; }
+.modal-close-btn { position:absolute; top:0.5rem; right:0.5rem; cursor:pointer; font-size:1.2rem; }
+.modal-icon { font-size:2.5rem; margin-bottom:1rem; }
+.success-icon { color: #10B981; }
+.error-icon { color: #EF4444; }
+.modal-title { font-weight:bold; font-size:1.2rem; margin-bottom:0.5rem; }
+.modal-message { margin-bottom:1rem; color:#6B7280; }
+.budget-list li {
+  display: block;            /* chaque élément sur sa ligne */
+  background-color: #E0F2FE; /* bleu clair */
+  color: #0369A1;            /* texte bleu foncé */
+  padding: 4px 8px;
+  border-radius: 6px;
   margin-bottom: 4px;
-  font-size: 13px;
 }
 
-td span {
-  color: #aaa;
-  font-style: italic;
+.valideur-list li {
+  display: block;
+  background-color: #DCFCE7; /* vert clair */
+  color: #166534;            /* texte vert foncé */
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-bottom: 4px;
 }
-
-/* Styles pour le pop-up modal */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 50;
-}
-
-.modal-content {
-    background-color: white;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    max-width: 400px;
-    width: 90%;
-    text-align: center;
-    position: relative;
-}
-
-.modal-close-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.75rem;
-    font-size: 1.5rem;
-    color: #9ca3af;
-    cursor: pointer;
-}
-
-.modal-close-btn:hover {
-    color: #6b7280;
-}
-
-.modal-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-
-.success-icon {
-    color: #10B981;
-}
-
-.error-icon {
-    color: #EF4444;
-}
-
-.modal-title {
-    font-size: 1.25rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-}
-
-.modal-message {
-    color: #6B7280;
-}
-
-/* Styles des icônes d'action */
-td .action-btn {
-    font-size: 1.25rem;
-    margin: 0 5px;
-    color: #3498db; /* Couleur par défaut pour les icônes */
-    transition: color 0.3s ease;
-}
-
-/* Styles pour l'icône de modification */
-.edit-btn {
-    color: #3498db;
-}
-
-.edit-btn:hover {
-    color: #2980b9;
-}
-
-/* Styles pour l'icône de suppression */
-.delete-btn {
-    color: #e74c3c;
-}
-
-.delete-btn:hover {
-    color: #c0392b;
-}
-

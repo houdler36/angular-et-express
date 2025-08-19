@@ -46,6 +46,9 @@ export class JournalManagementComponent implements OnInit {
     this.loadJournals();
   }
 
+  getValideurName(userId: number): string {
+  return this.valideursDisponibles?.find(v => v.id === userId)?.username || 'Inconnu';
+}
   loadBudgets() {
     this.journalApiService.getAllBudgets().subscribe({
       next: (data) => {
@@ -69,7 +72,7 @@ export class JournalManagementComponent implements OnInit {
   loadJournals() {
     this.journalApiService.getAllJournals().subscribe({
       next: (data) => {
-        // Triez les valideurs de chaque journal par ordre pour l'affichage
+        // Triez les validateurs de chaque journal par ordre
         this.journals = data.map((journal: any) => {
           if (journal.valideurs && journal.valideurs.length > 0) {
             journal.valideurs.sort((a: any, b: any) => a.ordre - b.ordre);
@@ -92,9 +95,8 @@ export class JournalManagementComponent implements OnInit {
     const index = this.selectedValideurs.findIndex(v => v.user_id === valideur.id);
 
     if (index >= 0) {
-      // Retirer le valideur
+      // Retirer le valideur et mettre à jour l'ordre
       this.selectedValideurs.splice(index, 1);
-      // NOUVEAU : Réorganiser les ordres après la suppression
       this.selectedValideurs.forEach((v, i) => v.ordre = i + 1);
     } else {
       // Ajouter à la fin avec ordre
@@ -167,13 +169,8 @@ export class JournalManagementComponent implements OnInit {
       user_id: v.user_id, 
       ordre: v.ordre 
     }));
-    
-    // NOUVEAU : S'assurer que les valideurs sont triés par leur ordre pour un affichage correct
-    this.selectedValideurs.sort((a, b) => a.ordre - b.ordre);
   }
-getValideursRH(journal: any) {
-  return journal.valideurs?.filter((v: any) => v.role === 'RH') || [];
-}
+
   updateJournal() {
     if (!this.editingJournalId) {
       return;
@@ -233,5 +230,10 @@ getValideursRH(journal: any) {
     this.newJournal = { nom_journal: '', nom_projet: '' };
     this.selectedBudgetIds = [];
     this.selectedValideurs = [];
+    // Réinitialiser la sélection dans le <select> pour une meilleure UX
+    const selectElement = document.querySelector('select[name="valideurs"]');
+    if (selectElement) {
+        (selectElement as HTMLSelectElement).selectedIndex = -1;
+    }
   }
 }

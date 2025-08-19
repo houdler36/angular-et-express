@@ -59,12 +59,23 @@ export class DemandeService {
     );
   }
 
-  getAllDemandes(): Observable<any[]> {
-    const headers = this.getAuthHeaders();
-    return this.http.get<any[]>(this.apiUrl, { headers: headers }).pipe(
-      catchError(this.handleError)
-    );
-  }
+ getAllDemandes(status?: string, userId?: number): Observable<any[]> {
+  const headers = this.getAuthHeaders();
+  let url = this.apiUrl;
+
+  // Ajouter les paramètres de query si nécessaires
+  const params: any = {};
+  if (status) params.status = status;
+  if (userId) params.userId = userId;
+
+  const queryString = new URLSearchParams(params).toString();
+  if (queryString) url += `?${queryString}`;
+
+  return this.http.get<any[]>(url, { headers }).pipe(
+    catchError(this.handleError)
+  );
+}
+
 
   getDemandeById(id: number): Observable<any> {
     const headers = this.getAuthHeaders();

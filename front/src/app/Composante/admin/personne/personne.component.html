@@ -1,0 +1,71 @@
+<div class="personne-crud-container">
+  <h2>Gestion des Personnes</h2>
+<div *ngIf="toastMessage" class="toast" [ngClass]="toastType">
+  {{ toastMessage }}
+</div>
+  <button (click)="openForm()" class="btn btn-primary btn-icon">
+    <span class="material-icons">person_add</span> Nouveau
+  </button>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom</th>
+        <th>Prénom</th>
+        <th>Poste</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of personnes">
+        <td>{{ p.id }}</td>
+        <td>{{ p.nom }}</td>
+        <td>{{ p.prenom }}</td>
+        <td>{{ p.poste }}</td>
+        <td>
+          <button (click)="openForm(p)" class="btn btn-sm btn-warning btn-icon">
+            <span class="material-icons">edit</span>
+          </button>
+          <button (click)="confirmDelete(p.id!)" class="btn btn-sm btn-danger btn-icon">
+            <span class="material-icons">delete</span>
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Modal -->
+  <div class="modal" [class.show]="showForm">
+    <div class="modal-content">
+      <span class="close" (click)="closeForm()">&times;</span>
+      <h3>{{ editingPersonne ? 'Modifier Personne' : 'Ajouter Personne' }}</h3>
+
+
+
+      <form [formGroup]="personneForm" (ngSubmit)="submitForm()">
+        <div class="form-group">
+          <label>Nom</label>
+          <input formControlName="nom" />
+        </div>
+        <div class="form-group">
+          <label>Prénom</label>
+          <input formControlName="prenom" />
+        </div>
+        <div class="form-group">
+          <label>Poste</label>
+          <input formControlName="poste" />
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-success btn-icon">
+            <span class="material-icons">{{ editingPersonne ? 'edit' : 'person_add' }}</span>
+            {{ editingPersonne ? 'Modifier' : 'Ajouter' }}
+          </button>
+          <button type="button" (click)="closeForm()" class="btn btn-secondary btn-icon">
+            <span class="material-icons">close</span> Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
