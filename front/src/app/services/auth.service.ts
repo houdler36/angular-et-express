@@ -1,3 +1,4 @@
+//auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
@@ -49,6 +50,9 @@ export class AuthService {
     }
     return null;
   }
+  getCurrentUser(): any {
+  return this.tokenStorage.getUser();
+}
 
   /**
    * Obtient le rôle de l'utilisateur connecté.

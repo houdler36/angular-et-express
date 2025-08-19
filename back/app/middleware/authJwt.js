@@ -21,6 +21,7 @@ const verifyToken = (req, res, next) => {
       return res.status(401).send({ message: "Non autorisé !" });
     }
     req.userId = decoded.id;
+    console.log("Utilisateur connecté (req.userId) :", req.userId);
     next();
   });
 };

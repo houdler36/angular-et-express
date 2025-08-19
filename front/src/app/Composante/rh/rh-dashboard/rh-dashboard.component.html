@@ -1,33 +1,135 @@
-
-
 <div class="flex-container">
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="header-container">
-      <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
-      <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
+    <div class="sidebar-header">
+      <div class="header-container">
+        <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
+        <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
+      </div>
     </div>
+    
     <nav>
-      <a role="button" [class.active]="currentView === 'dashboard'" (click)="setCurrentView('dashboard')">
+      <a role="button" [class.active]="currentView === 'dashboard'" (click)="setCurrentView('dashboard')" class="nav-link">
         <i class="fas fa-tachometer-alt"></i>
-        Tableau de Bord RH
+        <span>Tableau de Bord RH</span>
       </a>
-      <a role="button" [class.active]="currentView === 'validation'" (click)="setCurrentView('validation')">
+      <a role="button" [class.active]="currentView === 'validation'" (click)="setCurrentView('validation')" class="nav-link">
         <i class="fas fa-check-circle"></i>
-        Validation RH
+        <span>Validation RH</span>
       </a>
     </nav>
+    
+    <div class="user-profile-container">
+      <div class="user-profile">
+        <img [src]="userAvatar" alt="User" class="user-avatar">
+        <div class="user-info">
+          <span class="user-name">{{userName}}</span>
+          <span class="user-role">{{userRole}}</span>
+        </div>
+      </div>
+    </div>
   </aside>
 
   <!-- Main content -->
   <main class="main-content">
-    <section *ngIf="currentView === 'dashboard'">
-      <h1>Tableau de Bord RH</h1>
-      <p>Statistiques, données et informations sur la gestion RH.</p>
-      <!-- Ajoute ici des widgets ou données pertinentes -->
+    <section *ngIf="currentView === 'dashboard'" class="dashboard-view">
+      <div class="dashboard-header">
+        <div>
+          <h1 class="dashboard-title">Tableau de Bord RH</h1>
+          <p class="dashboard-description">
+            Consultez les statistiques et les données clés de la gestion des ressources humaines.
+            Surveillez les indicateurs de performance et les tendances importantes.
+          </p>
+        </div>
+        <div>
+          <button class="refresh-btn" (click)="refreshData()">
+            <i class="fas fa-sync-alt"></i> Actualiser
+          </button>
+        </div>
+      </div>
+      
+      <div class="stats-container">
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <i class="fas fa-users"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{stats.activeEmployees}}</h3>
+            <p>Employés actifs</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <i class="fas fa-file-contract"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{stats.pendingContracts}}</h3>
+            <p>Contrats en attente</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <i class="fas fa-calendar-day"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{stats.pendingLeaves}}</h3>
+            <p>Congés à approuver</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon purple">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="stat-content">
+            <h3>{{stats.satisfactionRate}}%</h3>
+            <p>Taux de satisfaction</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="charts-container">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title">Répartition des employés par département</h3>
+            <div>
+              <select [(ngModel)]="selectedPeriod" class="chart-select">
+                <option value="current">Mois en cours</option>
+                <option value="quarter">Trimestre</option>
+                <option value="year">Année</option>
+              </select>
+            </div>
+          </div>
+          <div class="chart-placeholder">
+            <div class="chart-bar" *ngFor="let dept of departments" [style.width.%]="dept.percentage">
+              <span class="dept-name">{{dept.name}}</span>
+              <span class="dept-percentage">{{dept.percentage}}%</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3 class="chart-title">Tendances d'embauche</h3>
+            <div>
+              <select [(ngModel)]="selectedYear" class="chart-select">
+                <option *ngFor="let year of years" [value]="year">{{year}}</option>
+              </select>
+            </div>
+          </div>
+          <div class="chart-placeholder">
+            <div class="hiring-bar" *ngFor="let month of hiringTrends" [style.height.px]="month.value * 5">
+              <span class="month-label">{{month.month}}</span>
+              <span class="hiring-value">{{month.value}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section *ngIf="currentView === 'validation'">
+    <section *ngIf="currentView === 'validation'" class="validation-view">
       <app-validation-rh></app-validation-rh>
     </section>
   </main>

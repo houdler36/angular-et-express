@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../services/user.service';
 
-// Définition des interfaces
+// Interfaces
 interface Journal {
   id_journal: number;
   nom_journal: string;
@@ -28,10 +28,8 @@ interface User {
 })
 export class UserManagementComponent implements OnInit {
 
-  // --- Contrôle de la modale ---
   showAddUserModal = false;
 
-  // --- Données du formulaire ---
   newUser: any = {
     username: '',
     email: '',
@@ -43,7 +41,6 @@ export class UserManagementComponent implements OnInit {
   journals: Journal[] = [];
   users: User[] = [];
 
-  // --- Messages utilisateur ---
   message: string = '';
   isError: boolean = false;
 
@@ -57,25 +54,15 @@ export class UserManagementComponent implements OnInit {
   // --- API ---
   loadJournals(): void {
     this.userService.getJournalsList().subscribe({
-      next: data => {
-        this.journals = data;
-      },
-      error: err => {
-        console.error('Erreur lors du chargement des journaux :', err);
-        this.setMessage('Erreur lors du chargement des journaux.', true);
-      }
+      next: data => this.journals = data,
+      error: err => this.setMessage('Erreur lors du chargement des journaux.', true)
     });
   }
 
   loadUsers(): void {
     this.userService.getUsersList().subscribe({
-      next: data => {
-        this.users = data;
-      },
-      error: err => {
-        console.error('Erreur lors du chargement des utilisateurs :', err);
-        this.setMessage('Erreur lors du chargement des utilisateurs.', true);
-      }
+      next: data => this.users = data,
+      error: err => this.setMessage('Erreur lors du chargement des utilisateurs.', true)
     });
   }
 
@@ -87,16 +74,12 @@ export class UserManagementComponent implements OnInit {
 
     this.userService.createAdminUser(this.newUser).subscribe({
       next: res => {
-        console.log('Utilisateur créé :', res);
         this.setMessage('Utilisateur créé avec succès !', false);
         this.loadUsers();
         this.resetForm();
         this.closeModal();
       },
-      error: err => {
-        console.error('Erreur lors de la création de l\'utilisateur :', err);
-        this.setMessage('Erreur lors de la création : ' + (err.error?.message || 'Inconnue'), true);
-      }
+      error: err => this.setMessage('Erreur lors de la création : ' + (err.error?.message || 'Inconnue'), true)
     });
   }
 
@@ -104,26 +87,16 @@ export class UserManagementComponent implements OnInit {
   onJournalChange(event: Event, id_journal: number): void {
     const isChecked = (event.target as HTMLInputElement).checked;
     if (isChecked) {
-      if (!this.newUser.journalIds.includes(id_journal)) {
-        this.newUser.journalIds.push(id_journal);
-      }
+      if (!this.newUser.journalIds.includes(id_journal)) this.newUser.journalIds.push(id_journal);
     } else {
       const index = this.newUser.journalIds.indexOf(id_journal);
-      if (index > -1) {
-        this.newUser.journalIds.splice(index, 1);
-      }
+      if (index > -1) this.newUser.journalIds.splice(index, 1);
     }
   }
 
   // --- Utilitaires ---
   resetForm(): void {
-    this.newUser = {
-      username: '',
-      email: '',
-      password: '',
-      role: '',
-      journalIds: []
-    };
+    this.newUser = { username: '', email: '', password: '', role: '', journalIds: [] };
     this.message = '';
     this.isError = false;
   }
@@ -131,9 +104,7 @@ export class UserManagementComponent implements OnInit {
   setMessage(message: string, isError: boolean): void {
     this.message = message;
     this.isError = isError;
-    setTimeout(() => {
-      this.message = '';
-    }, 5000);
+    setTimeout(() => this.message = '', 5000);
   }
 
   getJournalNamesForUser(user: User): string {

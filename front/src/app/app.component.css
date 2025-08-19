@@ -13,7 +13,7 @@
 
 /* Barre de navigation */
 .navbar {
-  background-color: cornflowerblue;
+  background-color: rgba(125, 122, 215, 0.771);
   color: var(--text-color-light);
   padding: 1rem 2rem; /* Augmentation du padding pour plus d'espace */
   display: flex;

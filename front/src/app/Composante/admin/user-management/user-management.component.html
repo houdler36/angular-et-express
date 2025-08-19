@@ -5,7 +5,7 @@
     {{ message }}
   </div>
 
-  <!-- Bouton Ajouter -->
+  <!-- Header avec bouton -->
   <div class="header">
     <h2>Gestion des utilisateurs</h2>
     <button class="btn-primary" (click)="openModal()">+ Ajouter un utilisateur</button>
@@ -35,7 +35,7 @@
     <p class="empty">Aucun utilisateur trouvé.</p>
   </ng-template>
 
-  <!-- POP-UP AJOUT UTILISATEUR -->
+  <!-- Modale d'ajout utilisateur -->
   <div class="modal-backdrop" *ngIf="showAddUserModal">
     <div class="modal">
       <div class="modal-header">
@@ -55,15 +55,14 @@
 
         <label>Rôle :</label>
         <select [(ngModel)]="newUser.role" required>
-  <option value="">-- Sélectionner --</option>
-  <option value="user">Utilisateur</option>
-  <option value="admin">Admin</option>
-  <option value="approver">Approver</option>
-  <option value="rh">RH</option>
-  <option value="daf">DAF</option>
-  <option value="caissier">Caissier</option>
-  
-</select>
+          <option value="">-- Sélectionner --</option>
+          <option value="user">Utilisateur</option>
+          <option value="admin">Admin</option>
+          <option value="approver">Approver</option>
+          <option value="rh">RH</option>
+          <option value="daf">DAF</option>
+          <option value="caissier">Caissier</option>
+        </select>
 
         <label>Journaux :</label>
         <div class="checkbox-group">

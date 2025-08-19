@@ -1,3 +1,6 @@
+
+//verifySignup
+const { verifySignup } = require(".");
 const db = require("../Models");
 
 const checkDuplicateUsernameOrEmail = async (req, res, next) => {

@@ -1,14 +1,10 @@
-<!-- Fichier: src/app/Composante/admin/admin-dashboard/admin-dashboard.component.html -->
 <div class="flex-container">
-  <!-- Barre latérale de navigation -->
   <aside class="sidebar">
-    <!-- Remplacement de l'ancien logo par l'image et le titre -->
     <div class="header-container">
       <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
       <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
     </div>
     <nav>
-      <!-- Les liens ont été modifiés pour ne pas avoir de href, évitant ainsi le rechargement de la page -->
       <a role="button" [class.active]="activePage === 'Dashboard'" (click)="setActivePage('Dashboard')">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
@@ -41,7 +37,6 @@
         </svg>
         <span class="hidden-mobile">DAF</span>
       </a>
-      <!-- Nouvelle entrée pour le journal -->
       <a role="button" [class.active]="activePage === 'Journal'" (click)="setActivePage('Journal')">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
@@ -59,10 +54,8 @@
     </nav>
   </aside>
 
-  <!-- Zone de contenu principale -->
   <main class="main-content">
     <div class="card">
-      <!-- Affiche les composants enfants en fonction de la page active -->
       <div *ngIf="activePage === 'Dashboard'">
         <h1>Tableau de Bord</h1>
         <div class="stats-grid">
@@ -84,10 +77,8 @@
           </div>
         </div>
       </div>
-      <!-- Le composant de gestion des utilisateurs est affiché ici -->
       <app-user-management *ngIf="activePage === 'Users'"></app-user-management>
 
-      <!-- Les autres sections de l'application -->
       <div *ngIf="activePage === 'RH'">
         <h1>Ressources Humaines</h1>
         <p>Cette section est pour la gestion des employés et des salaires.</p>
@@ -101,9 +92,14 @@
         <p>Consultez les rapports financiers et la gestion budgétaire.</p>
       </div>
       
-      <!-- Le composant de gestion des journaux est affiché ici -->
-       <app-budget-management *ngIf="activePage === 'budget'"></app-budget-management>
+      <app-budget-management *ngIf="activePage === 'budget'"></app-budget-management>
       <app-journal-management *ngIf="activePage === 'Journal'"></app-journal-management>
     </div>
   </main>
 </div>
+
+<button (click)="scrollToTop()" class="scroll-to-top" title="Remonter en haut de la page">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 19V5m-7 7l7-7 7 7"/>
+  </svg>
+</button>

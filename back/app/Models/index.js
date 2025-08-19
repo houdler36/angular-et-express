@@ -32,8 +32,12 @@ db.demande_detail = require("./demande_detail.model.js")(sequelize, Sequelize);
 db.journal = require("./journal.model.js")(sequelize, Sequelize);
 db.budget = require("./budget.model.js")(sequelize, Sequelize);
 db.personne = require("./personne.model.js")(sequelize, Sequelize);
-db.journalValider = require("./journal_valider.js")(sequelize, Sequelize); // Chemin corrigé
+db.journalValider = require("./journal_valider.model.js")(sequelize, Sequelize); // Le nom de fichier est corrigé
 db.Order = require("./order.model.js")(sequelize, Sequelize);
+db.demande_validation = require("./demande_validation.model.js")(sequelize, Sequelize); // Le nouveau modèle
+db.journalBudget = require("./journal_budget.model.js")(sequelize, Sequelize);
+db.userJournal = require("./user_journal.model.js")(sequelize, Sequelize); // Ajout de l'importation du modèle de liaison
+
 
 // --- ASSOCIATIONS DE MODÈLES ---
 
@@ -56,17 +60,6 @@ db.demande.hasMany(db.demande_detail, {
 db.demande_detail.belongsTo(db.demande, {
   foreignKey: "demande_id",
   as: "demande",
-});
-
-// User (1) <-> (N) Demande_detail (concernedUserId)
-db.user.hasMany(db.demande_detail, {
-  foreignKey: "concerned_user_id",
-  as: "concernedDetails",
-  onDelete: "SET NULL",
-});
-db.demande_detail.belongsTo(db.user, {
-  foreignKey: "concerned_user_id",
-  as: "concernedUser",
 });
 
 // Association responsable PJ : demande.resp_pj_id -> personne.id
@@ -95,61 +88,63 @@ db.journal.hasMany(db.demande, {
 
 // Relation plusieurs-à-plusieurs Journal <-> Budget via journal_budgets
 db.journal.belongsToMany(db.budget, {
-  through: {
-    model: "journal_budgets",
-    timestamps: false,
-  },
-  foreignKey: "journalId",
-  otherKey: "budgetId",
+  through: db.journalBudget,
+  foreignKey: "journal_id",
+  otherKey: "id_budget",
+  as: "budgets",
 });
 db.budget.belongsToMany(db.journal, {
-  through: {
-    model: "journal_budgets",
-    timestamps: false,
-  },
-  foreignKey: "budgetId",
-  otherKey: "journalId",
+  through: db.journalBudget,
+  foreignKey: "id_budget",
+  otherKey: "journal_id",
+  as: "journals",
 });
 
-// Relation plusieurs-à-plusieurs User <-> Journal via user_journals
+// MODIFICATION : Association plusieurs-à-plusieurs User <-> Journal via user_journals
+// Cette association est pour la liaison générale d'un utilisateur à un journal.
 db.user.belongsToMany(db.journal, {
-  through: {
-    model: "user_journals",
-    timestamps: false,
-  },
+  through: db.userJournal,
   foreignKey: "userId",
   otherKey: "journalId",
   as: "journals",
 });
 db.journal.belongsToMany(db.user, {
-  through: {
-    model: "user_journals",
-    timestamps: false,
-  },
+  through: db.userJournal,
   foreignKey: "journalId",
   otherKey: "userId",
   as: "users",
 });
 
-// Association Journal <-> User via journal_validers (validateurs avec statut)
-db.journal.belongsToMany(db.user, {
-  through: db.journalValider,
-  foreignKey: "journal_id",
-  otherKey: "user_id",
-  as: "valideurs",
+// MODIFICATION : L'association journal_validers est maintenant une relation one-to-many
+// Elle est pour l'association d'un utilisateur en tant que "validateur" pour un journal.
+db.user.hasMany(db.journalValider, { foreignKey: "user_id", as: "validationConfigs" });
+db.journalValider.belongsTo(db.user, { foreignKey: "user_id", as: "user" });
+
+db.journal.hasMany(db.journalValider, { foreignKey: "journal_id", as: "validationsConfig" });
+db.journalValider.belongsTo(db.journal, { foreignKey: "journal_id", as: "journal" });
+
+// --- NOUVELLES ASSOCIATIONS POUR LA VALIDATION DES DEMANDES ---
+
+// Demande (1) <-> (N) Demande_validation
+db.demande.hasMany(db.demande_validation, {
+  foreignKey: "demande_id",
+  as: "validations",
+  onDelete: "CASCADE"
 });
-db.user.belongsToMany(db.journal, {
-  through: db.journalValider,
-  foreignKey: "user_id",
-  otherKey: "journal_id",
-  as: "journalsToValidate",
+db.demande_validation.belongsTo(db.demande, {
+  foreignKey: "demande_id",
+  as: "demande"
 });
 
-// Association directe journalValider -> journal & user
-db.journalValider.belongsTo(db.journal, { foreignKey: "journal_id", as: "journal" });
-db.journalValider.belongsTo(db.user, { foreignKey: "user_id", as: "user" });
-db.journal.hasMany(db.journalValider, { foreignKey: "journal_id", as: "validations" });
-db.user.hasMany(db.journalValider, { foreignKey: "user_id", as: "validations" });
+// Demande_validation (N) <-> (1) User
+db.demande_validation.belongsTo(db.user, {
+  foreignKey: "user_id",
+  as: "user"
+});
+db.user.hasMany(db.demande_validation, {
+  foreignKey: "user_id",
+  as: "demandeValidations"
+});
 
 // Association User (1) <-> (N) Order
 db.user.hasMany(db.Order, {

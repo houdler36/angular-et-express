@@ -57,16 +57,17 @@
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let budget of budgetsAffiches">
-        <td>{{ budget.id_budget }}</td>
-        <td>{{ budget.code_budget }}</td>
-        <td>{{ budget.description }}</td> <td>{{ budget.annee_fiscale }}</td>
-        <td>{{ budget.budget_annuel | currency:'EUR':'symbol':'1.2-2' }}</td>
-        <td>{{ budget.budget_trimestre_1 | currency:'EUR':'symbol':'1.2-2' }}</td>
-        <td>{{ budget.budget_trimestre_2 | currency:'EUR':'symbol':'1.2-2' }}</td>
-        <td>{{ budget.budget_trimestre_3 | currency:'EUR':'symbol':'1.2-2' }}</td>
-        <td>{{ budget.budget_trimestre_4 | currency:'EUR':'symbol':'1.2-2' }}</td>
-      </tr>
-    </tbody>
+  <tr *ngFor="let budget of budgetsAffiches">
+    <td>{{ budget.id_budget }}</td>
+    <td>{{ budget.code_budget }}</td>
+    <td>{{ budget.description }}</td>
+    <td>{{ budget.annee_fiscale }}</td>
+    <td>{{ budget.budget_annuel | currency:'Ar':'symbol':'1.0-0' }}</td>
+    <td>{{ budget.budget_trimestre_1 | currency:'Ar':'symbol':'1.0-0' }}</td>
+    <td>{{ budget.budget_trimestre_2 | currency:'Ar':'symbol':'1.0-0' }}</td>
+    <td>{{ budget.budget_trimestre_3 | currency:'Ar':'symbol':'1.0-0' }}</td>
+    <td>{{ budget.budget_trimestre_4 | currency:'Ar':'symbol':'1.0-0' }}</td>
+  </tr>
+</tbody>
   </table>
 </div>

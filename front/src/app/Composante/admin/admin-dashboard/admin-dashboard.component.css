@@ -9,16 +9,79 @@
   
   
 }
+/* Fichier: src/app/Composante/admin/admin-dashboard/admin-dashboard.component.css */
 
+/* -------------------- Styles du Bouton "Retour en haut" -------------------- */
+.scroll-to-top {
+  /* Positionnement et dimensions du bouton */
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 50px; /* Taille légèrement plus grande pour un meilleur confort */
+  height: 50px;
+  border-radius: 50%;
+
+  /* Apparence visuelle du bouton */
+  background-color: #007bff; /* Un bleu vif et professionnel */
+  color: white; /* Couleur du texte/flèche */
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* Alignement de la flèche au centre */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Animation au survol */
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+/* Effet au survol du bouton */
+.scroll-to-top:hover {
+  transform: translateY(-5px); /* Monte légèrement */
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée */
+}
+
+/* ---------------------- Styles de la Flèche SVG ----------------------- */
+.scroll-to-top svg {
+  /* Dimensions et épaisseur de la flèche */
+  width: 24px;
+  height: 24px;
+  stroke: white; /* La flèche hérite de la couleur du bouton */
+  stroke-width: 2; /* Épaisseur de la ligne de la flèche */
+
+  /* Animation sur la flèche elle-même */
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Effet au survol de la flèche (mouvement subtil) */
+.scroll-to-top:hover svg {
+  transform: translateY(2px); /* La flèche descend un peu, créant un effet de rebond */
+}
 /* Styles améliorés pour la barre latérale */
 .sidebar {
-  width: 280px; /* Largeur légèrement augmentée */
-  background: linear-gradient(180deg, #bab8c4, #f9f9fb); /* Dégradé de fond subtil */
+  /* Garde la largeur */
+  width: 280px;
+
+  /* Dégradé de couleurs plus élégantes */
+  background: linear-gradient(180deg, #f0f2f5, #e3e9ef);
+  
+  /* Maintient le rembourrage */
   padding: 24px;
-  box-shadow: 2px 0 10px rgba(253, 250, 250, 0.884); /* Ombre plus prononcée */
+  
+  /* Ajout de coins légèrement arrondis pour un look moderne */
+  border-radius: 8px;
+
+  /* Ombre plus subtile et professionnelle */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease; /* Transition pour la responsivité */
+
+  /* Garde la transition */
+  transition: width 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease;
 }
 
 /* Styles pour le conteneur de l'en-tête de la barre latérale */
@@ -159,3 +222,7 @@
     margin-right: 0;
   }
 }
+/* Fichier: src/app/Composante/admin/admin-dashboard/admin-dashboard.component.css */
+
+/* ... (Vos styles existants pour .flex-container, .sidebar, etc.) ... */
+

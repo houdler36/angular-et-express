@@ -1,9 +1,10 @@
 <div class="login-container">
-   <div class="header-container">
+  <div class="header-container">
     <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
     <h1 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h1>
     <img src="/images/Lutherrose.jpg" alt="Symbole Lutherrose" class="header-logo">
   </div>
+  
   <form (ngSubmit)="onSubmit()" *ngIf="!isLoggedIn">
     <h2>Connexion</h2>
     
@@ -11,7 +12,8 @@
       <label for="username">Nom d'utilisateur</label>
       <input type="text" id="username" name="username" 
              [(ngModel)]="form.username" required
-             [disabled]="isLoading">
+             [disabled]="isLoading"
+             placeholder="Entrez votre nom d'utilisateur">
     </div>
     
     <div class="form-group password-container">
@@ -20,7 +22,8 @@
         <input [type]="showPassword ? 'text' : 'password'" 
                id="password" name="password"
                [(ngModel)]="form.password" required
-               [disabled]="isLoading">
+               [disabled]="isLoading"
+               placeholder="Entrez votre mot de passe">
         <i class="material-icons" (click)="togglePasswordVisibility()"
            [class.disabled]="isLoading">
           {{ showPassword ? 'visibility_off' : 'visibility' }}
@@ -29,20 +32,22 @@
     </div>
     
     <button type="submit" [disabled]="isLoading">
-      <span *ngIf="!isLoading">Se connecter</span>
-      
+      <span class="button-content">
+        <span *ngIf="isLoading" class="spinner"></span>
+        {{ isLoading ? 'Connexion...' : 'Se connecter' }}
+      </span>
     </button>
     
-    <div *ngIf="isLoginFailed" class="alert alert-danger">
+    <div *ngIf="isLoginFailed" class="alert alert-danger shake">
       {{ errorMessage }}
     </div>
   </form>
 
-  <div *ngIf="isLoggedIn" class="logged-in-message">
+  <div *ngIf="isLoggedIn" class="logged-in-message pulse">
     <p>Vous êtes déjà connecté. Redirection en cours...</p>
   </div>
 
-  <div class="register-link">
+  <div class="register-link fade-in-delay">
     Pas encore de compte? <a routerLink="/register">S'inscrire</a>
   </div>
 </div>

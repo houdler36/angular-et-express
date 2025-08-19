@@ -14,24 +14,25 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false
     }
   }, {
-    freezeTableName: true
+    freezeTableName: true,
+    tableName: 'journal' // facultatif si freezeTableName=true
   });
 
-  // Association Many-to-Many avec User via JournalValider
   Journal.associate = (models) => {
+    // Association Many-to-Many avec User via JournalValider
     Journal.belongsToMany(models.User, {
       through: models.JournalValider,
       foreignKey: 'journal_id',
       otherKey: 'user_id',
-      as: 'valideurs'
+      as: 'valideurs' // alias utilisé pour les includes
     });
 
-    // Si tu as une association avec Budget (exemple)
+    // Association Many-to-Many avec Budget
     Journal.belongsToMany(models.Budget, {
-      through: 'journal_budgets', // adapte le nom si différent
+      through: 'journal_budgets', // nom exact de la table de jointure
       foreignKey: 'journal_id',
       otherKey: 'id_budget',
-      as: 'budgets'
+      as: 'budgets' // alias utilisé pour les includes
     });
   };
 

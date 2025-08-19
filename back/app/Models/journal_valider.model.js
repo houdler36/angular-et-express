@@ -1,4 +1,3 @@
-// models/journal_valider.model.js
 module.exports = (sequelize, Sequelize) => {
   const JournalValider = sequelize.define('journal_valider', {
     id: {
@@ -36,6 +35,18 @@ module.exports = (sequelize, Sequelize) => {
     timestamps: true,
     tableName: 'journal_validers',
   });
+
+  JournalValider.associate = (models) => {
+    JournalValider.belongsTo(models.User, {
+      foreignKey: 'user_id',
+      as: 'user'
+    });
+
+    JournalValider.belongsTo(models.Journal, {
+      foreignKey: 'journal_id',
+      as: 'journal'
+    });
+  };
 
   return JournalValider;
 };

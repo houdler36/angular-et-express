@@ -1,3 +1,5 @@
+//demande.service.ts
+
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
@@ -107,7 +109,12 @@ export class DemandeService {
       catchError(this.handleError)
     );
   }
-
+getDemandesEnAttenteAutres(): Observable<any[]> {
+  const headers = this.getAuthHeaders();
+  return this.http.get<any[]>(`${this.apiUrl}/enattenteautres`, { headers }).pipe(
+    catchError(this.handleError)
+  );
+}
   // ⭐ FONCTION DE REFUS MISE À JOUR ⭐
   // Inclut les en-têtes et la gestion d'erreur
   refuseDemande(demandeId: number, commentaire: string): Observable<any> {

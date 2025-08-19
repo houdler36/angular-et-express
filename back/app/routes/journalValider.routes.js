@@ -1,12 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const { authJwt } = require('../middleware');
+const { verifyToken } = require('../middleware/authJwt'); // vérifier le chemin exact
 const journalValiderController = require('../Controllers/journalValider.controller');
 
-// Récupérer validateurs pour un journal
-router.get('/journal/:journalId/validateurs', [authJwt.verifyToken], journalValiderController.getValidateursByJournal);
+// Récupérer les validateurs pour un journal
+router.get(
+  '/journal/:journalId/validateurs',
+  verifyToken,
+  journalValiderController.getValidateursByJournal
+);
 
-// Valider ou refuser une demande par un validateur
-router.post('/demandes/:demandeId/validate', [authJwt.verifyToken], journalValiderController.validateDemande);
+// Valider ou refuser une demande
+router.post(
+  '/demandes/:demandeId/validate',
+  verifyToken,
+  journalValiderController.validateDemande
+);
 
 module.exports = router;

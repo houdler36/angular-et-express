@@ -88,6 +88,7 @@ router.get("/journals/:journalId/budgets", async (req, res) => {
         const journal = await Journal.findByPk(journalId, {
             include: [{
                 model: Budget,
+                as: 'budgets', // <--- C'est la ligne corrigée
                 through: { attributes: [] }
             }]
         });

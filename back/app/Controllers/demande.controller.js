@@ -1,490 +1,485 @@
 // Fichier: demande.controller.js
 
 const db = require('../Models');
-const Demande = db.demande;
-const DemandeDetail = db.demande_detail;
-const Journal = db.journal;
-const JournalValider = db.journalValider;
-const User = db.user;
 const { Op } = require("sequelize");
-const fs = require('fs');
-const path = require('path');
-// Créer une nouvelle demande et ses détails
+
+// --- Création d'une demande ─────────────────────────────────────────────
+// --- Création d'une demande (RH-only validateurs) ─────────────────────────────
+// --- Création d'une demande ─────────────────────────────────────────────
 exports.create = async (req, res) => {
-    // Vérification de la présence des champs obligatoires
-    const { userId, journal_id, date, details } = req.body;
-    if (!userId || !journal_id || !date || !details || !Array.isArray(details) || details.length === 0) {
-        return res.status(400).send({
-            message: "Le contenu de la demande et ses détails ne peuvent pas être vides."
-        });
-    }
+    const { journal_id, date, details, type, expected_justification_date, pj_status, resp_pj_id, description, montant_total } = req.body;
+    const userId = req.userId;
 
-    const t = await db.sequelize.transaction();
-    let nouvelleDemande;
-    try {
-        // 1. Création de la demande principale
-        nouvelleDemande = await Demande.create({
-            userId: userId,
-            type: req.body.type,
-            journal_id: journal_id,
-            date: date,
-            expected_justification_date: req.body.expected_justification_date,
-            pj_status: req.body.pj_status,
-            resp_pj_id: req.body.resp_pj_id,
-            description: req.body.description,
-            status: 'en attente',
-            montant_total: req.body.montant_total || 0
-        }, { transaction: t });
+    // Vérification des données requises
+    if (!userId || !journal_id || !date || !details || !Array.isArray(details) || details.length === 0) {
+        return res.status(400).send({ message: "Le contenu de la demande et ses détails ne peuvent pas être vides." });
+    }
 
-        // 2. Préparation des détails pour l'insertion
-        const detailsAvecDemandeId = details.map(detail => ({
-            ...detail,
-            demande_id: nouvelleDemande.id
-        }));
+    // Calcul du montant total
+    const totalCalculated = details.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0);
+    if (montant_total && parseFloat(montant_total) !== totalCalculated) {
+        return res.status(400).send({ message: "Le montant total ne correspond pas à la somme des détails" });
+    }
+    const finalMontantTotal = montant_total || totalCalculated;
 
-        // 3. Création de tous les détails de la demande
-        await DemandeDetail.bulkCreate(detailsAvecDemandeId, { transaction: t });
-        
-        // ⭐ Correction pour initialiser le statut du premier validateur
-        // 4. Récupérer les validateurs pour le journal_id
-        const validateursDuJournal = await JournalValider.findAll({
-            where: { journal_id: journal_id },
-            order: [['ordre', 'ASC']],
-            transaction: t
-        });
-
-        if (validateursDuJournal.length === 0) {
-            await t.rollback();
-            return res.status(404).send({
-                message: "Aucun validateur trouvé pour ce journal. La demande ne peut pas être créée."
-            });
-        }
-
-        // Mettre le statut du premier validateur à 'en attente'
-        await JournalValider.update(
-            { statut: 'en attente' }, 
-            { where: { id: validateursDuJournal[0].id }, transaction: t }
-        );
-        
-        // 5. On valide la transaction
-        await t.commit();
-        
-    } catch (err) {
-        // En cas d'erreur avant le commit, on annule toutes les opérations
-        await t.rollback();
-        console.error("Erreur lors de la création de la demande et de ses détails:", err);
-        return res.status(500).send({
-            message: err.message || "Une erreur s'est produite lors de la création de la demande et de ses détails."
-        });
-    }
-
-    // Le code qui suit ne s'exécute que si la transaction a été validée avec succès
-    try {
-        // 6. On récupère la nouvelle demande avec ses détails
-        const demandeComplete = await Demande.findByPk(nouvelleDemande.id, {
-            include: [{ 
-                model: DemandeDetail, 
-                as: 'details',
-                attributes: [
-                    'id', 'demande_id', 'nature', 'libelle', 'amount', 
-                    'beneficiaire', 'nif_exists', 'numero_compte', 
-                    'budget_id', 'status_detail'
-                ]
-            }]
-        });
-
-        res.status(201).send(demandeComplete);
-    } catch (err) {
-        console.error("Erreur lors de la récupération de la demande après l'insertion:", err);
-        res.status(500).send({
-            message: "La demande a été créée mais une erreur est survenue lors de sa récupération."
-        });
-    }
-};
-
-// Récupérer toutes les demandes pour un utilisateur spécifique
-exports.findAll = async (req, res) => {
-    try {
-        const userId = req.userId;
-        if (!userId) {
-            return res.status(401).send({ message: "Utilisateur non authentifié." });
-        }
-
-        const demandes = await Demande.findAll({
-            where: { userId: userId },
-            include: [
-                { model: User, attributes: ['username'], as: 'user' },
-                { model: Journal, attributes: ['nom_journal', 'nom_projet'], as: 'journal' }
-            ]
-        });
-        res.send(demandes);
-    } catch (err) {
-        console.error("Erreur lors de la récupération des demandes:", err);
-        res.status(500).send({
-            message: err.message || "Une erreur s'est produite lors de la récupération des demandes."
-        });
-    }
-};
-
-// Récupérer une seule demande par ID avec ses détails et ses validateurs (CORRIGÉ)
-exports.findOne = async (req, res) => {
-    const id = req.params.id;
-
-    try {
-        const demande = await Demande.findByPk(id, {
-            include: [
-                { model: User, attributes: ['username'], as: 'user' },
-                { 
-                    model: Journal, 
-                    as: 'journal',
-                    include: [{
-                        model: JournalValider,
-                        as: 'validations',
-                        include: [{
-                            model: User,
-                            as: 'user'
-                        }]
-                    }]
-                },
-                {
-                    model: DemandeDetail,
-                    as: 'details',
-                    attributes: [
-                        'id', 'demande_id', 'nature', 'libelle', 
-                        'beneficiaire', 'amount', 'nif_exists', 
-                        'numero_compte', 'budget_id', 'status_detail'
-                    ]
-                }
-            ]
-        });
-
-        if (demande) {
-            res.send(demande);
-        } else {
-            res.status(404).send({
-                message: `Impossible de trouver la demande avec l'id=${id}.`
-            });
-        }
-    } catch (err) {
-        console.error("Erreur lors de la récupération de la demande:", err);
-        res.status(500).send({
-            message: err.message || "Erreur lors de la récupération de la demande avec l'id=" + id
-        });
-    }
-};
-
-// Mettre à jour une demande par ID
-exports.update = async (req, res) => {
-    const id = req.params.id;
-
-    try {
-        const [num] = await Demande.update(req.body, {
-            where: { id: id }
-        });
-
-        if (num === 1) {
-            res.send({
-                message: "La demande a été mise à jour avec succès."
-            });
-        } else {
-            res.send({
-                message: `Impossible de mettre à jour la demande avec l'id=${id}. Peut-être que la demande n'a pas été trouvée ou que le corps de la requête est vide.`
-            });
-        }
-    } catch (err) {
-        res.status(500).send({
-            message: "Erreur lors de la mise à jour de la demande avec l'id=" + id
-        });
-    }
-};
-
-// Supprimer une demande par ID
-exports.delete = async (req, res) => {
-    const id = req.params.id;
-
-    try {
-        const num = await Demande.destroy({
-            where: { id: id }
-        });
-
-        if (num === 1) {
-            res.send({
-                message: "La demande a été supprimée avec succès !"
-            });
-        } else {
-            res.send({
-                message: `Impossible de supprimer la demande avec l'id=${id}. Peut-être que la demande n'a pas été trouvée.`
-            });
-        }
-    } catch (err) {
-        res.status(500).send({
-            message: "Impossible de supprimer la demande avec l'id=" + id
-        });
-    }
-};
-
-// Supprimer toutes les demandes
-exports.deleteAll = async (req, res) => {
-    try {
-        const nums = await Demande.destroy({
-            where: {},
-            truncate: false
-        });
-        res.send({ message: `${nums} demandes ont été supprimées avec succès !` });
-    } catch (err) {
-        res.status(500).send({
-            message: err.message || "Une erreur s'est produite lors de la suppression de toutes les demandes."
-        });
-    }
-};
-
-// Récupérer les statistiques de demandes par statut pour un utilisateur
-exports.getDemandeStats = async (req, res) => {
-    try {
-        const userId = req.userId;
-        if (!userId) {
-            return res.status(401).send({ message: "Utilisateur non authentifié." });
-        }
-
-        const stats = await Demande.count({
-            where: { userId: userId },
-            group: ['status']
-        });
-
-        const formattedStats = stats.reduce((acc, item) => {
-            acc[item.status] = item.count;
-            return acc;
-        }, {});
-
-        res.status(200).json(formattedStats);
-    } catch (err) {
-        console.error("Erreur lors de la récupération des statistiques:", err);
-        res.status(500).send({
-            message: err.message || "Une erreur s'est produite lors de la récupération des statistiques."
-        });
-    }
-};
-
-// Valider une demande séquentiellement
-exports.validerDemande = async (req, res) => {
-    const demandeId = req.params.id;
-    const userId = req.userId;
-    const { commentaire } = req.body; 
-    
-    const t = await db.sequelize.transaction();
-
-    try {
-        const demande = await Demande.findByPk(demandeId, {
-            include: [{
-                model: Journal,
-                as: 'journal'
-            }],
-            transaction: t
-        });
-
-        if (!demande) {
-            await t.rollback();
-            return res.status(404).send({ message: "Demande non trouvée." });
-        }
-        
-        if (!demande.journal) {
-            await t.rollback();
-            return res.status(400).send({ message: "La demande n'est pas liée à un journal de validation." });
-        }
-        
-        const validations = await JournalValider.findAll({
-            where: { journal_id: demande.journal.id_journal },
-            order: [['ordre', 'ASC']],
-            transaction: t
-        });
-        
-        // Vérifie si l'utilisateur actuel est le validateur dont le statut est 'en attente'
-        const validateurActuel = validations.find(v => v.user_id === userId && v.statut === 'en attente');
-
-        if (!validateurActuel) {
-            await t.rollback();
-            return res.status(403).send({ message: "Vous n'êtes pas le prochain validateur ou la demande n'est pas en attente de votre validation." });
-        }
-
-        // Met à jour le statut du validateur actuel
-        await JournalValider.update({ 
-            statut: 'approuvé',
-            date_validation: new Date(),
-            commentaire: commentaire,
-        }, {
-            where: { id: validateurActuel.id },
-            transaction: t
-        });
-        
-        // Met à jour le statut des détails de la demande
-        await DemandeDetail.update(
-            { status_detail: 'approuvé' },
-            { where: { demande_id: demandeId, status_detail: 'en attente' }, transaction: t }
-        );
-
-        // Trouve le prochain validateur dans la chaîne
-        const prochainValidateur = validations.find(v => v.ordre === validateurActuel.ordre + 1);
-
-        if (prochainValidateur) {
-            // S'il y a un prochain validateur, met son statut à 'en attente'
-            await JournalValider.update({ statut: 'en attente' }, {
-                where: { id: prochainValidateur.id },
-                transaction: t
-            });
-            // Et met à jour le statut de la demande principale à 'en validation'
-            await Demande.update({ status: 'en validation' }, { where: { id: demandeId }, transaction: t });
-        } else {
-            // S'il n'y a pas de prochain validateur, la demande est finalisée
-            await Demande.update({ status: 'approuvée' }, { where: { id: demandeId }, transaction: t });
-        }
-        
-        await t.commit();
-        res.status(200).send({ message: `La validation de la demande ${demandeId} a été enregistrée avec succès.` });
-
-    } catch (error) {
-        if (t.finished !== 'commit') {
-            await t.rollback();
-        }
-        console.error("Erreur lors de la validation de la demande:", error);
-        res.status(500).send({ message: "Erreur interne du serveur lors de la validation." });
-    }
-};
-// Refuser une demande
-exports.refuserDemande = async (req, res) => {
-    const demandeId = req.params.id;
-    const userId = req.userId;
-    const { commentaire } = req.body;
-    
-    const t = await db.sequelize.transaction();
-
-    try {
-        const demande = await Demande.findByPk(demandeId, {
-            include: [{
-                model: Journal,
-                as: 'journal'
-            }],
-            transaction: t
-        });
-
-        if (!demande) {
-            await t.rollback();
-            return res.status(404).send({ message: "Demande non trouvée." });
-        }
-        
-        if (!demande.journal) {
-            await t.rollback();
-            return res.status(400).send({ message: "La demande n'est pas liée à un journal de validation." });
-        }
-
-        const validations = await JournalValider.findAll({
-            where: { journal_id: demande.journal.id_journal },
-            order: [['ordre', 'ASC']],
-            transaction: t
-        });
-
-        const validateurActuel = validations.find(v => v.user_id === userId && v.statut === 'en attente');
-        if (!validateurActuel) {
-            await t.rollback();
-            return res.status(403).send({ message: "Vous n'êtes pas le validateur actuel de cette demande." });
-        }
-
-        // Mettre à jour le statut du validateur et de la demande
-        await JournalValider.update({ statut: 'rejeté', commentaire: commentaire, date_validation: new Date() }, {
-            where: { id: validateurActuel.id },
-            transaction: t
-        });
-        await Demande.update({ status: 'rejetée', description: demande.description + '\n' + `(Rejetée par ${userId} : ${commentaire})` }, {
-            where: { id: demandeId },
-            transaction: t
-        });
-        
-        await t.commit();
-
-        res.status(200).send({ message: `La demande ${demandeId} a été rejetée avec succès.` });
-    } catch (error) {
-        if (t.finished !== 'commit') {
-            await t.rollback();
-        }
-        console.error("Erreur lors du rejet de la demande:", error);
-        res.status(500).send({ message: "Erreur interne du serveur lors du rejet de la demande." });
-    }
-};
-
-// Fonction obsolète, gérée par `validerDemande` et `refuserDemande`
-exports.updateDemandeStatus = (req, res) => {
-    res.status(501).send({ message: "Cette fonctionnalité est gérée par les fonctions `validerDemande` et `refuserDemande`." });
-};
-
-// Récupérer les demandes à valider par l'utilisateur connecté
-exports.getDemandesAValider = async (req, res) => {
+    let transaction;
     try {
-        const userId = req.userId;
-        if (!userId) {
-            return res.status(401).json({ message: "Utilisateur non authentifié." });
-        }
+        transaction = await db.sequelize.transaction();
 
-        const demandes = await Demande.findAll({
-            include: [
-                {
-                    model: Journal,
-                    as: 'journal',
-                    include: [{
-                        model: JournalValider,
-                        as: 'validations',
-                        required: true, // INNER JOIN
-                        where: {
-                            user_id: userId,
-                            statut: 'en attente'
-                        },
-                        include: [{
-                            model: User,
-                            as: 'user'
-                        }]
-                    }]
-                }
-            ],
-            // ❗ Retirer le "status" global ici, on filtre uniquement par validateur
-            order: [['date', 'DESC']]
+        // Récupérer tous les validateurs du journal
+        let validateursDuJournal = await db.journalValider.findAll({
+            where: { journal_id },
+            include: [{ model: db.user, as: 'user', attributes: ['id', 'role'] }],
+            order: [['ordre', 'ASC']],
+            transaction
         });
 
-        return res.status(200).json(demandes);
+        if (!validateursDuJournal || validateursDuJournal.length === 0) {
+            await transaction.rollback();
+            return res.status(404).send({ message: "Aucun validateur trouvé pour ce journal." });
+        }
 
-    } catch (error) {
-        console.error("Erreur lors de la récupération des demandes à valider:", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
-    }
-};
+        // Filtrer uniquement les utilisateurs RH et exclure le demandeur
+        validateursDuJournal = validateursDuJournal.filter(v => v.user.role === 'rh' && v.user.id !== userId);
 
+        if (validateursDuJournal.length === 0) {
+            await transaction.rollback();
+            return res.status(400).send({ message: "Aucun validateur RH disponible pour ce journal." });
+        }
 
-// Récupérer les demandes qui ont été finalisées (approuvées ou rejetées) pour tous les utilisateurs
-exports.getDemandesFinalisees = async (req, res) => {
-    try {
-        const demandes = await Demande.findAll({
-            where: {
-                status: {
-                    [Op.in]: ['approuvée', 'rejetée']
-                }
-            },
+        // Créer la nouvelle demande
+        const nouvelleDemande = await db.demande.create({
+            userId,
+            type,
+            journal_id,
+            date,
+            expected_justification_date,
+            pj_status,
+            resp_pj_id,
+            description,
+            status: 'en attente',
+            montant_total: finalMontantTotal,
+        }, { transaction });
+
+        // Créer les détails de la demande
+        const detailsAvecDemandeId = details.map(d => ({ ...d, demande_id: nouvelleDemande.id }));
+        await db.demande_detail.bulkCreate(detailsAvecDemandeId, { transaction });
+
+        // Créer les validations uniquement pour les RH
+        const firstOrder = validateursDuJournal[0].ordre;
+        const validationsACreer = validateursDuJournal.map(v => ({
+            demande_id: nouvelleDemande.id,
+            user_id: v.user.id,
+            ordre: v.ordre,
+            statut: (v.ordre === firstOrder) ? 'en attente' : 'initial'
+        }));
+        await db.demande_validation.bulkCreate(validationsACreer, { transaction });
+
+        await transaction.commit();
+
+        // Retourner la demande complète avec détails et validations
+        const demandeComplete = await db.demande.findByPk(nouvelleDemande.id, {
             include: [
+                { model: db.demande_detail, as: 'details' },
                 {
-                    model: Journal,
-                    as: 'journal',
-                    include: [{
-                        model: JournalValider,
-                        as: 'validations',
-                        include: [{
-                            model: User,
-                            as: 'user'
-                        }]
-                    }]
+                    model: db.demande_validation,
+                    as: 'validations',
+                    include: [{ model: db.user, as: 'user', attributes: ['id', 'username', 'role'] }]
                 }
             ]
         });
 
-        return res.status(200).json(demandes);
+        res.status(201).send(demandeComplete);
 
-    } catch (error) {
-        console.error("Erreur lors de la récupération des demandes finalisées:", error);
-        res.status(500).json({ message: "Erreur interne du serveur." });
+    } catch (err) {
+        if (transaction && !transaction.finished) {
+            await transaction.rollback();
+        }
+        console.error("Erreur lors de la création de la demande :", err);
+        res.status(500).send({ message: err.message || "Erreur lors de la création de la demande." });
+    }
+};
+
+
+// --- Récupération d'une demande par ID ────────────────────────────────
+exports.findOne = async (req, res) => {
+    const id = req.params.id;
+    try {
+        const demande = await db.demande.findByPk(id, {
+            include: [
+                { 
+                    model: db.user, 
+                    attributes: ['username'], 
+                    as: 'user' 
+                },
+                {
+                    model: db.journal,
+                    as: 'journal',
+                    include: [{
+                        model: db.journalValider,
+                        as: 'validationsConfig',
+                        include: [{ model: db.user, as: 'user' }]
+                    }]
+                },
+                { 
+                    model: db.demande_detail, 
+                    as: 'details' 
+                }
+            ]
+        });
+        if (!demande) return res.status(404).send({ message: `Demande ${id} introuvable.` });
+        res.send(demande);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: "Erreur lors de la récupération de la demande." });
+    }
+};
+
+// --- Mise à jour d'une demande ─────────────────────────────────────────
+exports.update = async (req, res) => {
+    const id = req.params.id;
+    try {
+        const [num] = await db.demande.update(req.body, { where: { id } });
+        if (num === 1) res.send({ message: "Demande mise à jour avec succès." });
+        else res.send({ message: `Impossible de mettre à jour la demande ${id}.` });
+    } catch (err) {
+        res.status(500).send({ message: `Erreur lors de la mise à jour de la demande ${id}` });
+    }
+};
+
+// --- Suppression d'une demande ─────────────────────────────────────────
+exports.delete = async (req, res) => {
+    const id = req.params.id;
+    try {
+        const num = await db.demande.destroy({ where: { id } });
+        if (num === 1) res.send({ message: "Demande supprimée avec succès." });
+        else res.send({ message: `Demande ${id} introuvable.` });
+    } catch (err) {
+        res.status(500).send({ message: `Erreur lors de la suppression de la demande ${id}` });
+    }
+};
+
+// --- Validation d'une demande (RH-only) ────────────────────────────────
+exports.validerDemande = async (req, res) => {
+    const demandeId = Number(req.params.id);
+    const userId = Number(req.userId);
+    const { commentaire, signatureBase64 } = req.body;
+
+    let transaction;
+    try {
+        transaction = await db.sequelize.transaction();
+
+        // Vérifier que l'utilisateur est RH
+        const currentUser = await db.user.findByPk(userId, { transaction });
+        if (!currentUser || currentUser.role !== 'rh') {
+            await transaction.rollback();
+            return res.status(403).send({ message: "Seuls les utilisateurs RH peuvent valider cette demande." });
+        }
+
+        // Récupérer la demande avec ses validations
+        const demande = await db.demande.findByPk(demandeId, {
+            include: [
+                {
+                    model: db.demande_validation,
+                    as: 'validations',
+                    include: [{ model: db.user, as: 'user' }]
+                }
+            ],
+            transaction
+        });
+
+        if (!demande) {
+            await transaction.rollback();
+            return res.status(404).send({ message: "Demande introuvable." });
+        }
+
+        // --- LOGIQUE TOUR PAR TOUR STRICTE ---
+        const minOrdreEnAttente = Math.min(
+            ...demande.validations
+                .filter(v => v.statut === 'en attente')
+                .map(v => v.ordre)
+        );
+
+        const validationActuelle = demande.validations.find(
+            v => Number(v.user_id) === userId && v.statut === 'en attente' && v.ordre === minOrdreEnAttente
+        );
+
+        if (!validationActuelle) {
+            await transaction.rollback();
+            return res.status(403).send({ message: "Ce n'est pas votre tour pour valider cette demande RH." });
+        }
+
+        // Mise à jour de la validation
+        await db.demande_validation.update(
+            {
+                statut: 'validé',
+                commentaire,
+                signature: signatureBase64,
+                date_validation: new Date()
+            },
+            { where: { id: validationActuelle.id }, transaction }
+        );
+
+        // Vérifier si toutes les validations du même ordre sont terminées
+        const validationsSameOrder = await db.demande_validation.findAll({
+            where: { demande_id: demandeId, ordre: validationActuelle.ordre },
+            transaction
+        });
+
+        const allSameOrderCompleted = validationsSameOrder.every(v =>
+            v.statut === 'validé' || v.statut === 'rejeté'
+        );
+
+        if (!allSameOrderCompleted) {
+            await transaction.commit();
+            return res.status(200).send({
+                message: "Validation RH enregistrée. En attente des autres validateurs du même ordre."
+            });
+        }
+
+        // Passer à l'ordre suivant
+        const nextOrder = validationActuelle.ordre + 1;
+        const nextValidations = await db.demande_validation.findAll({
+            where: { demande_id: demandeId, ordre: nextOrder, statut: 'initial' },
+            transaction
+        });
+
+        if (nextValidations.length > 0) {
+            await db.demande_validation.update(
+                { statut: 'en attente' },
+                { where: { demande_id: demandeId, ordre: nextOrder }, transaction }
+            );
+        } else {
+            // Finaliser la demande
+            await db.demande.update(
+                { status: 'approuvée' },
+                { where: { id: demandeId }, transaction }
+            );
+        }
+
+        await transaction.commit();
+        res.status(200).send({ message: "Demande validée avec succès par RH." });
+
+    } catch (err) {
+        if (transaction && !transaction.finished) {
+            await transaction.rollback();
+        }
+        console.error(err);
+        res.status(500).send({ message: "Erreur interne lors de la validation RH." });
+    }
+};
+
+
+
+// --- Refus d'une demande ───────────────────────────────────────────────
+exports.refuserDemande = async (req, res) => {
+    const demandeId = Number(req.params.id);
+    const userId = req.userId;
+    const { commentaire } = req.body;
+
+    let transaction;
+    try {
+        transaction = await db.sequelize.transaction();
+
+        // Récupérer la demande
+        const demande = await db.demande.findByPk(demandeId, {
+            include: [{ model: db.demande_validation, as: 'validations' }],
+            transaction
+        });
+
+        if (!demande) {
+            await transaction.rollback();
+            return res.status(404).send({ message: "Demande introuvable." });
+        }
+
+        // Trouver la validation actuelle
+        const validationActuelle = demande.validations.find(
+            v => Number(v.user_id) === userId && v.statut === 'en attente'
+        );
+
+        if (!validationActuelle) {
+            await transaction.rollback();
+            return res.status(403).send({ message: "Vous n'êtes pas le validateur actuel de cette demande." });
+        }
+
+        // Mise à jour du statut
+        await db.demande_validation.update(
+            { 
+                statut: 'rejeté', 
+                commentaire, 
+                date_validation: new Date() 
+            },
+            { where: { id: validationActuelle.id }, transaction }
+        );
+
+        // Annuler les validations suivantes
+        await db.demande_validation.update(
+            { statut: 'annulé' },
+            { 
+                where: { 
+                    demande_id: demandeId,
+                    ordre: { [Op.gt]: validationActuelle.ordre } 
+                },
+                transaction
+            }
+        );
+
+        // Mettre à jour le statut de la demande
+        await db.demande.update(
+            { status: 'rejetée' },
+            { where: { id: demandeId }, transaction }
+        );
+
+        await transaction.commit();
+        res.status(200).send({ message: "Demande rejetée avec succès." });
+
+    } catch (err) {
+        if (transaction && !transaction.finished) {
+            await transaction.rollback();
+        }
+        console.error(err);
+        res.status(500).send({ message: "Erreur interne lors du refus de la demande." });
+    }
+};
+exports.getDemandesAValider = async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) return res.status(401).send({ message: "Utilisateur non authentifié." });
+
+        // Récupérer toutes les demandes où l'utilisateur a une validation en attente
+        const demandes = await db.demande.findAll({
+            include: [
+                { model: db.demande_detail, as: 'details' },
+                {
+                    model: db.demande_validation,
+                    as: 'validations',
+                    include: [{ model: db.user, as: 'user', attributes: ['id', 'role'] }]
+                },
+                {
+                    model: db.journal,
+                    as: 'journal',
+                    include: [
+                        { model: db.journalValider, as: 'validationsConfig', include: [{ model: db.user, as: 'user' }] }
+                    ]
+                }
+            ],
+            order: [['date', 'DESC']]
+        });
+
+        // Filtrer les demandes où c'est vraiment le tour de l'utilisateur
+        const demandesFiltrees = demandes.filter(d => {
+            // Récupérer toutes les validations en attente RH
+            const validationsRH = d.validations
+                .filter(v => v.user.role === 'rh' && v.statut === 'en attente');
+
+            if (validationsRH.length === 0) return false;
+
+            // Trouver l'ordre minimal en attente
+            const ordreMin = Math.min(...validationsRH.map(v => v.ordre));
+
+            // Vérifier si l'utilisateur connecté est dans cet ordre
+            return validationsRH.some(v => v.user.id === userId && v.ordre === ordreMin);
+        });
+
+        res.json(demandesFiltrees);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: err.message });
+    }
+};
+
+// --- Demandes en attente chez un autre validateur ────────────
+exports.getDemandesEnAttenteAutres = async (req, res) => {
+    try {
+        const userId = req.userId;
+        if (!userId) return res.status(401).send({ message: "Utilisateur non authentifié." });
+
+        // ─── CORRECTION : UTILISER UNE SOUS-REQUÊTE PLUS PRÉCISE ───────────────
+        const demandes = await db.demande.findAll({
+            where: {
+                status: 'en attente',
+                id: {
+                    [Op.notIn]: db.sequelize.literal(`(
+                        SELECT demande_id 
+                        FROM demande_validations 
+                        WHERE user_id = ${userId} 
+                        AND statut = 'en attente'
+                    )`)
+                }
+            },
+            include: [
+                {
+                    model: db.demande_validation,
+                    as: 'validations',
+                    where: { statut: 'en attente' },
+                    required: true,
+                },
+                { 
+                    model: db.demande_detail, 
+                    as: 'details' 
+                },
+                {
+                    model: db.journal,
+                    as: 'journal',
+                    include: [
+                        { 
+                            model: db.journalValider, 
+                            as: 'validationsConfig', 
+                            include: [{ model: db.user, as: 'user' }] 
+                        }
+                    ]
+                }
+            ],
+            order: [['date', 'DESC']]
+        });
+        res.json(demandes);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: err.message });
+    }
+};
+// --- Demandes déjà finalisées ────────────────────────────────
+exports.getDemandesFinalisees = async (req, res) => {
+    try {
+        const demandes = await db.demande.findAll({
+            where: {
+                status: { [Op.in]: ['approuvée', 'rejetée'] }
+            },
+            include: [
+                { 
+                    model: db.demande_detail, 
+                    as: 'details' 
+                },
+                {
+                    model: db.journal,
+                    as: 'journal',
+                    include: [
+                        { 
+                            model: db.journalValider, 
+                            as: 'validationsConfig', 
+                            include: [{ model: db.user, as: 'user' }] 
+                        }
+                    ]
+                }
+            ],
+            order: [['date', 'DESC']]
+        });
+
+        res.json(demandes);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: err.message });
+    }
+};
+
+// --- Statistiques simples ─────────────────────────────────────────────
+exports.getDemandeStats = async (req, res) => {
+    try {
+        const total = await db.demande.count();
+        const enAttente = await db.demande.count({ where: { status: 'en attente' } });
+        const finalisees = await db.demande.count({ where: { status: { [Op.in]: ['approuvée', 'rejetée'] } } });
+        res.json({ total, enAttente, finalisees });
+    } catch (err) {
+        res.status(500).send({ message: err.message });
     }
 };

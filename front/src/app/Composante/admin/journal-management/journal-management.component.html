@@ -1,85 +1,51 @@
-<div class="container-vertical">
-
-  <!-- Formulaire -->
-  <div class="card form-card">
-    <h1>Gestion des journaux</h1>
-    <form (ngSubmit)="addJournal()">
-      <div>
-        <label>Nom du journal</label>
-        <input [(ngModel)]="newJournal.nom_journal" name="nom_journal" required />
-      </div>
-
-      <div>
-        <label>Nom du projet</label>
-        <input [(ngModel)]="newJournal.nom_projet" name="nom_projet" required />
-      </div>
-
-      <div>
-        <label>Budgets disponibles (multiple)</label>
-        <select multiple [(ngModel)]="selectedBudgetIds" name="budgets" required>
-          <option *ngFor="let b of budgetsDisponibles" [value]="b.id_budget">
-            {{ b.code_budget }} - {{ b.description }}
-          </option>
-        </select>
-      </div>
-
-  <div>
-  <label>Valideurs RH (multiple)</label>
-  <select multiple name="valideurs" required>
-    <option *ngFor="let v of valideursDisponibles"
-            [value]="v.id"
-            [selected]="isValideurSelected(v.id)"
-            (mousedown)="toggleValideur(v, $event)">
-      {{ v.username }}
-    </option>
-  </select>
-</div>
-
-      <button type="submit">Ajouter le journal</button>
-    </form>
-  </div>
-
-  <!-- Tableau -->
-  <div class="card table-card">
-    <h2>Liste des journaux</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nom journal</th>
-          <th>Nom projet</th>
-          <th>Budgets associés</th>
-          <th>Valideurs associés</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let journal of journals">
-          <td>{{ journal.id_journal }}</td>
-          <td>{{ journal.nom_journal }}</td>
-          <td>{{ journal.nom_projet }}</td>
-          <td>
-            <ul *ngIf="journal.budgets?.length > 0">
-              <li *ngFor="let b of journal.budgets">
-                {{ b.code_budget }} ({{ b.annee_fiscale }})
-              </li>
-            </ul>
-            <span *ngIf="!journal.budgets || journal.budgets.length === 0">
-              Aucun budget associé
-            </span>
-          </td>
-          <td>
-            <ul *ngIf="journal.valideurs?.length > 0">
-              <li *ngFor="let v of journal.valideurs">
-                {{ v.username }} (ordre: {{ v.journal_valider?.ordre }})
-              </li>
-            </ul>
-            <span *ngIf="!journal.valideurs || journal.valideurs.length === 0">
-              Aucun valideur associé
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
+<div class="card table-card">
+  <h2>Liste des journaux</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom journal</th>
+        <th>Nom projet</th>
+        <th>Budgets associés</th>
+        <th>Valideurs RH associés</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let journal of journals">
+        <td>{{ journal.id_journal }}</td>
+        <td>{{ journal.nom_journal }}</td>
+        <td>{{ journal.nom_projet }}</td>
+        <td>
+          <ul *ngIf="journal.budgets?.length > 0">
+            <li *ngFor="let b of journal.budgets">
+              {{ b.code_budget }} ({{ b.annee_fiscale }})
+            </li>
+          </ul>
+          <span *ngIf="!journal.budgets || journal.budgets.length === 0">
+            Aucun budget associé
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          <ul *ngIf="getValideursRH(journal).length > 0">
+            <li *ngFor="let v of getValideursRH(journal)">
+              {{ v.username }}
+              <span *ngIf="v.ordre">(ordre: {{ v.ordre }})</span>
+            </li>
+          </ul>
+          <span *ngIf="getValideursRH(journal).length === 0">
+            Aucun valideur RH associé
+          </span>
+        </td>
+        <td>
+          <a href="javascript:void(0)" class="action-btn edit-btn" (click)="editJournal(journal)" title="Modifier">
+            <i class="fas fa-pencil-alt"></i>
+          </a>
+          <a href="javascript:void(0)" class="action-btn delete-btn" (click)="deleteJournal(journal.id_journal)" title="Supprimer">
+            <i class="fas fa-trash-alt"></i>
+          </a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
 </div>

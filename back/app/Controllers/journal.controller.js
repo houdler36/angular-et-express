@@ -1,86 +1,265 @@
-const db = require('../Models');
+// Fichier: journal.controller.js
+
+const db = require("../Models");
 const Journal = db.journal;
 const Budget = db.budget;
 const User = db.user;
+const JournalValider = db.journalValider;
+const JournalBudget = db.journalBudget;
+const Demande = db.demande;
 
-// Créer un journal avec budgets et valideurs
+const { Op } = require("sequelize");
+
+// ─── Création de journal ──────────────────────────────────────────────
 exports.create = async (req, res) => {
-  const { nom_journal, nom_projet, budgetIds, valideurs } = req.body;
+    const { nom_journal, nom_projet, budgetIds, valideurs } = req.body;
 
-  if (!nom_journal || !nom_projet) {
-    return res.status(400).send({ message: "Nom du journal et nom du projet requis." });
-  }
-
-  try {
-    const newJournal = await Journal.create({ nom_journal, nom_projet });
-
-    if (budgetIds && budgetIds.length > 0) {
-      const budgets = await Budget.findAll({ where: { id_budget: budgetIds } });
-      if (budgets.length > 0) {
-        await newJournal.setBudgets(budgets);
-      }
+    if (!nom_journal || !nom_projet || !budgetIds || budgetIds.length === 0) {
+        return res.status(400).send({ message: "Le nom du journal, du projet et les budgets sont obligatoires." });
     }
 
-    if (valideurs && valideurs.length > 0) {
-      for (const v of valideurs) {
-        await db.journalValider.create({
-          journal_id: newJournal.id_journal,
-          user_id: v.user_id,
-          ordre: v.ordre || 1,
-          statut: 'en attente',
-          date_validation: null,
-          commentaire: null,
-        });
-      }
-    }
+    const t = await db.sequelize.transaction();
+    try {
+        // Créer le journal
+        const journal = await Journal.create({ nom_journal, nom_projet }, { transaction: t });
 
-    // Récupérer le journal complet avec budgets ET valideurs
-    const journalFull = await Journal.findByPk(newJournal.id_journal, {
-      include: [
-        {
-          model: Budget,
-          as: 'budgets',
-          through: { attributes: [] }
-        },
-        {
-          model: User,
-          as: 'valideurs',
-          through: {
-            attributes: ['ordre', 'statut', 'date_validation', 'commentaire']
-          }
+        // Associer les budgets
+        if (budgetIds.length > 0) {
+            const budgets = await Budget.findAll({
+                where: { id_budget: { [Op.in]: budgetIds } },
+                transaction: t
+            });
+            await journal.addBudgets(budgets, { transaction: t });
         }
-      ]
-    });
 
-    res.status(201).send(journalFull);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: err.message || "Erreur création journal." });
-  }
+        // Ajouter uniquement les RH comme valideurs
+        if (valideurs && valideurs.length > 0) {
+            const rhUsers = await User.findAll({
+                where: { id: { [Op.in]: valideurs.map(v => v.user_id) }, role: 'rh' },
+                transaction: t
+            });
+
+            const journalValidateurs = rhUsers.map(user => {
+                const ordre = valideurs.find(v => v.user_id === user.id)?.ordre || 1;
+                return {
+                    journal_id: journal.id_journal,
+                    user_id: user.id,
+                    ordre,
+                    statut: 'en attente',
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                };
+            });
+
+            await JournalValider.bulkCreate(journalValidateurs, { transaction: t });
+        }
+
+        await t.commit();
+
+        // Récupérer le journal avec ses budgets et validateurs RH
+        const newJournal = await Journal.findByPk(journal.id_journal, {
+            include: [
+                { model: Budget, as: 'budgets', through: { attributes: [] } },
+                { model: JournalValider, as: 'validationsConfig', include: [{ model: User, as: 'user', attributes: ['username', 'email'] }] }
+            ]
+        });
+
+        res.status(201).send(newJournal);
+
+    } catch (err) {
+        if (t && !t.finished) await t.rollback();
+        console.error("Erreur lors de la création du journal :", err);
+        res.status(500).send({ message: err.message || "Une erreur est survenue lors de la création du journal." });
+    }
 };
 
-// Récupérer tous les journaux avec budgets et valideurs
-exports.findAll = async (req, res) => {
-  try {
-    const journals = await Journal.findAll({
-      include: [
-        {
-          model: Budget,
-          as: 'budgets',
-          through: { attributes: [] }
-        },
-        {
-          model: User,
-          as: 'valideurs',
-          through: {
-            attributes: ['ordre', 'statut', 'date_validation', 'commentaire']
-          }
+
+// ─── Mise à jour d'un journal ─────────────────────────────────────────
+// ─── Mise à jour d'un journal ─────────────────────────────────────────
+exports.update = async (req, res) => {
+    const id = req.params.id;
+    const { nom_journal, nom_projet, budgetIds, valideurs } = req.body;
+
+    const t = await db.sequelize.transaction();
+    try {
+        const journal = await Journal.findByPk(id, { transaction: t });
+        if (!journal) {
+            await t.rollback();
+            return res.status(404).send({ message: "Journal introuvable." });
         }
-      ]
-    });
-    res.status(200).send(journals);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: err.message || "Erreur récupération journaux." });
-  }
+
+        // Mettre à jour le nom et le projet
+        await journal.update({ nom_journal, nom_projet }, { transaction: t });
+
+        // Gestion des budgets
+        if (budgetIds && budgetIds.length > 0) {
+            const budgets = await Budget.findAll({
+                where: { id_budget: { [Op.in]: budgetIds } },
+                transaction: t
+            });
+            await journal.setBudgets(budgets, { transaction: t });
+        }
+
+        // Gestion des validateurs RH uniquement
+        if (valideurs && valideurs.length > 0) {
+            // Récupérer les RH uniquement
+            const rhUsers = await User.findAll({
+                where: { id: { [Op.in]: valideurs.map(v => v.user_id) }, role: 'rh' },
+                transaction: t
+            });
+
+            // Supprimer les anciens valideurs
+            await JournalValider.destroy({ where: { journal_id: id }, transaction: t });
+
+            // Créer les nouveaux valideurs RH
+            const journalValidateurs = rhUsers.map(user => {
+                const ordre = valideurs.find(v => v.user_id === user.id)?.ordre || 1;
+                return {
+                    journal_id: id,
+                    user_id: user.id,
+                    ordre,
+                    statut: 'en attente',
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                };
+            });
+
+            await JournalValider.bulkCreate(journalValidateurs, { transaction: t });
+        }
+
+        await t.commit();
+        res.status(200).send({ message: "Journal mis à jour avec succès." });
+
+    } catch (err) {
+        if (t && !t.finished) await t.rollback();
+        console.error("Erreur lors de la mise à jour du journal :", err);
+        res.status(500).send({ message: err.message || "Erreur serveur." });
+    }
+};
+
+
+// Fonction utilitaire pour transformer un journal
+const transformJournal = (journal) => {
+    const data = journal.toJSON();
+    return {
+        ...data,
+        valideurs: (data.validationsConfig || []).map(vc => ({
+            username: vc.user?.username || null,
+            email: vc.user?.email || null,
+            ordre: vc.ordre,
+            user_id: vc.user_id
+        })),
+        validationsConfig: undefined
+    };
+};
+
+// ─── Récupération de tous les journaux ────────────────────────────────────────────────
+// ─── Récupération de tous les journaux avec RH uniquement ───────────────
+exports.findAll = async (req, res) => {
+    try {
+        const journals = await Journal.findAll({
+            include: [
+                {
+                    model: Budget,
+                    as: 'budgets',
+                    through: { attributes: [] }
+                },
+                {
+                    model: JournalValider,
+                    as: 'validationsConfig',
+                    include: [
+                        {
+                            model: User,
+                            as: 'user',
+                            attributes: ['username', 'email', 'role'],
+                            where: { role: 'rh' } // ← filtrer uniquement les RH
+                        }
+                    ]
+                }
+            ]
+        });
+
+        // Transformation pour ne garder que les champs utiles
+        const result = journals.map(journal => {
+            const data = journal.toJSON();
+            return {
+                ...data,
+                valideurs: (data.validationsConfig || []).map(vc => ({
+                    user_id: vc.user_id,
+                    username: vc.user?.username,
+                    email: vc.user?.email,
+                    ordre: vc.ordre,
+                    statut: vc.statut
+                })),
+                validationsConfig: undefined // on supprime la config brute
+            };
+        });
+
+        res.send(result);
+
+    } catch (err) {
+        console.error("Erreur lors de la récupération des journaux :", err);
+        res.status(500).send({ message: "Une erreur est survenue lors de la récupération des journaux." });
+    }
+};
+
+// ─── Récupération d'un journal par ID ────────────────────────────────────────────────
+exports.findOne = async (req, res) => {
+    const id = req.params.id;
+    try {
+        const journal = await Journal.findByPk(id, {
+            include: [
+                {
+                    model: Budget,
+                    as: 'budgets',
+                    through: { attributes: [] }
+                },
+                {
+                    model: JournalValider,
+                    as: 'validationsConfig',
+                    include: [
+                        { model: User, as: 'user', attributes: ['username', 'email'] }
+                    ]
+                }
+            ]
+        });
+
+        if (!journal) {
+            return res.status(404).send({ message: "Journal introuvable." });
+        }
+
+        res.send(transformJournal(journal));
+    } catch (err) {
+        console.error(`Erreur lors de la récupération du journal avec l'id=${id} :`, err);
+        res.status(500).send({ message: "Erreur lors de la récupération du journal." });
+    }
+};
+
+// ─── Suppression d'un journal ─────────────────────────────────────────
+exports.delete = async (req, res) => {
+    const id = req.params.id;
+    const t = await db.sequelize.transaction();
+    try {
+        const journal = await Journal.findByPk(id, { transaction: t });
+
+        if (!journal) {
+            await t.rollback();
+            return res.status(404).send({ message: "Journal introuvable." });
+        }
+        
+        await Demande.destroy({ where: { journal_id: id }, transaction: t });
+        await JournalBudget.destroy({ where: { journal_id: id }, transaction: t });
+        await JournalValider.destroy({ where: { journal_id: id }, transaction: t });
+
+        await journal.destroy({ transaction: t });
+        
+        await t.commit();
+        res.status(204).send();
+    } catch (err) {
+        if (t && !t.finished) {
+            await t.rollback();
+        }
+        console.error("Erreur lors de la suppression du journal :", err);
+        res.status(500).send({ message: "Impossible de supprimer le journal." });
+    }
 };
