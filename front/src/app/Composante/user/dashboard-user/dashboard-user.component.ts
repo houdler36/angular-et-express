@@ -67,13 +67,22 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
 
   loadDemandeStats(): void {
     console.log("Chargement des statistiques de demandes...");
-    this.demandeService.getAllDemandes().subscribe({
-      next: (data: Demande[]) => {
-        // Aggrégation des données côté client
-        this.totalDemandes = data.length;
-        this.demandesEnAttente = data.filter(d => d.status === 'En attente').length;
-        this.demandesApprouvees = data.filter(d => d.status === 'Approuvée').length;
-        this.demandesRejetees = data.filter(d => d.status === 'Rejetée').length;
+    this.demandeService.getDemandeStats().subscribe({
+      next: (stats) => {
+        console.log("Statistiques reçues du backend :", stats);
+        
+        // Correction de la logique d'agrégation pour correspondre au backend
+        this.totalDemandes = stats.total;
+        this.demandesEnAttente = stats.enAttente;
+        
+        // Comme le backend ne renvoie pas 'approuvees' et 'rejetees' séparément,
+        // on peut les calculer si on a d'autres informations, ou simplement
+        // afficher 'finalisees' si c'est ce que l'on souhaite.
+        // Si vous avez un endpoint pour 'approuvees' et 'rejetees' séparément,
+        // il serait mieux de le charger ici. Pour l'instant, je les ai définies à 0
+        // pour éviter les valeurs 'undefined'.
+        this.demandesApprouvees = stats.finalisees;
+        this.demandesRejetees = 0; // Assumer que les demandes rejetées ne sont pas renvoyées.
         
         console.log("Statistiques agrégées :", {
           totalDemandes: this.totalDemandes,

@@ -101,7 +101,8 @@ exports.create = async (req, res) => {
 };
 
 
-// --- Récupération d'une demande par ID ────────────────────────────────
+// Fichier: demande.controller.js
+
 exports.findOne = async (req, res) => {
     const id = req.params.id;
     try {
@@ -115,18 +116,24 @@ exports.findOne = async (req, res) => {
                 {
                     model: db.journal,
                     as: 'journal',
-                    include: [{
-                        model: db.journalValider,
-                        as: 'validationsConfig',
-                        include: [{ model: db.user, as: 'user' }]
-                    }]
                 },
                 { 
                     model: db.demande_detail, 
                     as: 'details' 
+                },
+                {
+                    model: db.demande_validation,
+                    as: 'validations',
+                    include: [{ 
+                        model: db.user, 
+                        as: 'user', 
+                        // ✅ Ajoutez 'signature_image_url' ici
+                        attributes: ['username', 'signature_image_url'] 
+                    }]
                 }
             ]
         });
+        
         if (!demande) return res.status(404).send({ message: `Demande ${id} introuvable.` });
         res.send(demande);
     } catch (err) {
@@ -239,15 +246,16 @@ exports.validerDemande = async (req, res) => {
         }
 
         // Mise à jour de la validation
-        await db.demande_validation.update(
-            {
-                statut: 'validé',
-                commentaire,
-                signature: signatureBase64,
-                date_validation: new Date()
-            },
-            { where: { id: validationActuelle.id }, transaction }
-        );
+       await db.demande_validation.update(
+    {
+        statut: 'validé',
+        commentaire,
+        signature_image_url: signatureBase64, // ✅ nom exact de la colonne
+        date_validation: new Date()
+    },
+    { where: { id: validationActuelle.id }, transaction }
+);
+
 
         // Vérifier si toutes les validations du même ordre sont terminées
         const validationsSameOrder = await db.demande_validation.findAll({
@@ -370,19 +378,19 @@ exports.refuserDemande = async (req, res) => {
         res.status(500).send({ message: "Erreur interne lors du refus de la demande." });
     }
 };
+// --- Demandes à valider par l'utilisateur connecté (RH) ---
 exports.getDemandesAValider = async (req, res) => {
     try {
         const userId = req.userId;
         if (!userId) return res.status(401).send({ message: "Utilisateur non authentifié." });
 
-        // Récupérer toutes les demandes où l'utilisateur a une validation en attente
         const demandes = await db.demande.findAll({
             include: [
                 { model: db.demande_detail, as: 'details' },
                 {
                     model: db.demande_validation,
                     as: 'validations',
-                    include: [{ model: db.user, as: 'user', attributes: ['id', 'role'] }]
+                    include: [{ model: db.user, as: 'user', attributes: ['id', 'username', 'role'] }]
                 },
                 {
                     model: db.journal,
@@ -395,18 +403,10 @@ exports.getDemandesAValider = async (req, res) => {
             order: [['date', 'DESC']]
         });
 
-        // Filtrer les demandes où c'est vraiment le tour de l'utilisateur
         const demandesFiltrees = demandes.filter(d => {
-            // Récupérer toutes les validations en attente RH
-            const validationsRH = d.validations
-                .filter(v => v.user.role === 'rh' && v.statut === 'en attente');
-
+            const validationsRH = d.validations.filter(v => v.user.role === 'rh' && v.statut === 'en attente');
             if (validationsRH.length === 0) return false;
-
-            // Trouver l'ordre minimal en attente
             const ordreMin = Math.min(...validationsRH.map(v => v.ordre));
-
-            // Vérifier si l'utilisateur connecté est dans cet ordre
             return validationsRH.some(v => v.user.id === userId && v.ordre === ordreMin);
         });
 
@@ -417,13 +417,12 @@ exports.getDemandesAValider = async (req, res) => {
     }
 };
 
-// --- Demandes en attente chez un autre validateur ────────────
+// --- Demandes en attente chez un autre validateur ---
 exports.getDemandesEnAttenteAutres = async (req, res) => {
     try {
         const userId = req.userId;
         if (!userId) return res.status(401).send({ message: "Utilisateur non authentifié." });
 
-        // ─── CORRECTION : UTILISER UNE SOUS-REQUÊTE PLUS PRÉCISE ───────────────
         const demandes = await db.demande.findAll({
             where: {
                 status: 'en attente',
@@ -440,34 +439,30 @@ exports.getDemandesEnAttenteAutres = async (req, res) => {
                 {
                     model: db.demande_validation,
                     as: 'validations',
+                    include: [{ model: db.user, as: 'user', attributes: ['id', 'username', 'role'] }],
                     where: { statut: 'en attente' },
-                    required: true,
+                    required: true
                 },
-                { 
-                    model: db.demande_detail, 
-                    as: 'details' 
-                },
+                { model: db.demande_detail, as: 'details' },
                 {
                     model: db.journal,
                     as: 'journal',
                     include: [
-                        { 
-                            model: db.journalValider, 
-                            as: 'validationsConfig', 
-                            include: [{ model: db.user, as: 'user' }] 
-                        }
+                        { model: db.journalValider, as: 'validationsConfig', include: [{ model: db.user, as: 'user' }] }
                     ]
                 }
             ],
             order: [['date', 'DESC']]
         });
+
         res.json(demandes);
     } catch (err) {
         console.error(err);
         res.status(500).send({ message: err.message });
     }
 };
-// --- Demandes déjà finalisées ────────────────────────────────
+
+// --- Demandes déjà finalisées ---
 exports.getDemandesFinalisees = async (req, res) => {
     try {
         const demandes = await db.demande.findAll({
@@ -475,19 +470,17 @@ exports.getDemandesFinalisees = async (req, res) => {
                 status: { [Op.in]: ['approuvée', 'rejetée'] }
             },
             include: [
-                { 
-                    model: db.demande_detail, 
-                    as: 'details' 
+                { model: db.demande_detail, as: 'details' },
+                {
+                    model: db.demande_validation,
+                    as: 'validations',
+                    include: [{ model: db.user, as: 'user', attributes: ['id', 'username', 'role'] }]
                 },
                 {
                     model: db.journal,
                     as: 'journal',
                     include: [
-                        { 
-                            model: db.journalValider, 
-                            as: 'validationsConfig', 
-                            include: [{ model: db.user, as: 'user' }] 
-                        }
+                        { model: db.journalValider, as: 'validationsConfig', include: [{ model: db.user, as: 'user' }] }
                     ]
                 }
             ],

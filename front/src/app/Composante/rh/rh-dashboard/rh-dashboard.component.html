@@ -1,136 +1,91 @@
 <div class="flex-container">
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <div class="header-container">
-        <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
-        <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
-      </div>
-    </div>
-    
-    <nav>
-      <a role="button" [class.active]="currentView === 'dashboard'" (click)="setCurrentView('dashboard')" class="nav-link">
-        <i class="fas fa-tachometer-alt"></i>
-        <span>Tableau de Bord RH</span>
-      </a>
-      <a role="button" [class.active]="currentView === 'validation'" (click)="setCurrentView('validation')" class="nav-link">
-        <i class="fas fa-check-circle"></i>
-        <span>Validation RH</span>
-      </a>
-    </nav>
-    
-    <div class="user-profile-container">
-      <div class="user-profile">
-        <img [src]="userAvatar" alt="User" class="user-avatar">
-        <div class="user-info">
-          <span class="user-name">{{userName}}</span>
-          <span class="user-role">{{userRole}}</span>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="header-container">
+                <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
+                <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
+            </div>
         </div>
-      </div>
-    </div>
-  </aside>
+        
+        <nav>
+            <a role="button" class="nav-link active" (click)="currentView = 'dashboard'">
+                <i class="fas fa-check-circle"></i>
+                <span>Tâches en attente</span>
+            </a>
+            <a role="button" class="nav-link" (click)="currentView = 'validation'">
+                <i class="fas fa-history"></i>
+                <span>Historique</span>
+            </a>
+        </nav>
+        
+        <div class="user-profile-container">
+            <div class="user-profile">
+                <img src="https://via.placeholder.com/45" alt="User" class="user-avatar">
+                <div class="user-info">
+                    <span class="user-name">Validateur RH</span>
+                    <span class="user-role">Département RH</span>
+                </div>
+            </div>
+        </div>
+    </aside>
 
-  <!-- Main content -->
-  <main class="main-content">
-    <section *ngIf="currentView === 'dashboard'" class="dashboard-view">
-      <div class="dashboard-header">
-        <div>
-          <h1 class="dashboard-title">Tableau de Bord RH</h1>
-          <p class="dashboard-description">
-            Consultez les statistiques et les données clés de la gestion des ressources humaines.
-            Surveillez les indicateurs de performance et les tendances importantes.
-          </p>
-        </div>
-        <div>
-          <button class="refresh-btn" (click)="refreshData()">
-            <i class="fas fa-sync-alt"></i> Actualiser
-          </button>
-        </div>
-      </div>
-      
-      <div class="stats-container">
-        <div class="stat-card">
-          <div class="stat-icon blue">
-            <i class="fas fa-users"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{stats.activeEmployees}}</h3>
-            <p>Employés actifs</p>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon green">
-            <i class="fas fa-file-contract"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{stats.pendingContracts}}</h3>
-            <p>Contrats en attente</p>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon orange">
-            <i class="fas fa-calendar-day"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{stats.pendingLeaves}}</h3>
-            <p>Congés à approuver</p>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon purple">
-            <i class="fas fa-chart-line"></i>
-          </div>
-          <div class="stat-content">
-            <h3>{{stats.satisfactionRate}}%</h3>
-            <p>Taux de satisfaction</p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="charts-container">
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">Répartition des employés par département</h3>
-            <div>
-              <select [(ngModel)]="selectedPeriod" class="chart-select">
-                <option value="current">Mois en cours</option>
-                <option value="quarter">Trimestre</option>
-                <option value="year">Année</option>
-              </select>
+    <main class="main-content">
+        <section *ngIf="currentView === 'dashboard'" class="dashboard-view">
+            <div class="validation-header">
+                <h1 class="validation-title">Tableau de bord</h1>
+                <p class="validation-description">
+                    Aperçu des tâches de validation en cours et finalisées.
+                </p>
             </div>
-          </div>
-          <div class="chart-placeholder">
-            <div class="chart-bar" *ngFor="let dept of departments" [style.width.%]="dept.percentage">
-              <span class="dept-name">{{dept.name}}</span>
-              <span class="dept-percentage">{{dept.percentage}}%</span>
+            
+            <div class="validation-stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>12</h3>
+                        <p>Demandes en attente</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>58</h3>
+                        <p>Demandes finalisées</p>
+                    </div>
+                </div>
             </div>
-          </div>
-        </div>
-        
-        <div class="chart-card">
-          <div class="chart-header">
-            <h3 class="chart-title">Tendances d'embauche</h3>
-            <div>
-              <select [(ngModel)]="selectedYear" class="chart-select">
-                <option *ngFor="let year of years" [value]="year">{{year}}</option>
-              </select>
-            </div>
-          </div>
-          <div class="chart-placeholder">
-            <div class="hiring-bar" *ngFor="let month of hiringTrends" [style.height.px]="month.value * 5">
-              <span class="month-label">{{month.month}}</span>
-              <span class="hiring-value">{{month.value}}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
 
-    <section *ngIf="currentView === 'validation'" class="validation-view">
-      <app-validation-rh></app-validation-rh>
-    </section>
-  </main>
+            <div class="validation-list-container">
+                <div class="validation-card">
+                    <div class="card-header">
+                        <span class="item-type">Nouveau Contrat</span>
+                        <span class="item-status status-pending">En attente</span>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Candidat :</strong> Marie Leblanc</p>
+                        <p><strong>Poste :</strong> Développeur Web</p>
+                        <p><strong>Date de création :</strong> 18/08/2025</p>
+                    </div>
+                    <div class="card-actions">
+                        <button class="action-btn approve-btn">
+                            <i class="fas fa-check"></i>
+                            Approuver
+                        </button>
+                        <button class="action-btn reject-btn">
+                            <i class="fas fa-times"></i>
+                            Rejeter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section *ngIf="currentView === 'validation'" class="validation-view">
+            <app-validation-rh></app-validation-rh>
+        </section>
+    </main>
 </div>

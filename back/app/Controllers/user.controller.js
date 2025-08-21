@@ -9,9 +9,10 @@ const bcrypt = require("bcryptjs");
 // Rôles autorisés à être validateurs
 const rolesValideurs = ["rh", "daf", "approver"];
 
+// ✅ Ajout de signature_image_url dans la création d'un utilisateur
 exports.createAdminUser = async (req, res) => {
   try {
-    const { username, email, password, role, journalIds } = req.body;
+    const { username, email, password, role, journalIds, signature_image_url } = req.body;
     console.log("Données reçues :", req.body);
 
     // Vérifier si le rôle est valide
@@ -33,6 +34,7 @@ exports.createAdminUser = async (req, res) => {
       email,
       password: bcrypt.hashSync(password, 8),
       role,
+      signature_image_url // ✅ Ajout du champ signature_image_url
     });
     console.log("Utilisateur créé :", user.username, "Rôle :", user.role);
 
@@ -49,7 +51,7 @@ exports.createAdminUser = async (req, res) => {
 
     res.status(201).json({
       message: "Utilisateur créé et associé aux journaux avec succès.",
-      user: { id: user.id, username: user.username, email: user.email, role: user.role }
+      user: { id: user.id, username: user.username, email: user.email, role: user.role, signature_image_url: user.signature_image_url }
     });
 
   } catch (error) {
@@ -59,11 +61,11 @@ exports.createAdminUser = async (req, res) => {
 };
 
 
-// Récupérer tous les utilisateurs
+// ✅ Ajout de signature_image_url dans la récupération de tous les utilisateurs
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.findAll({
-      attributes: ["id", "username", "email", "role"],
+      attributes: ["id", "username", "email", "role", "signature_image_url"],
       include: [{
         model: Journal,
         as: "journals",
@@ -83,7 +85,8 @@ exports.getAllRhUsers = async (req, res) => {
   try {
     const users = await User.findAll({
       where: { role: "rh" },
-      attributes: ["id", "username", "email", "role"],
+      // ✅ Ajout de signature_image_url
+      attributes: ["id", "username", "email", "role", "signature_image_url"],
       include: [{
         model: Journal,
         as: "journals",
@@ -102,7 +105,8 @@ exports.getAllRhUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id, {
-      attributes: ["id", "username", "email", "role"],
+      // ✅ Ajout de signature_image_url
+      attributes: ["id", "username", "email", "role", "signature_image_url"],
       include: [{
         model: Journal,
         as: "journals",
@@ -130,10 +134,11 @@ exports.getJournals = async (req, res) => {
     res.status(500).send({ message: "Erreur lors de la récupération des journaux." });
   }
 };
-// Mettre à jour un utilisateur existant
+
+// ✅ Mise à jour de l'utilisateur pour inclure signature_image_url
 exports.updateUser = async (req, res) => {
   try {
-    const { username, email, password, role, journalIds } = req.body;
+    const { username, email, password, role, journalIds, signature_image_url } = req.body;
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ message: "Utilisateur non trouvé" });
 
@@ -142,6 +147,7 @@ exports.updateUser = async (req, res) => {
     user.email = email || user.email;
     if (password) user.password = bcrypt.hashSync(password, 8);
     user.role = role || user.role;
+    user.signature_image_url = signature_image_url !== undefined ? signature_image_url : user.signature_image_url;
 
     await user.save();
 

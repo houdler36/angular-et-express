@@ -23,6 +23,10 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.ENUM('admin', 'user', 'rh', 'daf', 'caissier'),
       defaultValue: 'user',
       allowNull: false
+    },
+    signature_image_url: {   // ✅ AJOUT
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     timestamps: false,
@@ -36,7 +40,6 @@ module.exports = (sequelize, DataTypes) => {
     return bcrypt.compareSync(password, this.password);
   };
 
-  // Association Many-to-Many avec Journal via JournalValider
   User.associate = (models) => {
     User.belongsToMany(models.Journal, {
       through: models.JournalValider,

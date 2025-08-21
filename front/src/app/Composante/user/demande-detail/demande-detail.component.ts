@@ -1,9 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, CurrencyPipe, DatePipe, TitleCasePipe } from '@angular/common';
 import { DemandeService } from '../../../services/demande.service';
 import { FormsModule } from '@angular/forms';
 
+// --- Corrected Interfaces ---
+// La propriété "validations" est maintenant directement sur l'interface Demande,
+// car c'est ainsi que le backend la renvoie.
 interface DemandeDetail {
   id: number;
   demande_id: number;
@@ -17,22 +20,23 @@ interface DemandeDetail {
   status_detail: 'en attente' | 'approuvée' | 'rejetée';
 }
 
-interface JournalValider {
+interface DemandeValidation {
   id: number;
-  journal_id: number;
+  demande_id: number;
   user_id: number;
-  statut: 'en attente' | 'approuvé' | 'rejeté';
+  statut: 'en attente' | 'approuvé' | 'rejeté' | 'validé' | 'initial';
   ordre: number;
   date_validation?: string;
   commentaire?: string;
-  user?: { username: string }; // Ajout de la propriété user
+  user?: { username: string, signature_image_url?: string } | null; // ✅ Ajout signature
 }
+
 
 interface Journal {
   id: number;
   nom_journal: string;
   nom_projet: string;
-  validations?: JournalValider[];
+  // Les validations ne sont plus ici, car elles sont sur l'objet demande principal
 }
 
 interface Demande {
@@ -50,7 +54,8 @@ interface Demande {
   details?: DemandeDetail[];
   user?: { username: string };
   comments?: any[];
-  journal?: Journal; // Propriété ajoutée
+  journal?: Journal;
+  validations?: DemandeValidation[]; // ✅ Corrected: The validations array is here now
 }
 
 @Component({
@@ -65,7 +70,8 @@ interface Demande {
   ],
   providers: [
     CurrencyPipe,
-    DatePipe
+    DatePipe,
+    TitleCasePipe
   ]
 })
 export class DemandeDetailComponent implements OnInit {
@@ -73,6 +79,11 @@ export class DemandeDetailComponent implements OnInit {
   demande: Demande | null = null;
   errorMessage: string = '';
   successMessage: string = '';
+  finalValidatorName: string | null = null;
+  serverUrl = 'http://localhost:8081';
+
+  // Le type a été mis à jour pour correspondre à la nouvelle interface
+  displayValidators: DemandeValidation[] = []; 
 
   showDeleteConfirmModal: boolean = false;
   showRejectModal: boolean = false;
@@ -83,7 +94,7 @@ export class DemandeDetailComponent implements OnInit {
     private router: Router,
     private demandeService: DemandeService
   ) { }
-
+  
   ngOnInit(): void {
     const idFromRoute = this.route.snapshot.paramMap.get('id');
     if (idFromRoute) {
@@ -94,16 +105,48 @@ export class DemandeDetailComponent implements OnInit {
       this.router.navigate(['/demandes']);
     }
   }
+handleImageError(validator: DemandeValidation) {
+  // Si l'image ne charge pas, on peut mettre undefined pour ne plus essayer de la charger
+  if (validator.user) {
+    validator.user.signature_image_url = undefined;
+  }
+}
 
   loadDemandeDetails(id: number): void {
     this.demandeService.getDemandeById(id).subscribe({
       next: (data: Demande) => {
         this.demande = data;
         this.errorMessage = '';
+
+        // ✅ IMPORTANT: Correction de la ligne suivante pour accéder directement à `demande.validations`
+        const allValidations = this.demande.validations?.sort((a, b) => a.ordre - b.ordre) || [];
+
+        this.displayValidators = [];
+        const maxValidators = 4;
+        
+        for (let i = 0; i < maxValidators; i++) {
+          if (allValidations[i]) {
+            this.displayValidators.push(allValidations[i]);
+          } else {
+            // Création d'un objet "placeholder" pour les validateurs manquants.
+            this.displayValidators.push({
+              id: 0,
+              demande_id: 0,
+              user_id: 0,
+              statut: 'initial', // Utilisation de 'initial' pour un statut non encore existant
+              ordre: i,
+              user: null
+            });
+          }
+        }
+        
+        const finalValidation = allValidations.find(v => v.statut === 'approuvé' || v.statut === 'rejeté' || v.statut === 'validé');
+        this.finalValidatorName = finalValidation?.user?.username || null;
+        
       },
       error: (err: any) => {
         console.error("Erreur lors du chargement des détails de la demande:", err);
-        this.errorMessage = 'Impossible de charger les détails de la demande. Vous n\'avez peut-être pas les permissions ou la demande n\'existe pas.';
+        this.errorMessage = 'Impossible de charger les détails de la demande.';
         this.demande = null;
       }
     });

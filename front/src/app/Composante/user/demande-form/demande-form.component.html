@@ -140,11 +140,17 @@
               <input type="number" formControlName="quarterly_budget" [disabled]="true" class="form-input" />
             </div>
 
-            <div class="form-group" *ngIf="details.controls[i].get('nature')?.value === 'appro' || details.controls[i].get('nature')?.value === 'autre'">
-              <label [for]="'accountNumber-' + i" class="form-label" [class.text-red-500]="isDetailInvalid(i, 'account_number')">Numéro de compte</label>
-              <input type="text" [id]="'accountNumber-' + i" formControlName="account_number" [class.invalid]="isDetailInvalid(i, 'account_number')" class="form-input" />
-              <div *ngIf="isDetailInvalid(i, 'account_number')" class="form-error">Le numéro de compte est requis.</div>
-            </div>
+            <div class="form-group">
+  <label for="accountNumber-{{i}}" class="form-label" 
+         [class.text-red-500]="isDetailInvalid(i, 'account_number')">
+    Numéro de compte
+  </label>
+  <input type="text" id="accountNumber-{{i}}" formControlName="account_number" 
+         [class.invalid]="isDetailInvalid(i, 'account_number')" class="form-input" />
+  <div *ngIf="isDetailInvalid(i, 'account_number')" class="form-error">
+    Le numéro de compte est requis.
+  </div>
+</div>
           </div>
         </div>
         <button type="button" (click)="addDetail()" class="btn-add-detail">

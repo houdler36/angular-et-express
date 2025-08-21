@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, NgIf, NgFor } from '@angular/common';
+import { Router } from '@angular/router'; // Importer le service Router
 import { DemandeService } from '../../../services/demande.service';
 import { AuthService } from '../../../services/auth.service';
 
+// Interfaces pour la structure des données
 interface DemandeValidation {
   id: number;
   demande_id: number;
@@ -47,7 +49,11 @@ export class ValidationRhComponent implements OnInit {
   loadingEnAttente = false;
   loadingFinalisees = false;
 
-  constructor(private demandeService: DemandeService, private authService: AuthService) {
+  constructor(
+    private demandeService: DemandeService,
+    private authService: AuthService,
+    private router: Router // Injecter le service Router pour la navigation
+  ) {
     this.currentUserId = this.authService.getUserId();
   }
 
@@ -60,7 +66,7 @@ export class ValidationRhComponent implements OnInit {
   /**
    * Charge les demandes que l'utilisateur doit valider.
    */
-loadDemandesATraiter() {
+ loadDemandesATraiter() {
   this.loadingATraiter = true;
   this.demandeService.getDemandesAValider().subscribe({
     next: (demandes: any[]) => {
@@ -69,24 +75,28 @@ loadDemandesATraiter() {
           (v: any) => v.user.role === 'rh'
         );
 
+        console.log('Demande à traiter ID:', demande.id);
+        console.log('Validations RH:', validationsRH);
+
         if (validationsRH.length === 0) return null;
 
-        // Ordre minimal des validations RH en attente
         const ordreMinEnAttente = Math.min(
           ...validationsRH
             .filter((v: any) => v.statut === 'en attente')
             .map((v: any) => v.ordre)
         );
 
-        // Vérifie si l'utilisateur est dans l'ordre minimal
         const estTourUtilisateur = validationsRH.some(
           (v: any) => v.user.id === this.currentUserId && v.ordre === ordreMinEnAttente && v.statut === 'en attente'
         );
 
-        // Pour afficher le nom du validateur actuel
         const currentValidator = validationsRH.find(
           (v: any) => v.ordre === ordreMinEnAttente && v.statut === 'en attente'
         )?.user.username || null;
+
+        console.log('Ordre minimal en attente:', ordreMinEnAttente);
+        console.log('Est tour utilisateur:', estTourUtilisateur);
+        console.log('Validateur actuel:', currentValidator);
 
         return {
           ...demande,
@@ -101,23 +111,27 @@ loadDemandesATraiter() {
   });
 }
 
-
-
 loadDemandesEnAttente() {
   this.loadingEnAttente = true;
   this.demandeService.getDemandesEnAttenteAutres().subscribe({
     next: (data) => {
       this.demandesEnAttente = data.map((demande: any) => {
-        const validations = demande.validations || []; // Correction clé
-        
+        const validations = demande.validations || [];
+
+        console.log('Demande en attente ID:', demande.id);
+        console.log('Validations:', validations);
+
         const currentValidation = validations.find(
-          (v: DemandeValidation) => v.statut === 'en attente'
+          (v: any) => v.statut === 'en attente'
         );
-        
+
         const journalValidator = demande.journal?.journal_validers?.find(
-          (v: JournalValidator) => v.user_id === currentValidation?.user_id
+          (v: any) => v.user_id === currentValidation?.user_id
         );
-        
+
+        console.log('Current validation:', currentValidation);
+        console.log('Journal validator:', journalValidator);
+
         return {
           ...demande,
           currentValidator: journalValidator?.user?.username || null
@@ -131,29 +145,44 @@ loadDemandesEnAttente() {
 
 loadDemandesFinalisees() {
   this.loadingFinalisees = true;
+
   this.demandeService.getDemandesFinalisees().subscribe({
     next: (data) => {
       this.demandesFinalisees = data.map((demande: any) => {
-        const validations = demande.validations || []; // Correction clé
-        
+        const validations = demande.validations || [];
+
+        console.log('Demande finalisée ID:', demande.id);
+        console.log('Validations:', validations);
+
+        // Trouver la dernière validation effectuée (approuvée/validée ou rejetée)
         const finalValidation = validations.find(
-          (v: DemandeValidation) => v.statut === 'validé' || v.statut === 'rejeté'
+          (v: any) => v.statut === 'validé' || v.statut === 'rejeté'
         );
-        
-        const journalValidator = demande.journal?.journal_validers?.find(
-          (v: JournalValidator) => v.user_id === finalValidation?.user_id
-        );
-        
+
+        console.log('Final validation trouvée:', finalValidation);
+
+        // Récupérer le nom de l'utilisateur ayant fait cette validation
+        const finalValidatorName = finalValidation?.user?.username || 'Inconnu';
+
+        console.log('Final validator:', finalValidatorName);
+
         return {
           ...demande,
-          finalValidator: journalValidator?.user?.username || null
+          finalValidatorName
         };
       });
+
       this.loadingFinalisees = false;
     },
-    error: () => (this.loadingFinalisees = false)
+    error: () => {
+      console.error('Erreur lors du chargement des demandes finalisées.');
+      this.loadingFinalisees = false;
+    }
   });
 }
+
+
+
   valider(id: number) {
     this.demandeService.validateDemande(id).subscribe(() => {
       this.loadDemandesATraiter();
@@ -168,5 +197,14 @@ loadDemandesFinalisees() {
       this.loadDemandesFinalisees();
       this.loadDemandesEnAttente();
     });
+  }
+
+  /**
+   * Gère l'action de "Voir" pour une demande spécifique en naviguant vers une nouvelle route.
+   * @param id L'identifiant de la demande à visualiser.
+   */
+  voirDetails(id: number) {
+    console.log(`Bouton "Voir" cliqué pour la demande avec l'ID : ${id}`);
+    this.router.navigate(['/demandes', id]);
   }
 }

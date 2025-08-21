@@ -68,10 +68,19 @@
           <option value="caissier">Caissier</option>
         </select>
 
+        <!-- ✅ Affichage conditionnel de l'upload d'image -->
+        <div *ngIf="newUser.role === 'rh'">
+            <label>Signature (scannée) :</label>
+            <input type="file" (change)="onFileSelected($event)" accept="image/png, image/jpeg">
+            <div *ngIf="signatureImageUrl" class="image-preview">
+                <img [src]="signatureImageUrl" alt="Aperçu de la signature" style="max-width: 150px; border: 1px solid #ccc; margin-top: 10px;">
+            </div>
+        </div>
+
         <label>Journaux :</label>
         <div class="checkbox-group">
           <div *ngFor="let journal of journals">
-            <input type="checkbox" 
+            <input type="checkbox"
                    [checked]="newUser.journalIds.includes(journal.id_journal)"
                    (change)="onJournalChange($event, journal.id_journal)">
             {{ journal.nom_journal }}

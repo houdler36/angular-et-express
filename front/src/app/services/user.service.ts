@@ -1,7 +1,7 @@
-// Fichier : src/app/services/user.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+const token = localStorage.getItem('accessToken') || '';
 
 // URL de base de l'API
 const API_URL = 'http://localhost:8081/api/';
@@ -9,7 +9,9 @@ const API_URL = 'http://localhost:8081/api/';
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' })
 };
-
+const headers = new HttpHeaders({
+  'Authorization': `Bearer ${token}`
+});
 @Injectable({
   providedIn: 'root'
 })
@@ -51,4 +53,20 @@ export class UserService {
   getJournalsList(): Observable<any> {
     return this.http.get(API_URL + 'users/journals', httpOptions);
   }
+
+  /** Envoyer le fichier de signature */
+/** Envoyer le fichier de signature */
+uploadSignature(file: File): Observable<any> {
+  const formData = new FormData();
+  formData.append('signature', file, file.name);
+
+  const token = localStorage.getItem('accessToken') || '';
+
+  const headers = new HttpHeaders({
+    Authorization: `Bearer ${token}`
+  });
+
+  return this.http.post(API_URL + 'upload-signature', formData, { headers });
+}
+
 }
