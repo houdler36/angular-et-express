@@ -12,46 +12,53 @@ import { DemandeDetailComponent } from './Composante/user/demande-detail/demande
 
 // Composants de rôles spécifiques
 import { AdminDashboardComponent } from './Composante/admin/admin-dashboard/admin-dashboard.component';
+import { DafDashboardComponent } from './Composante/daf/daf-dashboard.component';
 
 // Composants RH
 import { RhDashboardComponent } from './Composante/rh/rh-dashboard/rh-dashboard.component';
 import { ValidationRhComponent } from './Composante/rh/validation-rh/validation-rh.component';
 
-// Service de garde d’authentification
+// Guard
 import { AuthGuardService } from './auth.guard';
 
 export const routes: Routes = [
-  // Routes publiques accessibles sans authentification
+  // Routes publiques
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
-  // Routes protégées (nécessitent authentification)
+  // Routes utilisateur connectés
+  { path: 'dashboard', component: DashboardUserComponent, canActivate: [AuthGuardService] },
+  { path: 'demandes', component: DemandeListComponent, canActivate: [AuthGuardService] },
+  { path: 'demandes/new', component: DemandeFormComponent, canActivate: [AuthGuardService] },
+  { path: 'demandes/edit/:id', component: DemandeFormComponent, canActivate: [AuthGuardService] },
+  { path: 'demandes/:id', component: DemandeDetailComponent, canActivate: [AuthGuardService] },
+
+  // Routes Admin
+  { path: 'admin', component: AdminDashboardComponent, canActivate: [AuthGuardService] },
+
+  // Routes RH
   {
-    path: '',
+    path: 'rh',
     canActivate: [AuthGuardService],
     children: [
-      { path: 'dashboard', component: DashboardUserComponent },
-      { path: 'admin', component: AdminDashboardComponent },
-
-      // Sous-routes RH, sécurisées avec canActivate aussi
-      {
-        path: 'rh',
-        canActivate: [AuthGuardService],
-        children: [
-          { path: 'dashboard', component: RhDashboardComponent },
-          { path: 'validation', component: ValidationRhComponent },
-          { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-        ],
-      },
-
-      { path: 'demandes', component: DemandeListComponent },
-      { path: 'demandes/new', component: DemandeFormComponent },
-      { path: 'demandes/edit/:id', component: DemandeFormComponent },
-      { path: 'demandes/:id', component: DemandeDetailComponent },
+      { path: 'dashboard', component: RhDashboardComponent },
+      { path: 'validation', component: ValidationRhComponent },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
 
-  // Route joker pour toutes les autres URL non reconnues
+  // Routes DAF
+  // Routes DAF corrigées
+{
+  path: 'daf',
+  children: [
+    { path: 'dashboard', component: DafDashboardComponent, canActivate: [AuthGuardService] },
+    { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  ],
+},
+
+
+  // Route joker
   { path: '**', redirectTo: 'login' },
 ];

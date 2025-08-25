@@ -18,6 +18,11 @@ router.get('/finalisees', verifyToken, demandeController.getDemandesFinalisees);
 // Statistiques générales des demandes
 router.get('/stats/general', verifyToken, demandeController.getDemandeStats);
 
+// ✅ NOUVELLE ROUTE POUR LE DAF
+// Récupérer les demandes de plus de 70000 à valider par le DAF
+router.get('/daf-a-valider', verifyToken, demandeController.getDemandesDAFAValider);
+
+
 // ─── Routes par ID ────────────────────────────────────────
 
 // Création d'une demande

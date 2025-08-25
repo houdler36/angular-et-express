@@ -1,4 +1,3 @@
-//auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
@@ -13,80 +12,63 @@ export class AuthService {
 
   constructor(private http: HttpClient, private tokenStorage: TokenStorageService) { }
 
+  // ------------------------- LOGIN -------------------------
   login(username: string, password: string): Observable<any> {
-    console.log(`[AuthService] Attempting API login for ${username}`);
-    return this.http.post<any>(`${this.apiUrl}/signin`, { username, password }).pipe(
-      tap(response => {
-        console.log("[AuthService] API login response received.");
-      }),
-      catchError(this.handleError)
-    );
-  }
+  return this.http.post<any>(`${this.apiUrl}/signin`, { username, password }).pipe(
+    tap(response => {
+      console.log('Login response:', response); // ← AJOUTE ICI
+      if (response.accessToken) this.tokenStorage.saveToken(response.accessToken);
+      if (response.user) this.tokenStorage.saveUser(response.user);
+      console.log('User stored in session:', this.tokenStorage.getUser()); // ← AJOUTE ICI
+    }),
+    catchError(this.handleError)
+  );
+}
 
+
+  // ------------------------- REGISTER -------------------------
   register(username: string, email: string, password: string): Observable<any> {
-    console.log(`[AuthService] Attempting API registration for ${username}`);
     return this.http.post<any>(`${this.apiUrl}/signup`, { username, email, password }).pipe(
-      tap(response => {
-        console.log("[AuthService] API registration response received.");
-      }),
       catchError(this.handleError)
     );
   }
 
+  // ------------------------- AUTH CHECK -------------------------
   isLoggedIn(): boolean {
     const token = this.tokenStorage.getToken();
     const user = this.tokenStorage.getUser();
-    return !!token && !!user && Object.keys(user).length > 0 && user.id != null;
+    return !!token && !!user && !!user.role;
   }
 
-  /**
-   * Obtient l'ID de l'utilisateur à partir du stockage de jetons.
-   * @returns L'ID de l'utilisateur (nombre) ou null si l'utilisateur n'est pas connecté.
-   */
-  getUserId(): number | null {
-    const user = this.tokenStorage.getUser();
-    if (user && user.id) {
-      return user.id;
-    }
-    return null;
-  }
+  // ------------------------- USER INFO -------------------------
   getCurrentUser(): any {
-  return this.tokenStorage.getUser();
-}
+    return this.tokenStorage.getUser();
+  }
 
-  /**
-   * Obtient le rôle de l'utilisateur connecté.
-   * @returns Le rôle de l'utilisateur (chaîne de caractères en minuscules) ou null.
-   */
   getUserRole(): string | null {
     const user = this.tokenStorage.getUser();
-    if (user && user.role) {
-      return user.role.toLowerCase();
-    }
-    return null;
+    return user?.role?.toLowerCase() || null;
   }
 
+  getUserId(): number | null {
+    const user = this.tokenStorage.getUser();
+    return user?.id || null;
+  }
+
+  // ------------------------- LOGOUT -------------------------
   logout(): void {
     this.tokenStorage.signOut();
-    console.log("[AuthService] User logged out. Storage cleared.");
   }
 
-  /**
-   * Gère les erreurs HTTP.
-   * @param error L'erreur HTTP à traiter.
-   * @returns Un Observable qui lève une erreur.
-   */
+  // ------------------------- ERROR HANDLER -------------------------
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'Une erreur inconnue est survenue.';
     if (error.error instanceof ErrorEvent) {
       errorMessage = `Erreur: ${error.error.message}`;
     } else {
-      errorMessage = `Code d'erreur du serveur: ${error.status}\nMessage: ${error.error?.message || error.statusText}`;
-      if (error.error && error.error.message) {
-        errorMessage = error.error.message;
-      }
+      errorMessage = `Erreur serveur ${error.status}: ${error.error?.message || error.statusText}`;
     }
-    console.error(`[AuthService] HTTP Error: ${errorMessage}`, error);
+    console.error('[AuthService] ', errorMessage);
     return throwError(() => new Error(errorMessage));
   }
 }

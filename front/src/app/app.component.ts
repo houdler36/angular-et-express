@@ -28,13 +28,15 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     console.log("[AppComponent] ngOnInit called.");
     this.userSubscription = this.tokenStorageService.currentUser.subscribe(user => {
-      this.currentUser = user;
-      this.isLoggedIn = !!user && !!user.accessToken;
-      console.log("[AppComponent] User state updated via subscription:", this.isLoggedIn, this.currentUser);
-    });
+   this.currentUser = user;
+   this.isLoggedIn = !!user && !!user.accessToken;
+   console.log("[AppComponent] User state updated via subscription:", this.isLoggedIn, this.currentUser);
+});
 
-    this.currentUser = this.tokenStorageService.getUser();
-    this.isLoggedIn = this.tokenStorageService.isLoggedIn();
+
+   this.currentUser = this.tokenStorageService.getUser();
+this.isLoggedIn = this.tokenStorageService.isLoggedIn();
+
     console.log("[AppComponent] Initial user state:", this.isLoggedIn, this.currentUser);
   }
 
@@ -49,6 +51,7 @@ export class AppComponent implements OnInit, OnDestroy {
   logout(): void {
     console.log("[AppComponent] Logging out...");
     this.authService.logout();
-    this.router.navigate(['/login']);
+this.router.navigate(['/login']);
+
   }
 }

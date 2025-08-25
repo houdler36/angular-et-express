@@ -69,7 +69,7 @@
         </select>
 
         <!-- ✅ Affichage conditionnel de l'upload d'image -->
-        <div *ngIf="newUser.role === 'rh'">
+        <div *ngIf="newUser.role === 'rh' || newUser.role === 'daf'">
             <label>Signature (scannée) :</label>
             <input type="file" (change)="onFileSelected($event)" accept="image/png, image/jpeg">
             <div *ngIf="signatureImageUrl" class="image-preview">

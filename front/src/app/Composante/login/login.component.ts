@@ -94,8 +94,9 @@ export class LoginComponent implements OnInit {
     } else if (roles.includes('rh')) {
       targetRoute = '/rh/dashboard';
     } else if (roles.includes('daf')) {
-      targetRoute = '/daf-dashboard';
-    } else if (roles.includes('caissier')) {
+  targetRoute = '/daf/dashboard';
+}
+ else if (roles.includes('caissier')) {
       targetRoute = '/caissier-dashboard';
     }
 

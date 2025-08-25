@@ -1,111 +1,82 @@
 /* Fichier: src/app/Composante/admin/admin-dashboard/admin-dashboard.component.css */
-
 .flex-container {
   display: flex;
   min-height: 100vh;
-  background-color: #bfc3cb;
-  font-family: 'Inter', sans-serif; /* Utilisation d'une police moderne */
+  background-color: #f5f7fa;
+  font-family: 'Inter', sans-serif;
   color: #1f2937;
-  
-  
 }
-/* Fichier: src/app/Composante/admin/admin-dashboard/admin-dashboard.component.css */
 
 /* -------------------- Styles du Bouton "Retour en haut" -------------------- */
 .scroll-to-top {
-  /* Positionnement et dimensions du bouton */
   position: fixed;
   bottom: 20px;
   right: 20px;
   z-index: 1000;
-  width: 50px; /* Taille légèrement plus grande pour un meilleur confort */
+  width: 50px;
   height: 50px;
   border-radius: 50%;
-
-  /* Apparence visuelle du bouton */
-  background-color: #007bff; /* Un bleu vif et professionnel */
-  color: white; /* Couleur du texte/flèche */
+  background-color: #007bff;
+  color: white;
   border: none;
   cursor: pointer;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-
-  /* Alignement de la flèche au centre */
   display: flex;
   justify-content: center;
   align-items: center;
-
-  /* Animation au survol */
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 }
 
-/* Effet au survol du bouton */
 .scroll-to-top:hover {
-  transform: translateY(-5px); /* Monte légèrement */
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée */
+  transform: translateY(-5px);
+  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* ---------------------- Styles de la Flèche SVG ----------------------- */
 .scroll-to-top svg {
-  /* Dimensions et épaisseur de la flèche */
   width: 24px;
   height: 24px;
-  stroke: white; /* La flèche hérite de la couleur du bouton */
-  stroke-width: 2; /* Épaisseur de la ligne de la flèche */
-
-  /* Animation sur la flèche elle-même */
+  stroke: white;
+  stroke-width: 2;
   transition: transform 0.3s ease-in-out;
 }
 
-/* Effet au survol de la flèche (mouvement subtil) */
 .scroll-to-top:hover svg {
-  transform: translateY(2px); /* La flèche descend un peu, créant un effet de rebond */
+  transform: translateY(2px);
 }
-/* Styles améliorés pour la barre latérale */
+
+/* -------------------- Styles de la barre latérale -------------------- */
 .sidebar {
-  /* Garde la largeur */
   width: 280px;
-
-  /* Dégradé de couleurs plus élégantes */
   background: linear-gradient(180deg, #f0f2f5, #e3e9ef);
-  
-  /* Maintient le rembourrage */
   padding: 24px;
-  
-  /* Ajout de coins légèrement arrondis pour un look moderne */
   border-radius: 8px;
-
-  /* Ombre plus subtile et professionnelle */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-
   display: flex;
   flex-direction: column;
-
-  /* Garde la transition */
   transition: width 0.3s ease, box-shadow 0.3s ease, border-radius 0.3s ease;
 }
 
-/* Styles pour le conteneur de l'en-tête de la barre latérale */
 .header-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  margin-bottom: 40px; /* Marge augmentée pour l'espacement */
+  margin-bottom: 40px;
   padding-bottom: 20px;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .header-logo {
-  width: 70px; /* Taille légèrement augmentée pour le logo */
+  width: 70px;
   height: auto;
   border-radius: 50%;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Ombre plus visible */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .header-title {
   font-size: 13px;
   font-weight: 500;
-  color: #1f2937; /* Couleur de texte plus foncée */
+  color: #1f2937;
   margin-top: 15px;
   line-height: 1.2;
 }
@@ -119,28 +90,27 @@
   align-items: center;
   padding: 16px 20px;
   margin-bottom: 10px;
-  border-radius: 12px; /* Coins plus arrondis */
+  border-radius: 12px;
   color: #4b5563;
   text-decoration: none;
   font-weight: 500;
-  transition: all 0.3s ease; /* Transition pour les effets de survol */
+  transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .sidebar a:hover {
-  background-color: #eef2ff; /* Couleur de survol plus claire */
+  background-color: #eef2ff;
   color: #4338ca;
-  transform: translateX(5px); /* Déplacement subtil au survol */
+  transform: translateX(5px);
 }
 
-/* Style pour le lien actif */
 .sidebar a.active {
   background-color: #4f46e5;
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3); /* Ombre pour l'état actif */
-  border-left: 5px solid #3b82f6; /* Marqueur visuel de la page active */
-  transform: translateX(0); /* Annuler la transformation de survol */
+  box-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+  border-left: 5px solid #3b82f6;
+  transform: translateX(0);
 }
 
 .sidebar a.active svg {
@@ -152,46 +122,187 @@
   transition: all 0.3s ease;
 }
 
+/* -------------------- Styles du contenu principal -------------------- */
 .main-content {
   flex-grow: 1;
   padding: 32px;
   overflow-y: auto;
+  background-color: #f5f7fa;
 }
 
 .card {
   background-color: #ffffff;
   padding: 32px;
   border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 0.5s ease-out;
+  transition: all 0.3s ease;
 }
 
+.card:hover {
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.15);
+}
+
+/* -------------------- Animations -------------------- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes count {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* -------------------- Grille de statistiques améliorée -------------------- */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 24px;
-  margin-top: 24px;
+  margin-top: 32px;
 }
 
 .stat-card {
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  background: linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%);
+  border-radius: 16px;
   padding: 24px;
   text-align: center;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+/* Délais d'animation différents pour chaque carte */
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+.stat-card:nth-child(5) { animation-delay: 0.5s; }
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #4f46e5, #3b82f6);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card:hover::before {
+  transform: scaleX(1);
 }
 
 .stat-card h3 {
   font-size: 16px;
   font-weight: 600;
   color: #6b7280;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .stat-card .stat-number {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 800;
   color: #312e81;
+  margin: 0;
+  transition: all 0.3s ease;
+  animation: count 1s ease-out;
+}
+
+.stat-card:hover .stat-number {
+  color: #4f46e5;
+  animation: pulse 1s;
+}
+
+/* Icônes pour les cartes de statistiques */
+.stat-card::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  width: 60px;
+  height: 60px;
+  opacity: 0.1;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+/* Icônes différentes selon le type de statistique */
+.stat-card:nth-child(1)::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='9' cy='7' r='4'/%3E%3Cpath d='M22 21v-2a4 4 0 0 0-3-3.87'/%3E%3Cpath d='M16 3.13a4 4 0 0 1 0 7.75'/%3E%3C/svg%3E");
+}
+
+.stat-card:nth-child(2)::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='7' width='20' height='14' rx='2' ry='2'/%3E%3Cpath d='M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16'/%3E%3C/svg%3E");
+}
+
+.stat-card:nth-child(3)::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19.5A2.5 2.5 0 0 1 6.5 17H20'/%3E%3Cpath d='M6.5 2H20v20h-13.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z'/%3E%3C/svg%3E");
+}
+
+.stat-card:nth-child(4)::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='12' y1='1' x2='12' y2='23'/%3E%3Cpath d='M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6'/%3E%3C/svg%3E");
+}
+
+.stat-card:nth-child(5)::after {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3Cline x1='16' y1='13' x2='8' y2='13'/%3E%3Cline x1='16' y1='17' x2='8' y2='17'/%3E%3Cpolyline points='10 9 9 9 8 9'/%3E%3C/svg%3E");
+}
+
+/* Titre principal */
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 10px;
+  position: relative;
+  padding-bottom: 15px;
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #4f46e5, #3b82f6);
+  border-radius: 2px;
+}
+
+/* -------------------- Responsive design -------------------- */
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
@@ -221,8 +332,39 @@
   .sidebar a svg {
     margin-right: 0;
   }
+  
+  .main-content {
+    padding: 16px;
+  }
+  
+  .card {
+    padding: 24px 16px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  h1 {
+    font-size: 24px;
+  }
+  
+  .stat-card .stat-number {
+    font-size: 30px;
+  }
 }
-/* Fichier: src/app/Composante/admin/admin-dashboard/admin-dashboard.component.css */
 
-/* ... (Vos styles existants pour .flex-container, .sidebar, etc.) ... */
-
+@media (max-width: 480px) {
+  h1 {
+    font-size: 22px;
+  }
+  
+  .stat-card {
+    padding: 20px 16px;
+  }
+  
+  .stat-card .stat-number {
+    font-size: 28px;
+  }
+}

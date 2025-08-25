@@ -48,6 +48,7 @@ const journalRoutes = require('./app/routes/journal.routes');
 const journalValiderRoutes = require('./app/routes/journalValider.routes');
 const uploadRoutes = require('./app/routes/upload.routes');
 const path = require('path');
+const statsRoutes = require('./app/routes/stats.routes');
 
 // Servir le dossier public/uploads pour les fichiers uploadés
 app.use('/uploads', (req, res, next) => {
@@ -69,7 +70,7 @@ app.use('/api/journals', journalRoutes);
 app.use('/api', journalValiderRoutes);
 app.use('/api/personnes', personneRoutes);
 app.use('/api', uploadRoutes);
-
+app.use('/api/stats', statsRoutes);
 /* ======================
    DB + INIT
 ====================== */

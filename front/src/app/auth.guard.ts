@@ -1,61 +1,37 @@
 import { Injectable, inject } from '@angular/core';
-import {
-  CanActivateFn,
-  Router,
-  ActivatedRouteSnapshot,
-  RouterStateSnapshot
-} from '@angular/router';
-import { AuthService } from './services/auth.service';
+import { CanActivateFn, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { TokenStorageService } from './services/token-storage.service';
 
-export const AuthGuardService: CanActivateFn = (
-  route: ActivatedRouteSnapshot,
-  state: RouterStateSnapshot
-) => {
-  const authService = inject(AuthService);
+export const AuthGuardService: CanActivateFn = (route: ActivatedRouteSnapshot, state: RouterStateSnapshot) => {
+  const tokenStorage = inject(TokenStorageService);
   const router = inject(Router);
 
-  // Vérifie si l'utilisateur est connecté
-  const isUserLoggedIn = authService.isLoggedIn();
+  const user = tokenStorage.getUser();           // <- récupère directement le user stocké
+  const userRole = user?.role?.toLowerCase();
 
-  // Si l'utilisateur n'est pas connecté
-  if (!isUserLoggedIn) {
+  // Non connecté → redirige vers login
+  if (!user) {
     if (!state.url.includes('/login') && !state.url.includes('/register')) {
       router.navigate(['/login']);
       return false;
     }
-    return true; // autorise accès à login et register
+    return true;
   }
 
-  // Si l'utilisateur est connecté
-  // Bloque accès à login et register
+  // Connecté et tente d’aller sur login/register → redirection selon rôle
   if (state.url.includes('/login') || state.url.includes('/register')) {
-    router.navigate(['/dashboard']);
+    if (userRole === 'daf') router.navigate(['/daf/dashboard']);
+    else if (userRole === 'rh') router.navigate(['/rh/dashboard']);
+    else if (userRole === 'admin') router.navigate(['/admin']);
+    else router.navigate(['/dashboard']);
     return false;
   }
 
-  // Récupère le rôle utilisateur en minuscules
-  const userRole = authService.getUserRole();
+  // Gestion des accès par rôle
+  if (state.url.includes('/admin')) return userRole === 'admin';
+  if (state.url.includes('/rh')) return userRole === 'rh';
+  if (state.url.includes('/daf')) return userRole === 'daf';
 
-  // Gestion accès pour admin
-  if (state.url.startsWith('/admin')) {
-    if (userRole === 'admin') {
-      return true;
-    } else {
-      router.navigate(['/dashboard']);
-      return false;
-    }
-  }
-
-  // Gestion accès pour RH
-  if (state.url.startsWith('/rh')) {
-    if (userRole === 'rh') {
-      return true;
-    } else {
-      router.navigate(['/dashboard']);
-      return false;
-    }
-  }
-
-  // Autorise toutes les autres routes si connecté
+  // Routes générales accessibles
   return true;
 };

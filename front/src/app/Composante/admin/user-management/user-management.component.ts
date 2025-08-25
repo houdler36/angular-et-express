@@ -134,14 +134,17 @@ private uploadSignature(): Promise<string | null> {
 }
 
 
-  async createOrUpdateUser() {
+ // ... (le reste du code du composant) ...
+
+async createOrUpdateUser() {
     if (!this.newUser.username || !this.newUser.email || (!this.isEditMode && !this.newUser.password) || !this.newUser.role) {
       this.setMessage('Veuillez remplir tous les champs obligatoires.', true);
       return;
     }
 
     let signatureUrl: string | null = null;
-    if (this.newUser.role === 'rh' && this.selectedFile) {
+    // La condition ici est mise à jour pour inclure le rôle 'daf'
+    if ((this.newUser.role === 'rh' || this.newUser.role === 'daf') && this.selectedFile) {
       try {
         signatureUrl = await this.uploadSignature();
       } catch (error) {
@@ -179,6 +182,7 @@ private uploadSignature(): Promise<string | null> {
     }
   }
 
+// ... (le reste du code du composant) ...
   deleteUser() {
     if (!this.selectedUser) return;
 

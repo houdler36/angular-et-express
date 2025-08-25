@@ -1,17 +1,29 @@
-// src/app/components/personne-crud/personne-crud.component.ts
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Personne } from '../../../models/personne';
 import { PersonneApiService } from '../../../services/Personne.service';
 import { HttpClientModule } from '@angular/common/http';
+import { trigger, transition, style, animate, query, stagger } from '@angular/animations';
 
 @Component({
   selector: 'app-personne',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, HttpClientModule],
   templateUrl: './personne.component.html',
-  styleUrls: ['./personne.component.css']
+  styleUrls: ['./personne.component.css'],
+  animations: [
+    trigger('tableAnimation', [
+      transition('* => *', [
+        query(':enter', [
+          style({ opacity: 0, transform: 'translateY(-10px)' }),
+          stagger('100ms', [
+            animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+          ])
+        ], { optional: true })
+      ])
+    ])
+  ]
 })
 export class PersonneCrudComponent implements OnInit {
   personnes: Personne[] = [];
@@ -31,6 +43,11 @@ export class PersonneCrudComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPersonnes();
+  }
+
+  // Fonction pour suivre les éléments par leur ID pour de meilleures performances
+  trackById(index: number, item: Personne): number {
+    return item.id!;
   }
 
   loadPersonnes(): void {
@@ -61,7 +78,13 @@ export class PersonneCrudComponent implements OnInit {
   }
 
   submitForm(): void {
-    if (this.personneForm.invalid) return;
+    if (this.personneForm.invalid) {
+      // Marquer tous les champs comme touchés pour afficher les erreurs
+      Object.keys(this.personneForm.controls).forEach(key => {
+        this.personneForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
 
     const data: Personne = this.personneForm.value;
 
