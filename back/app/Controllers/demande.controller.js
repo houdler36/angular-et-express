@@ -125,7 +125,7 @@ exports.getDemandesDAFAValider = async (req, res) => {
         if (!dafUser || dafUser.role !== 'daf') {
             return res.status(403).send({ message: "Seul le DAF peut accéder à cette ressource." });
         }
-
+cc
         // Étape 2: Récupérer les demandes qui correspondent aux critères:
         // - Montant total supérieur au seuil DAF.
         // - L'utilisateur (le DAF) est un validateur et son statut est 'en attente'.
@@ -167,7 +167,7 @@ exports.getDemandesDAFAValider = async (req, res) => {
         res.status(500).send({ message: err.message || "Erreur interne lors de la récupération des demandes DAF." });
     }
 };
-// --- Les autres fonctions (findOne, findAllUserDemandes, etc.) ne changent pas pour le moment ---
+// Fichier: demande.controller.js
 exports.findOne = async (req, res) => {
     const id = req.params.id;
     try {
@@ -177,6 +177,10 @@ exports.findOne = async (req, res) => {
                     model: db.user,
                     attributes: ['username'],
                     as: 'user'
+                },
+                {
+                    model: db.personne, // AJOUTEZ CETTE LIGNE
+                    as: 'responsible_pj' // ET CETTE LIGNE
                 },
                 {
                     model: db.journal,
@@ -205,7 +209,6 @@ exports.findOne = async (req, res) => {
         res.status(500).send({ message: "Erreur lors de la récupération de la demande." });
     }
 };
-
 exports.findAllUserDemandes = async (req, res) => {
     try {
         const userId = req.userId; // récupéré depuis le middleware d’authentification

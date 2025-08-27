@@ -1,6 +1,8 @@
+// Fichier: dashboard-user.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms'; // N'oubliez pas d'importer FormsModule pour ngModel
 import { Subscription } from 'rxjs';
 import { DemandeService } from '../../../services/demande.service';
 import { DemandeUpdateService } from '../../../services/demande-update.service';
@@ -13,17 +15,23 @@ import { Demande } from '../../../models/demande';
   standalone: true,
   imports: [
     RouterModule,
-    CommonModule
+    CommonModule,
+    FormsModule // Ajout de FormsModule pour la liaison bidirectionnelle ngModel
   ]
 })
 export class DashboardUserComponent implements OnInit, OnDestroy {
   totalDemandes: number = 0;
   demandesEnAttente: number = 0;
-  demandesApprouvees: number = 0; // Ces valeurs seront calculées
-  demandesRejetees: number = 0; // Ces valeurs seront calculées
+  demandesApprouvees: number = 0;
+  demandesRejetees: number = 0;
 
   demandeStats: { status: string, count: number }[] = [];
+  
+  // Nouveaux tableaux et propriétés pour le filtrage
+  allDemandes: Demande[] = [];
   lastDemandes: Demande[] = [];
+  searchTerm: string = '';
+
   errorMessage: string = '';
   private updateSubscription!: Subscription;
 
@@ -50,13 +58,23 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
   }
 
   loadDemandes(): void {
-    console.log("Chargement des dernières demandes...");
+    console.log("Chargement des demandes...");
     
-    // Affiche toutes les demandes, ou tu peux filtrer par statut si besoin
     this.demandeService.getAllDemandes().subscribe({
       next: (data: any[]) => {
-        this.lastDemandes = data;
-        console.log("Demandes chargées :", this.lastDemandes);
+        // Conversion de la chaîne de date en un objet Date pour le formatage dans le template
+        this.allDemandes = data.map(demande => ({
+          ...demande,
+          date: new Date(demande.date)
+        }));
+
+        this.lastDemandes = this.allDemandes; // Affiche toutes les demandes
+        console.log("Demandes chargées :", this.allDemandes);
+        
+        // Applique le filtre initial si l'utilisateur avait déjà un terme de recherche
+        if (this.searchTerm) {
+          this.applyFilter();
+        }
       },
       error: (err) => {
         this.errorMessage = 'Erreur lors du chargement des demandes : ' + err.message;
@@ -71,18 +89,10 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
       next: (stats) => {
         console.log("Statistiques reçues du backend :", stats);
         
-        // Correction de la logique d'agrégation pour correspondre au backend
         this.totalDemandes = stats.total;
         this.demandesEnAttente = stats.enAttente;
-        
-        // Comme le backend ne renvoie pas 'approuvees' et 'rejetees' séparément,
-        // on peut les calculer si on a d'autres informations, ou simplement
-        // afficher 'finalisees' si c'est ce que l'on souhaite.
-        // Si vous avez un endpoint pour 'approuvees' et 'rejetees' séparément,
-        // il serait mieux de le charger ici. Pour l'instant, je les ai définies à 0
-        // pour éviter les valeurs 'undefined'.
         this.demandesApprouvees = stats.finalisees;
-        this.demandesRejetees = 0; // Assumer que les demandes rejetées ne sont pas renvoyées.
+        this.demandesRejetees = 0;
         
         console.log("Statistiques agrégées :", {
           totalDemandes: this.totalDemandes,
@@ -96,5 +106,30 @@ export class DashboardUserComponent implements OnInit, OnDestroy {
         console.error(this.errorMessage, err);
       }
     });
+  }
+
+  /**
+   * Applique le filtre de recherche sur la liste des demandes.
+   */
+  applyFilter(): void {
+    const term = this.searchTerm.toLowerCase();
+    
+    if (!term) {
+      // Si le champ de recherche est vide, on affiche toutes les demandes
+      this.lastDemandes = this.allDemandes;
+    } else {
+      // Sinon, on filtre toutes les demandes
+      this.lastDemandes = this.allDemandes.filter(demande => {
+        // Formatage de la date pour la recherche
+        const dateFormatted = (demande.date as any) instanceof Date ?
+          `${(demande.date as any).getDate().toString().padStart(2, '0')}-${((demande.date as any).getMonth() + 1).toString().padStart(2, '0')}-${(demande.date as any).getFullYear()}` : '';
+
+        // On vérifie si le terme de recherche est inclus dans le type, le montant, le statut ou la date
+        return (demande.type && demande.type.toLowerCase().includes(term)) ||
+               (demande.montant_total && demande.montant_total.toString().toLowerCase().includes(term)) ||
+               (demande.status && demande.status.toLowerCase().includes(term)) ||
+               (dateFormatted.includes(term));
+      });
+    }
   }
 }

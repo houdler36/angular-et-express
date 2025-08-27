@@ -1,17 +1,25 @@
 <div class="app-container">
-  <!-- Barre de navigation -->
   <nav *ngIf="isLoggedIn" class="navbar">
     <div class="navbar-left">
-        <span class="welcome-message">
-            <i class="fas fa-user-circle"></i> Bienvenue {{currentUser?.username}} ({{currentUser?.role}})
-        </span>
+      <span class="welcome-message">
+        <i class="fas fa-user-circle"></i> Bienvenue {{currentUser?.username}} ({{currentUser?.role}})
+      </span>
     </div>
-    <button (click)="logout()" class="logout-btn">
-        <i class="fas fa-sign-out-alt"></i> Déconnexion
+    <button (click)="openLogoutDialog()" class="logout-btn">
+      <i class="fas fa-sign-out-alt"></i> Déconnexion
     </button>
-</nav>
-  <!-- Contenu principal -->
+  </nav>
   <main>
     <router-outlet></router-outlet>
   </main>
+</div>
+<div *ngIf="showLogoutDialog" class="dialog-overlay">
+  <div class="dialog-content">
+    <h2>Confirmer la déconnexion</h2>
+    <p>Êtes-vous sûr de vouloir vous déconnecter de votre compte ?</p>
+    <div class="dialog-actions">
+      <button class="btn btn-cancel" (click)="onLogoutConfirm(false)">Annuler</button>
+      <button class="btn btn-confirm" (click)="onLogoutConfirm(true)">Confirmer</button>
+    </div>
+  </div>
 </div>

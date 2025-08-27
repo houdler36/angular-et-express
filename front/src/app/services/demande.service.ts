@@ -1,5 +1,3 @@
-// demande.service.ts
-
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
@@ -111,11 +109,19 @@ export class DemandeService {
       catchError(this.handleError)
     );
   }
-  
-  // ✅ NOUVELLE FONCTION POUR LE DAF
+  
+  // ✅ NOUVELLE FONCTION POUR LE DAF
   getDemandesDAFAValider(): Observable<any[]> {
     const headers = this.getAuthHeaders();
     return this.http.get<any[]>(`${this.apiUrl}/daf-a-valider`, { headers: headers }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  // ⭐ NOUVELLE FONCTION POUR VALIDER PAR JOURNAL ⭐
+  getDemandesAValiderParJournal(journalId: number): Observable<any[]> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<any[]>(`${this.apiUrl}/avalider/journal/${journalId}`, { headers }).pipe(
       catchError(this.handleError)
     );
   }

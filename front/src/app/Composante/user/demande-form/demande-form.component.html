@@ -28,19 +28,18 @@
         </div>
 
         <div class="form-group">
-          <label for="motif" class="form-label" [class.text-red-500]="isInvalid('motif')">Motif</label>
-          <input type="text" id="motif" formControlName="motif" [class.invalid]="isInvalid('motif')" class="form-input" />
-          <div *ngIf="isInvalid('motif')" class="form-error">Le motif est requis.</div>
-        </div>
+  <label for="motif" class="form-label" [class.text-red-500]="isInvalid('description')">Motif</label>
+    <input type="text" id="motif" formControlName="description" [class.invalid]="isInvalid('description')" class="form-input" />
+  <div *ngIf="isInvalid('description')" class="form-error">Le motif est requis.</div>
+</div>
 
         <div class="form-group">
-          <label for="respPj" class="form-label" [class.text-red-500]="isInvalid('responsible_pj_id')">Responsable PJ</label>
+          <label for="respPj" class="form-label" [class.text-red-500]="isInvalid('resp_pj_id')">Responsable PJ</label>
           <select id="respPj" formControlName="resp_pj_id" [class.invalid]="isInvalid('resp_pj_id')" class="form-input">
-  <option [ngValue]="null" disabled>Sélectionner un responsable</option>
-  <option *ngFor="let p of personnes" [ngValue]="p.id">{{ p.nom }}</option>
-</select>
-
-          <div *ngIf="isInvalid('responsible_pj_id')" class="form-error">Le responsable est requis.</div>
+            <option [ngValue]="null" disabled>Sélectionner un responsable</option>
+            <option *ngFor="let p of personnes" [ngValue]="p.id">{{ p.nom }}</option>
+          </select>
+          <div *ngIf="isInvalid('resp_pj_id')" class="form-error">Le responsable est requis.</div>
         </div>
 
         <div class="form-group">
@@ -122,12 +121,12 @@
             </div>
 
             <div class="form-group" *ngIf="details.controls[i].get('nature')?.value === 'charge' || details.controls[i].get('nature')?.value === 'produits'">
-              <label [for]="'codeBudget-' + i" class="form-label" [class.text-red-500]="isDetailInvalid(i, 'code_budget')">Code Budget</label>
-              <select [id]="'codeBudget-' + i" formControlName="code_budget" [class.invalid]="isDetailInvalid(i, 'code_budget')" class="form-input">
+              <label [for]="'codeBudget-' + i" class="form-label" [class.text-red-500]="isDetailInvalid(i, 'budget_id')">Code Budget</label>
+              <select [id]="'codeBudget-' + i" formControlName="budget_id" [class.invalid]="isDetailInvalid(i, 'budget_id')" class="form-input">
                 <option [ngValue]="null" disabled>Sélectionner un code budget</option>
-                <option *ngFor="let b of budgetsParJournal" [ngValue]="b.code_budget">{{ b.code_budget }} - {{ b.description }}</option>
+                <option *ngFor="let b of budgetsParJournal" [ngValue]="b.id_budget">{{ b.code_budget }} - {{ b.description }}</option>
               </select>
-              <div *ngIf="isDetailInvalid(i, 'code_budget')" class="form-error">Le code budget est requis.</div>
+              <div *ngIf="isDetailInvalid(i, 'budget_id')" class="form-error">Le code budget est requis.</div>
             </div>
 
             <div class="form-group" *ngIf="details.controls[i].get('nature')?.value === 'charge' || details.controls[i].get('nature')?.value === 'produits'">
@@ -140,14 +139,14 @@
               <input type="number" formControlName="quarterly_budget" [disabled]="true" class="form-input" />
             </div>
 
-            <div class="form-group">
-  <label for="accountNumber-{{i}}" class="form-label" 
-         [class.text-red-500]="isDetailInvalid(i, 'account_number')">
+        <div class="form-group">
+  <label for="numeroCompte-{{i}}" class="form-label" 
+         [class.text-red-500]="isDetailInvalid(i, 'numero_compte')">
     Numéro de compte
   </label>
-  <input type="text" id="accountNumber-{{i}}" formControlName="account_number" 
-         [class.invalid]="isDetailInvalid(i, 'account_number')" class="form-input" />
-  <div *ngIf="isDetailInvalid(i, 'account_number')" class="form-error">
+  <input type="text" id="numeroCompte-{{i}}" formControlName="numero_compte" 
+         [class.invalid]="isDetailInvalid(i, 'numero_compte')" class="form-input" />
+  <div *ngIf="isDetailInvalid(i, 'numero_compte')" class="form-error">
     Le numéro de compte est requis.
   </div>
 </div>

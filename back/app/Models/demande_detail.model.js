@@ -32,6 +32,14 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: false,
             defaultValue: 'non',
         },
+        nif: {
+            type: Sequelize.STRING,
+            allowNull: true,
+        },
+        stat: {
+            type: Sequelize.STRING,
+            allowNull: true,
+        },
         numero_compte: {
             type: Sequelize.STRING,
             allowNull: true,

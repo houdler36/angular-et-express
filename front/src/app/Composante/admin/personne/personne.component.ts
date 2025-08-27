@@ -13,12 +13,39 @@ import { trigger, transition, style, animate, query, stagger } from '@angular/an
   templateUrl: './personne.component.html',
   styleUrls: ['./personne.component.css'],
   animations: [
-    trigger('tableAnimation', [
+    trigger('modalAnimation', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(-50px) scale(0.95)' }),
+        animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0) scale(1)' }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', style({ opacity: 0, transform: 'translateY(-50px) scale(0.95)' }))
+      ])
+    ]),
+    trigger('toastAnimation', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateY(-30px)' }),
+        animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ]),
+      transition(':leave', [
+        animate('250ms ease-in', style({ opacity: 0, transform: 'translateY(-30px)' }))
+      ])
+    ]),
+    trigger('rowAnimation', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateX(-20px)' }),
+        animate('300ms ease-out', style({ opacity: 1, transform: 'translateX(0)' }))
+      ]),
       transition('* => *', [
+        query(':leave', [
+          stagger(100, [
+            animate('200ms', style({ opacity: 0, transform: 'translateX(100%)' }))
+          ])
+        ], { optional: true }),
         query(':enter', [
-          style({ opacity: 0, transform: 'translateY(-10px)' }),
-          stagger('100ms', [
-            animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+          style({ opacity: 0, transform: 'translateX(-20px)' }),
+          stagger(100, [
+            animate('300ms ease-out', style({ opacity: 1, transform: 'translateX(0)' }))
           ])
         ], { optional: true })
       ])
@@ -45,7 +72,6 @@ export class PersonneCrudComponent implements OnInit {
     this.loadPersonnes();
   }
 
-  // Fonction pour suivre les éléments par leur ID pour de meilleures performances
   trackById(index: number, item: Personne): number {
     return item.id!;
   }
@@ -78,13 +104,7 @@ export class PersonneCrudComponent implements OnInit {
   }
 
   submitForm(): void {
-    if (this.personneForm.invalid) {
-      // Marquer tous les champs comme touchés pour afficher les erreurs
-      Object.keys(this.personneForm.controls).forEach(key => {
-        this.personneForm.get(key)?.markAsTouched();
-      });
-      return;
-    }
+    if (this.personneForm.invalid) return;
 
     const data: Personne = this.personneForm.value;
 
