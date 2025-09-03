@@ -1,0 +1,45 @@
+<div class="rapport-container">
+  <h2>Rapport des demandes approuvées</h2>
+
+  <div class="filters">
+    <label for="journal">Sélectionner le journal:</label>
+    <select id="journal" [(ngModel)]="selectedJournalId">
+      <option [ngValue]="null">-- Choisir un journal --</option>
+      <option *ngFor="let journal of journals" [ngValue]="journal.id_journal">
+        {{ journal.nom_journal }}
+      </option>
+    </select>
+    <button (click)="loadRapport()" [disabled]="!selectedJournalId">Afficher</button>
+  </div>
+
+  <div *ngIf="loading" class="loading">Chargement...</div>
+  <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+
+  <table *ngIf="demandes.length > 0" class="rapport-table">
+    <thead>
+      <tr>
+        <th>Date Approuvé</th>
+        <th>Numéro Journal</th>
+        <th>Motif</th>
+        <th>Encaissement</th>
+        <th>Décaissement</th>
+        <th>Solde Progressif</th>
+      </tr>
+    </thead>
+    <tbody>
+  <tr *ngFor="let demande of demandes">
+    <td>{{ formatDateTime(demande.date_approuve) }}</td>
+    <td>{{ demande.numero_journal_approuve || '-' }}</td>
+    <td>{{ demande.motif || demande.description }}</td>
+    <td>{{ (demande.type === 'Recette' || demande.type === 'ERD') ? formatCurrency(demande.montant_total) : '-' }}</td>
+    <td>{{ demande.type === 'DED' ? formatCurrency(demande.montant_total) : '-' }}</td>
+    <td>{{ formatCurrency(demande.soldeProgressif) }}</td>
+  </tr>
+</tbody>
+
+  </table>
+
+  <div *ngIf="demandes.length === 0 && !loading" class="no-data">
+    Aucune demande approuvée pour ce journal.
+  </div>
+</div>

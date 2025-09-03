@@ -1,249 +1,395 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { DemandeService } from '../../../services/demande.service';
 import { TokenStorageService } from '../../../services/token-storage.service';
 
+/**
+ * Composant pour la création d'une demande (DED, Recette, ERD).
+ * Il gère la logique du formulaire, les validations et l'interaction avec les services.
+ */
 @Component({
-  selector: 'app-demande-form',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './demande-form.component.html',
-  styleUrls: ['./demande-form.component.css']
+  selector: 'app-demande-form',
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, DatePipe, DecimalPipe],
+  templateUrl: './demande-form.component.html',
+  styleUrls: ['./demande-form.component.css']
 })
 export class DemandeFormComponent implements OnInit {
-  demandeForm: FormGroup;
-  totalAmount = 0;
-  successMessage: string | null = null;
-  errorMessage: string | null = null;
-  showModal = false;
+  // Le groupe de formulaire principal
+  demandeForm: FormGroup;
+  // Montant total calculé à partir des détails
+  totalAmount = 0;
+  // Messages pour le modal de succès ou d'erreur
+  successMessage: string | null = null;
+  errorMessage: string | null = null;
+  // Contrôle l'affichage du modal
+  showModal = false;
+  // Données du récapitulatif pour affichage dans le modal
+  recapData: any;
+  // ID du journal actuellement sélectionné pour éviter les rechargements inutiles
+  private _journalId: number | null = null;
 
-  journals: any[] = [];
-  personnes: any[] = [];
-  budgetsParJournal: any[] = [];
-  currentUserId: number | null = null;
+  // Données pour les listes déroulantes (simulées ici, à remplacer par un service réel)
+  journals: any[] = [];
+  personnes: any[] = [];
+  budgetsParJournal: any[] = [];
+  currentUserId: number | null = null;
 
-  constructor(
-    private fb: FormBuilder,
-    private demandeService: DemandeService,
-    private tokenStorageService: TokenStorageService
-  ) {
-    this.demandeForm = this.fb.group({
-      type: ['DED'],
-      date: [new Date().toISOString().substring(0, 10), Validators.required],
-      journal_id: [null, Validators.required],
-      description: ['', Validators.required], // <-- CORRECTION ICI
-      resp_pj_id: [null, Validators.required],
-      pj_status: ['oui'],
-      expected_justification_date: [null],
-      details: this.fb.array([this.createDetail()])
-    });
-  }
+  constructor(
+    private fb: FormBuilder,
+    private demandeService: DemandeService,
+    private tokenStorageService: TokenStorageService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {
+    // Initialisation du formulaire avec des valeurs par défaut et des validateurs
+    this.demandeForm = this.fb.group({
+      type: ['DED'], // Type de demande par défaut
+      date: [new Date().toISOString().substring(0, 10), Validators.required],
+      journal_id: [null, Validators.required],
+      description: ['', Validators.required],
+      resp_pj_id: [null, Validators.required],
+      pj_status: ['oui'],
+      expected_justification_date: [null], // Validé conditionnellement
+      details: this.fb.array([this.createDetail()]), // Crée le premier groupe de détails
+      dedId: [null] // ID de la DED d'origine (pour les ERD)
+    });
+  }
 
-  ngOnInit(): void {
-    const user = this.tokenStorageService.getUser();
-    if (user && user.id) {
-      this.currentUserId = user.id;
-    }
+  ngOnInit(): void {
+    // Récupérer l'ID de l'utilisateur actuel
+    const user = this.tokenStorageService.getUser();
+    if (user && user.id) this.currentUserId = user.id;
 
-    this.demandeService.getJournals().subscribe({
-      next: (data: any[]) => this.journals = data,
-      error: err => console.error('Erreur lors de la récupération des journaux', err)
-    });
+    // S'abonner aux query params pour récupérer les données de la demande précédente (si une ERD est créée)
+    this.route.queryParams.subscribe(params => {
+      // PatchValue met à jour les champs du formulaire avec les valeurs reçues
+      if (params['type']) {
+        this.demandeForm.patchValue({ type: params['type'] });
+        // Si c'est un ERD, désactiver le budget_id du premier détail
+        if (params['type'] === 'ERD' && this.details.length > 0) {
+          const firstDetail = this.details.at(0);
+          firstDetail.get('budget_id')?.disable();
+          firstDetail.get('budget_id')?.clearValidators();
+          firstDetail.get('budget_id')?.updateValueAndValidity();
+        }
+      }
+      if (params['description']) this.demandeForm.patchValue({ description: params['description'] });
+      if (params['journalId']) {
+        const journalId = +params['journalId'];
+        this.demandeForm.patchValue({ journal_id: journalId });
+        this._journalId = journalId;
+      }
+      if (params['respPJId']) this.demandeForm.patchValue({ resp_pj_id: +params['respPJId'] });
 
-    this.demandeService.getPersonnes().subscribe({
-      next: (data: any[]) => this.personnes = data,
-      error: err => console.error('Erreur lors de la récupération des personnes', err)
-    });
+      if (params['montant']) {
+        const montant = parseFloat(params['montant']);
+        if (this.details.length === 0) {
+          this.addDetail();
+        }
+        this.details.at(0).patchValue({ amount: montant });
+        for (let i = 1; i < this.details.length; i++) {
+          this.details.at(i).patchValue({ amount: 0 });
+        }
+        setTimeout(() => this.calculateTotal(), 0);
+      }
+      if (params['dedId']) this.demandeForm.patchValue({ dedId: +params['dedId'] });
+    });
 
-    this.demandeForm.get('pj_status')?.valueChanges.subscribe(value => {
-      const control = this.demandeForm.get('expected_justification_date');
-      if (value === 'pas encore') {
-        control?.setValidators(Validators.required);
-      } else {
-        control?.clearValidators();
-        control?.setValue(null);
-      }
-      control?.updateValueAndValidity();
-    });
+    // Chargement des données pour les listes déroulantes
+    this.demandeService.getJournals().subscribe({
+      next: (data: any[]) => this.journals = data,
+      error: err => console.error('Erreur lors de la récupération des journaux', err)
+    });
 
-    this.demandeForm.get('details')?.valueChanges.subscribe(() => {
-      this.calculateTotal();
-    });
+    this.demandeService.getPersonnes().subscribe({
+      next: (data: any[]) => this.personnes = data,
+      error: err => console.error('Erreur lors de la récupération des personnes', err)
+    });
 
-    this.demandeForm.get('journal_id')?.valueChanges.subscribe(journalId => {
-      this.onJournalChange(journalId);
-    });
-  }
+    // Gère la validation du champ `expected_justification_date` en fonction du statut de la PJ
+    this.demandeForm.get('pj_status')?.valueChanges.subscribe(value => {
+      const control = this.demandeForm.get('expected_justification_date');
+      if (value === 'pas encore') {
+        control?.setValidators(Validators.required);
+      } else {
+        control?.clearValidators();
+        control?.setValue(null);
+      }
+      control?.updateValueAndValidity();
+    });
 
-  get details(): FormArray {
-    return this.demandeForm.get('details') as FormArray;
-  }
+    // Recalcule le montant total à chaque changement de valeur dans les détails
+    this.demandeForm.get('details')?.valueChanges.subscribe(() => this.calculateTotal());
 
-  createDetail(): FormGroup {
-    const detailFormGroup = this.fb.group({
-      nature: [null, Validators.required],
-      beneficiaire: ['', Validators.required],
-      nif_exists: ['non'],
-      nif: [''],
-      stat: [''],
-      libelle: ['', Validators.required],
-      amount: [0, [Validators.required, Validators.min(0.01)]],
-      numero_compte: [''],
-      budget_id: [null],
-      annual_budget: [{ value: 0, disabled: true }],
-      quarterly_budget: [{ value: 0, disabled: true }],
-    });
+    // Recharger les budgets quand le journal change
+    this.demandeForm.get('journal_id')?.valueChanges.subscribe(journalId => {
+      this.onJournalChange(journalId);
+    });
+  }
 
-    detailFormGroup.get('budget_id')?.valueChanges.subscribe(budgetId => {
-      const selectedBudget = this.budgetsParJournal.find(b => b.id_budget === budgetId);
-      if (selectedBudget) {
-        detailFormGroup.get('annual_budget')?.setValue(selectedBudget.budget_annuel);
-        detailFormGroup.get('quarterly_budget')?.setValue(selectedBudget.budget_trimestre_1);
-      } else {
-        detailFormGroup.get('annual_budget')?.setValue(0);
-        detailFormGroup.get('quarterly_budget')?.setValue(0);
-      }
-    });
+  // Permet d'accéder facilement au FormArray 'details'
+  get details(): FormArray {
+    return this.demandeForm.get('details') as FormArray;
+  }
 
-    detailFormGroup.get('nature')?.valueChanges.subscribe(nature => {
-      const budgetIdControl = detailFormGroup.get('budget_id');
-      const numeroCompteControl = detailFormGroup.get('numero_compte');
-      const annualBudgetControl = detailFormGroup.get('annual_budget');
-      const quarterlyBudgetControl = detailFormGroup.get('quarterly_budget');
+  /**
+   * Crée un nouveau groupe de formulaire pour un détail de la demande.
+   */
+  createDetail(): FormGroup {
+    const fg = this.fb.group({
+      nature: [null, Validators.required],
+      beneficiaire: ['', Validators.required],
+      nif_exists: ['non'],
+      nif: [''],
+      stat: [''],
+      libelle: ['', Validators.required],
+      amount: [0, [Validators.required, Validators.min(0.01)]],
+      numero_compte: [''],
+      budget_id: [null],
+      annual_budget: [{ value: 0, disabled: true }],
+      quarterly_budget: [{ value: 0, disabled: true }]
+    });
 
-      budgetIdControl?.clearValidators();
-      numeroCompteControl?.clearValidators();
-      budgetIdControl?.setValue(null);
-      numeroCompteControl?.setValue(null);
-      annualBudgetControl?.setValue(0);
-      quarterlyBudgetControl?.setValue(0);
+    // Gère la validation conditionnelle pour le NIF et le STAT
+    fg.get('nif_exists')?.valueChanges.subscribe(value => {
+      const nifControl = fg.get('nif');
+      const statControl = fg.get('stat');
+      if (value === 'oui') {
+        nifControl?.setValidators(Validators.required);
+        statControl?.setValidators(Validators.required);
+      } else {
+        nifControl?.clearValidators();
+        statControl?.clearValidators();
+        nifControl?.setValue('');
+        statControl?.setValue('');
+      }
+      nifControl?.updateValueAndValidity();
+    });
 
-      if (nature === 'charge' || nature === 'produits') {
-        budgetIdControl?.setValidators(Validators.required);
-      } else if (nature === 'appro' || nature === 'autre') {
-        numeroCompteControl?.setValidators(Validators.required);
-      }
-      budgetIdControl?.updateValueAndValidity();
-      numeroCompteControl?.updateValueAndValidity();
-    });
+    // Écouteur pour le changement de sélection du budget
+    fg.get('budget_id')?.valueChanges.subscribe(budgetId => {
+      const selectedBudget = this.budgetsParJournal.find(b => b.id_budget === budgetId);
+      if (selectedBudget) {
+        fg.patchValue({
+          annual_budget: selectedBudget.budget_annuel,
+          quarterly_budget: selectedBudget.budget_trimestriel
+        });
+      } else {
+        fg.patchValue({
+          annual_budget: 0,
+          quarterly_budget: 0
+        });
+      }
+    });
 
-    detailFormGroup.get('nif_exists')?.valueChanges.subscribe(value => {
-      const nifControl = detailFormGroup.get('nif');
-      const statControl = detailFormGroup.get('stat');
-      if (value === 'oui') {
-        nifControl?.setValidators(Validators.required);
-        statControl?.setValidators(Validators.required);
-      } else {
-        nifControl?.clearValidators();
-        statControl?.clearValidators();
-        nifControl?.setValue('');
-        statControl?.setValue('');
-      }
-      nifControl?.updateValueAndValidity();
-      statControl?.updateValueAndValidity();
-    });
+    return fg;
+  }
 
-    return detailFormGroup;
-  }
+  /**
+   * Ajoute un nouveau groupe de détail au FormArray.
+   */
+  addDetail(): void {
+    const newDetail = this.createDetail();
+    const newDetailIndex = this.details.length;
+    
+    this.details.push(newDetail);
 
-  addDetail(): void {
-    this.details.push(this.createDetail());
-  }
+    // Logique spécifique pour les ERD
+    if (this.demandeForm.get('type')?.value === 'ERD') {
+      const firstDetail = this.details.at(0);
+      
+      // Désactiver le budget pour le premier détail (index 0)
+      firstDetail.get('budget_id')?.disable();
 
-  removeDetail(index: number): void {
-    this.details.removeAt(index);
-  }
+      // Ajouter les validateurs et écouteurs uniquement pour les détails suivants (index > 0)
+      if (newDetailIndex > 0) {
+        newDetail.get('nature')?.valueChanges.subscribe(nature => {
+          const budgetControl = newDetail.get('budget_id');
+          if (nature === 'charge' || nature === 'produits') {
+            budgetControl?.enable();
+            budgetControl?.setValidators(Validators.required);
+          } else {
+            budgetControl?.disable();
+            budgetControl?.clearValidators();
+          }
+          budgetControl?.updateValueAndValidity();
+        });
+      }
+    }
+  }
 
-  calculateTotal(): void {
-    let total = 0;
-    this.details.controls.forEach(control => {
-      const value = control.get('amount')?.value;
-      if (value !== null && value !== undefined && !isNaN(value)) {
-        total += parseFloat(value);
-      }
-    });
-    this.totalAmount = total;
-  }
+  /**
+   * Supprime un groupe de détail du FormArray.
+   */
+  removeDetail(index: number): void {
+    this.details.removeAt(index);
+    this.calculateTotal();
+  }
 
-  isInvalid(controlName: string): boolean | undefined {
-    const control = this.demandeForm.get(controlName);
-    return control?.invalid && (control?.touched || control?.dirty);
-  }
+  /**
+   * Calcule le montant total de la demande.
+   */
+  calculateTotal(): void {
+    if (this.details.length === 0) {
+      this.totalAmount = 0;
+      return;
+    }
+    const typeDemande = this.demandeForm.get('type')?.value;
+    if (typeDemande === 'ERD') {
+      const first = parseFloat(this.details.at(0).get('amount')?.value) || 0;
+      let sumOthers = 0;
+      for (let i = 1; i < this.details.length; i++) {
+        sumOthers += parseFloat(this.details.at(i).get('amount')?.value) || 0;
+      }
+      this.totalAmount = first - sumOthers;
+    } else {
+      this.totalAmount = this.details.controls.reduce((acc, d) => acc + (parseFloat(d.get('amount')?.value) || 0), 0);
+    }
+  }
 
-  isDetailInvalid(index: number, controlName: string): boolean | undefined {
-    const detailGroup = this.details.at(index);
-    const control = detailGroup?.get(controlName);
-    return control?.invalid && (control?.touched || control?.dirty);
-  }
+  /**
+   * Construit un objet récapitulatif de la demande pour l'affichage.
+   */
+  getDemandeRecap(): any {
+    const recap: any = {
+      type: this.demandeForm.get('type')?.value,
+      date: this.demandeForm.get('date')?.value,
+      description: this.demandeForm.get('description')?.value,
+      journal: this.journals.find(j => j.id_journal === this.demandeForm.get('journal_id')?.value)?.nom_journal || 'N/A',
+      respPj: this.personnes.find(p => p.id === this.demandeForm.get('resp_pj_id')?.value)?.nom || 'N/A',
+      pjStatus: this.demandeForm.get('pj_status')?.value,
+      expectedJustificationDate: this.demandeForm.get('expected_justification_date')?.value,
+      details: this.details.value.map((d: any) => ({
+        nature: d.nature,
+        beneficiaire: d.beneficiaire,
+        libelle: d.libelle,
+        amount: d.amount,
+        budgetCode: this.budgetsParJournal.find(b => b.id_budget === d.budget_id)?.code_budget || 'N/A'
+      })),
+      totalAmount: this.totalAmount
+    };
+    return recap;
+  }
 
-  onJournalChange(journalId: number): void {
-    if (journalId) {
-      this.demandeService.getBudgetsByJournalId(journalId).subscribe({
-        next: (data: any[]) => {
-          this.budgetsParJournal = data;
-          this.details.clear();
-          this.addDetail();
-        },
-        error: err => {
-          console.error('Erreur lors de la récupération des budgets', err);
-          this.budgetsParJournal = [];
-        }
-      });
-    } else {
-      this.budgetsParJournal = [];
-    }
-  }
+  /**
+   * Vérifie si un contrôle du formulaire principal est invalide.
+   */
+  isInvalid(controlName: string): boolean | undefined {
+    const c = this.demandeForm.get(controlName);
+    return c?.invalid && (c?.touched || c?.dirty);
+  }
 
-  onSubmit(): void {
-    this.demandeForm.markAllAsTouched();
-    this.details.controls.forEach(detail => detail.markAllAsTouched());
+  /**
+   * Vérifie si un contrôle d'un détail est invalide.
+   */
+  isDetailInvalid(index: number, controlName: string): boolean | undefined {
+    const detail = this.details.at(index);
+    const c = detail?.get(controlName);
+    return c?.invalid && (c?.touched || c?.dirty);
+  }
 
-    if (this.demandeForm.valid) {
-      const dataToSend = {
-        userId: this.currentUserId,
-        ...this.demandeForm.value,
-        montant_total: this.totalAmount
-      };
+  /**
+   * Gère le changement de journal pour recharger les budgets correspondants.
+   */
+  onJournalChange(journalId: number): void {
+    if (this._journalId === journalId) {
+      return;
+    }
+    this._journalId = journalId;
 
-      console.log('Objet demande en cours d\'envoi:', dataToSend);
+    if (!journalId) {
+      this.budgetsParJournal = [];
+      return;
+    }
+    this.demandeService.getBudgetsByJournalId(journalId).subscribe({
+      next: data => {
+        this.budgetsParJournal = data;
+        // ⭐ Corrigé : Ne pas effacer les détails existants.
+        // this.details.clear();
+        // this.addDetail();
+      },
+      error: err => {
+        console.error('Erreur lors de la récupération des budgets', err);
+        this.budgetsParJournal = [];
+      }
+    });
+  }
 
-      this.demandeService.createDemande(dataToSend).subscribe({
-        next: () => {
-          this.successMessage = 'Demande soumise avec succès !';
-          this.errorMessage = null;
-          this.showModal = true;
-          this.resetForm();
-        },
-        error: err => {
-          console.error('Erreur lors de la soumission :', err);
-          this.errorMessage = err.message || 'Une erreur est survenue lors de la soumission.';
-          this.successMessage = null;
-          this.showModal = true;
-        }
-      });
-    } else {
-      this.errorMessage = 'Veuillez remplir correctement tous les champs obligatoires.';
-      this.successMessage = null;
-      this.showModal = true;
-      console.error('Formulaire invalide');
-    }
-  }
+  /**
+   * Gère la soumission du formulaire.
+   */
+  onSubmit(): void {
+    this.demandeForm.markAllAsTouched();
+    this.details.controls.forEach(d => d.markAllAsTouched());
 
-  resetForm(): void {
-    this.demandeForm.reset({
-      type: 'DED',
-      date: new Date().toISOString().substring(0, 10),
-      pj_status: 'oui',
-    });
-    this.details.clear();
-    this.addDetail();
-    this.totalAmount = 0;
-  }
+    const typeDemande = this.demandeForm.get('type')?.value;
+    let isFormValid = this.demandeForm.valid;
 
-  closeModal(): void {
-    this.showModal = false;
-    this.successMessage = null;
-    this.errorMessage = null;
-  }
+    if (typeDemande !== 'ERD') {
+      this.calculateTotal();
+      isFormValid = isFormValid && this.totalAmount === this.details.controls.reduce((acc, d) => acc + (parseFloat(d.get('amount')?.value) || 0), 0);
+    }
+    
+    if (isFormValid) {
+      const dataToSend = {
+        userId: this.currentUserId,
+        ...this.demandeForm.value,
+        montant_total: this.totalAmount
+      };
+
+      this.demandeService.createDemande(dataToSend).subscribe({
+        next: () => {
+          this.successMessage = 'Demande soumise avec succès !';
+          this.errorMessage = null;
+          this.showModal = true;
+
+          const dedId = this.demandeForm.get('dedId')?.value;
+          if (dedId) {
+            this.demandeService.updateDedStatus(dedId, 'oui').subscribe({
+              next: () => console.log(`Ancien DED ${dedId} mis à jour en pj_status = oui`),
+              error: (err: any) => console.error('Erreur lors de la mise à jour du DED', err)
+            });
+          }
+
+          this.resetForm();
+        },
+        error: (err: any) => {
+          this.errorMessage = err.message || 'Une erreur est survenue lors de la soumission.';
+          this.successMessage = null;
+          this.showModal = true;
+        }
+      });
+    } else {
+      this.errorMessage = 'Veuillez remplir correctement tous les champs obligatoires.';
+      this.successMessage = null;
+      this.showModal = true;
+    }
+  }
+
+  /**
+   * Réinitialise le formulaire à son état initial.
+   */
+  resetForm(): void {
+    this.demandeForm.reset({
+      type: 'DED',
+      date: new Date().toISOString().substring(0, 10),
+      pj_status: 'oui',
+      dedId: null
+    });
+    this.details.clear();
+    this.addDetail();
+    this.totalAmount = 0;
+  }
+
+  /**
+   * Ferme le modal d'information.
+   */
+  closeModal(): void {
+    this.showModal = false;
+    this.successMessage = null;
+    this.errorMessage = null;
+  }
 }

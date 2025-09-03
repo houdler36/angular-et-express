@@ -1,117 +1,84 @@
 <div class="flex-container">
+  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="header-container">
       <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
       <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
     </div>
+
     <nav>
       <a role="button" [class.active]="activePage === 'Dashboard'" (click)="setActivePage('Dashboard')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
+        <i class="fas fa-chart-line"></i>
         <span class="hidden-mobile">Tableau de Bord</span>
       </a>
       <a role="button" [class.active]="activePage === 'Users'" (click)="setActivePage('Users')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
-          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-        </svg>
+        <i class="fas fa-users"></i>
         <span class="hidden-mobile">Utilisateurs</span>
       </a>
       <a role="button" [class.active]="activePage === 'personne'" (click)="setActivePage('personne')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
-          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-        </svg>
+        <i class="fas fa-user-tie"></i>
         <span class="hidden-mobile">Responsable</span>
       </a>
+      <!-- Sidebar 
       <a role="button" [class.active]="activePage === 'Caissier'" (click)="setActivePage('Caissier')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
-          <line x1="12" y1="1" x2="12" y2="23"/>
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-        </svg>
+        <i class="fas fa-cash-register"></i>
         <span class="hidden-mobile">Caissier</span>
       </a>
       <a role="button" [class.active]="activePage === 'DAF'" (click)="setActivePage('DAF')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
-          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 0-2 0l-.15-.08a2 2 0 0 0-2.73 2.73l.08.15a2 2 0 0 0 0 2l-.25.43a2 2 0 0 1-1.73 1H2a2 2 0 0 0-2 2v.44a2 2 0 0 0 2 2h.18a2 2 0 0 1 1.73 1l.25.43a2 2 0 0 0 0 2l-.08.15a2 2 0 0 0 2.73 2.73l.15-.08a2 2 0 0 0 2 0l.43-.25a2 2 0 0 1 1.73-1h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 0 2 0l.15.08a2 2 0 0 0 2.73-2.73l-.08-.15a2 2 0 0 0 0-2l.25-.43a2 2 0 0 1 1.73-1h.18a2 2 0 0 0 2-2v-.44a2 2 0 0 0-2-2h-.18a2 2 0 0 1-1.73-1l-.25-.43a2 2 0 0 0 0-2l.08-.15a2 2 0 0 0-2.73-2.73l-.15.08a2 2 0 0 0-2 0l-.43.25a2 2 0 0 1-1.73 1V2z"/><circle cx="12" cy="12" r="3"/>
-        </svg>
+        <i class="fas fa-file-invoice-dollar"></i>
         <span class="hidden-mobile">DAF</span>
-      </a>
+      </a>-->
       <a role="button" [class.active]="activePage === 'Journal'" (click)="setActivePage('Journal')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-          <path d="M6.5 2H20v20h-13.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-        </svg>
+        <i class="fas fa-book"></i>
         <span class="hidden-mobile">Journal</span>
       </a>
       <a role="button" [class.active]="activePage === 'budget'" (click)="setActivePage('budget')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-3">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-          <path d="M6.5 2H20v20h-13.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-        </svg>
+        <i class="fas fa-wallet"></i>
         <span class="hidden-mobile">Budget</span>
       </a>
     </nav>
   </aside>
 
+  <!-- Contenu -->
   <main class="main-content">
     <div class="card">
       <div *ngIf="activePage === 'Dashboard'">
-        <h1>Tableau de Bord</h1>
-       <div class="stats-grid">
-  <div class="stat-card users">
-    <div class="stat-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-    </div>
-    <h3>Utilisateurs</h3>
-    <p class="stat-number">{{ userCount }}</p>
-  </div>
+        <h1>📊 Tableau de Bord</h1>
 
-  <div class="stat-card responsables">
-    <div class="stat-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-    </div>
-    <h3>Personnes/Responsables</h3>
-    <p class="stat-number">{{ personneCount }}</p>
-  </div>
+        <div class="stats-grid">
+          <div class="stat-card users">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <h3>Utilisateurs</h3>
+            <p class="stat-number">{{ userCount }}</p>
+          </div>
 
-  <div class="stat-card journaux">
-    <div class="stat-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20h-13.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-    </div>
-    <h3>Journaux</h3>
-    <p class="stat-number">{{ journalCount }}</p>
-  </div>
+          <div class="stat-card responsables">
+            <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
+            <h3>Responsables</h3>
+            <p class="stat-number">{{ personneCount }}</p>
+          </div>
 
-  <div class="stat-card budgets">
-    <div class="stat-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-    </div>
-    <h3>Budgets</h3>
-    <p class="stat-number">{{ budgetCount }}</p>
-  </div>
+          <div class="stat-card journaux">
+            <div class="stat-icon"><i class="fas fa-book"></i></div>
+            <h3>Journaux</h3>
+            <p class="stat-number">{{ journalCount }}</p>
+          </div>
 
-  <div class="stat-card demandes">
-    <div class="stat-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    </div>
-    <h3>Demandes</h3>
-    <p class="stat-number">{{ demandeCount }}</p>
-  </div>
-</div>
+          <div class="stat-card budgets">
+            <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+            <h3>Budgets</h3>
+            <p class="stat-number">{{ budgetCount }}</p>
+          </div>
 
+          <div class="stat-card demandes">
+            <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
+            <h3>Demandes</h3>
+            <p class="stat-number">{{ demandeCount }}</p>
+          </div>
+        </div>
       </div>
+
       <app-user-management *ngIf="activePage === 'Users'"></app-user-management>
-
-     
-      <div *ngIf="activePage === 'Caissier'">
-        <h1>Caissier</h1>
-        <p>Gérez les transactions, les paiements et les rapports de caisse ici.</p>
-      </div>
-      <div *ngIf="activePage === 'DAF'">
-        <h1>Direction Administrative et Financière</h1>
-        <p>Consultez les rapports financiers et la gestion budgétaire.</p>
-      </div>
       <app-personne *ngIf="activePage === 'personne'"></app-personne>
       <app-budget-management *ngIf="activePage === 'budget'"></app-budget-management>
       <app-journal-management *ngIf="activePage === 'Journal'"></app-journal-management>
@@ -119,8 +86,7 @@
   </main>
 </div>
 
-<button (click)="scrollToTop()" class="scroll-to-top" title="Remonter en haut de la page">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 19V5m-7 7l7-7 7 7"/>
-  </svg>
+<!-- Scroll to top -->
+<button (click)="scrollToTop()" class="scroll-to-top" title="Remonter en haut">
+  <i class="fas fa-arrow-up"></i>
 </button>

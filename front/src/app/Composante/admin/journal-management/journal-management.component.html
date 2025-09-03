@@ -4,6 +4,7 @@
   <div class="card form-card">
     <h3>{{ isEditMode ? 'Modifier le Journal' : 'Créer un nouveau Journal' }}</h3>
     <form (ngSubmit)="isEditMode ? updateJournal() : addJournal()">
+      
       <!-- Nom du journal -->
       <div>
         <label for="nom_journal">Nom du Journal</label>
@@ -14,6 +15,12 @@
       <div>
         <label for="nom_projet">Nom du Projet</label>
         <input type="text" id="nom_projet" [(ngModel)]="newJournal.nom_projet" name="nom_projet" required>
+      </div>
+
+      <!-- Solde -->
+      <div>
+        <label for="solde">Solde</label>
+        <input type="number" id="solde" [(ngModel)]="newJournal.solde" name="solde" min="0" step="0.01" required>
       </div>
 
       <!-- Budgets -->
@@ -59,6 +66,7 @@
           <th>ID</th>
           <th>Nom journal</th>
           <th>Nom projet</th>
+          <th>Solde</th>
           <th>Budgets</th>
           <th>Valideurs</th>
           <th>Actions</th>
@@ -69,29 +77,24 @@
           <td>{{ journal.id_journal }}</td>
           <td>{{ journal.nom_journal }}</td>
           <td>{{ journal.nom_projet }}</td>
+          <td>{{ journal.solde | number:'1.0-0' }} Ar</td>
           <td class="px-6 py-4 whitespace-nowrap">
-     <ul class="budget-list">
-    <li *ngFor="let budget of journal.budgets">
-      {{ budget.description }}
-    </li>
-  </ul>
-</td>
-
-<td class="px-6 py-4 whitespace-nowrap">
-  <ul class="valideur-list">
-    <li *ngFor="let valideur of journal.valideurs">
-      {{ valideur.ordre }} - {{ valideur.username }}
-    </li>
-  </ul>
-</td>
-
+            <ul class="budget-list">
+              <li *ngFor="let budget of journal.budgets">
+                {{ budget.description }}
+              </li>
+            </ul>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <ul class="valideur-list">
+              <li *ngFor="let valideur of journal.valideurs">
+                {{ valideur.ordre }} - {{ valideur.username }}
+              </li>
+            </ul>
+          </td>
           <td>
-            <button (click)="editJournal(journal)" class="edit-btn action-btn" title="Modifier">
-              ✎
-            </button>
-            <button (click)="deleteJournal(journal.id_journal)" class="delete-btn action-btn" title="Supprimer">
-              ✖
-            </button>
+            <button (click)="editJournal(journal)" class="edit-btn action-btn" title="Modifier">✎</button>
+            <button (click)="deleteJournal(journal.id_journal)" class="delete-btn action-btn" title="Supprimer">✖</button>
           </td>
         </tr>
       </tbody>

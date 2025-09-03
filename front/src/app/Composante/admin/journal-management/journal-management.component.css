@@ -1,55 +1,183 @@
-/* Container vertical */
-.container-vertical { display: flex; flex-direction: column; gap: 20px; padding: 20px; }
-
-/* Cartes */
-.card { background: white; border-radius: 8px; padding: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
-
-/* Formulaire */
-form div { margin-bottom: 15px; }
-label { font-weight: 600; display: block; margin-bottom: 5px; }
-input, select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; }
-
-/* Boutons */
-button { cursor: pointer; border-radius: 6px; padding: 8px 12px; border: none; background: #3498db; color: white; }
-button:hover { background: #2980b9; }
-
-/* Tableau */
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 10px; border-bottom: 1px solid #ddd; }
-tbody tr:hover { background: #f4f8ff; }
-
-/* Listes */
-ul { list-style: none; padding: 0; margin: 0; }
-li.selected { background-color: #a5b4fc; }
-
-/* Actions icônes */
-.action-btn { background: transparent; border: none; cursor: pointer; margin: 0 2px; font-size: 1rem; }
-.edit-btn { color: #3498db; } .edit-btn:hover { color: #1d4ed8; }
-.delete-btn { color: #e74c3c; } .delete-btn:hover { color: #c0392b; }
-
-/* Modal */
-.modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:50; }
-.modal-content { background:white; padding:1.5rem; border-radius:0.5rem; text-align:center; position:relative; width: 90%; max-width:400px; }
-.modal-close-btn { position:absolute; top:0.5rem; right:0.5rem; cursor:pointer; font-size:1.2rem; }
-.modal-icon { font-size:2.5rem; margin-bottom:1rem; }
-.success-icon { color: #10B981; }
-.error-icon { color: #EF4444; }
-.modal-title { font-weight:bold; font-size:1.2rem; margin-bottom:0.5rem; }
-.modal-message { margin-bottom:1rem; color:#6B7280; }
-.budget-list li {
-  display: block;            /* chaque élément sur sa ligne */
-  background-color: #E0F2FE; /* bleu clair */
-  color: #0369A1;            /* texte bleu foncé */
-  padding: 4px 8px;
-  border-radius: 6px;
-  margin-bottom: 4px;
+/* ---------------- Container principal ---------------- */
+.container-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+  background: #f3f4f6; /* gris clair */
+  font-family: 'Inter', sans-serif;
+  min-height: 100vh;
 }
 
-.valideur-list li {
+/* ---------------- Cartes ---------------- */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+.card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #111827;
+}
+
+/* ---------------- Formulaire ---------------- */
+form div { margin-bottom: 18px; }
+label {
+  font-weight: 600;
   display: block;
-  background-color: #DCFCE7; /* vert clair */
-  color: #166534;            /* texte vert foncé */
-  padding: 4px 8px;
+  margin-bottom: 6px;
+  color: #374151;
+}
+input, select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 0.95rem;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+input:focus, select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  outline: none;
+}
+
+/* ---------------- Boutons ---------------- */
+button {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 10px 16px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-weight: 500;
+  transition: background 0.25s, transform 0.15s;
+}
+button:hover { background: #1d4ed8; transform: translateY(-1px); }
+button:active { transform: scale(0.97); }
+button[type="button"] {
+  background: #9ca3af;
+}
+button[type="button"]:hover {
+  background: #6b7280;
+}
+
+/* ---------------- Tableau ---------------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+th, td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+thead {
+  background: #e5e7eb;
+  color: #111827;
+  font-weight: 600;
+}
+tbody tr {
+  transition: background 0.2s;
+}
+tbody tr:hover {
+  background: #f9fafb;
+}
+
+/* ---------------- Listes ---------------- */
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+li.selected {
+  background-color: #dbeafe;
+  border-radius: 6px;
+  padding: 6px;
+}
+
+/* ---------------- Actions icônes ---------------- */
+.action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  margin: 0 4px;
+  font-size: 1.2rem;
+  transition: transform 0.2s, color 0.2s;
+}
+.action-btn:hover {
+  transform: scale(1.2);
+}
+.edit-btn { color: #2563eb; } 
+.edit-btn:hover { color: #1d4ed8; }
+.delete-btn { color: #ef4444; } 
+.delete-btn:hover { color: #b91c1c; }
+
+/* ---------------- Modal ---------------- */
+.modal-overlay {
+  position: fixed; top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.5);
+  display:flex; justify-content:center; align-items:center;
+  z-index:50;
+}
+.modal-content {
+  background:white;
+  padding:2rem;
+  border-radius:12px;
+  text-align:center;
+  position:relative;
+  width: 90%;
+  max-width:420px;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9);}
+  to { opacity: 1; transform: scale(1);}
+}
+.modal-close-btn {
+  position:absolute; top:0.5rem; right:0.5rem;
+  cursor:pointer; font-size:1.4rem;
+  color:#6b7280;
+}
+.modal-icon { font-size:3rem; margin-bottom:1rem; }
+.success-icon { color: #10B981; }
+.error-icon { color: #EF4444; }
+.modal-title {
+  font-weight:600; font-size:1.25rem; margin-bottom:0.5rem;
+  color:#111827;
+}
+.modal-message { margin-bottom:1.25rem; color:#374151; }
+
+/* ---------------- Budgets ---------------- */
+.budget-list li {
+  display: block;
+  background-color: #dbeafe;
+  color: #1e40af;
+  padding: 6px 10px;
   border-radius: 6px;
   margin-bottom: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* ---------------- Valideurs ---------------- */
+.valideur-list li {
+  display: block;
+  background-color: #dcfce7;
+  color: #166534;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
 }

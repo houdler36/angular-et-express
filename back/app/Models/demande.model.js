@@ -62,6 +62,12 @@ const demandeModel = (sequelize, Sequelize) => {
             type: Sequelize.TEXT,
             allowNull: true,
         },
+        // --- NOUVELLE COLONNE AJOUTÉE POUR LA NUMÉROTATION SÉQUENTIELLE ---
+        numero_approuve_journal: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            comment: 'Numéro séquentiel de la demande approuvée par journal'
+        },
     }, {
         // Désactive les timestamps pour les tables qui n'ont pas les colonnes 'createdAt' et 'updatedAt'
         timestamps: false,

@@ -9,6 +9,7 @@ import { DashboardUserComponent } from './Composante/user/dashboard-user/dashboa
 import { DemandeListComponent } from './Composante/user/demande-list/demande-list.component';
 import { DemandeFormComponent } from './Composante/user/demande-form/demande-form.component';
 import { DemandeDetailComponent } from './Composante/user/demande-detail/demande-detail.component';
+import { DemandeRecapComponent } from './Composante/user/demande-recap/demande-recap.component'; 
 
 // Composants de rôles spécifiques
 import { AdminDashboardComponent } from './Composante/admin/admin-dashboard/admin-dashboard.component';
@@ -27,9 +28,19 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
-  // Routes utilisateur connectés
-  { path: 'dashboard', component: DashboardUserComponent, canActivate: [AuthGuardService] },
-  { path: 'demandes', component: DemandeListComponent, canActivate: [AuthGuardService] },
+  // Routes utilisateur connectés avec des routes enfants pour les vues principales
+  { 
+    path: 'dashboard', 
+    component: DashboardUserComponent, 
+    canActivate: [AuthGuardService],
+    children: [
+      { path: '', redirectTo: 'demandes', pathMatch: 'full' },
+      { path: 'demandes', component: DemandeListComponent },
+      { path: 'recapitulatif', component: DemandeRecapComponent },
+    ]
+  },
+  
+  // Routes spécifiques aux formulaires et détails qui ne sont pas des vues principales
   { path: 'demandes/new', component: DemandeFormComponent, canActivate: [AuthGuardService] },
   { path: 'demandes/edit/:id', component: DemandeFormComponent, canActivate: [AuthGuardService] },
   { path: 'demandes/:id', component: DemandeDetailComponent, canActivate: [AuthGuardService] },
@@ -50,13 +61,13 @@ export const routes: Routes = [
 
   // Routes DAF
   // Routes DAF corrigées
-{
-  path: 'daf',
-  children: [
-    { path: 'dashboard', component: DafDashboardComponent, canActivate: [AuthGuardService] },
-    { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-  ],
-},
+  {
+    path: 'daf',
+    children: [
+      { path: 'dashboard', component: DafDashboardComponent, canActivate: [AuthGuardService] },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+    ],
+  },
 
 
   // Route joker

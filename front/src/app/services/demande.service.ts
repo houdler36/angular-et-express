@@ -205,4 +205,25 @@ getDemandesEnAttenteAutres(): Observable<any[]> {
       catchError(this.handleError)
     );
   }
+
+// Récupérer les demandes approuvées filtrées par journal
+getRapportDemandesApprouvees(journalId: number): Observable<any[]> {
+  const headers = this.getAuthHeaders();
+  return this.http.get<any[]>(`${this.apiUrl}/rapport/${journalId}`, { headers }).pipe(
+    catchError(this.handleError)
+  );
+}
+
+// Récupérer les demandes dont les PJ ne sont pas encore fournies
+getDemandesPJNonFournies(): Observable<any[]> {
+  const headers = this.getAuthHeaders();
+  return this.http.get<any[]>(`${this.apiUrl}/pj-non-fournies`, { headers }).pipe(
+    catchError(this.handleError)
+  );
+}
+updateDedStatus(dedId: number, status: string) {
+  return this.http.put(`http://localhost:8081/api/demandes/${dedId}/pj_status`, { pj_status: status });
+}
+
+
 }

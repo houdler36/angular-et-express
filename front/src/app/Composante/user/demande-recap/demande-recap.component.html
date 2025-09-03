@@ -1,0 +1,35 @@
+<div class="recap-container">
+  <h1>Récapitulatif des demandes (PJ pas encore)</h1>
+
+  <div *ngIf="loading" class="loading">Chargement des demandes...</div>
+  <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+
+  <table *ngIf="!loading && demandes.length > 0" class="demande-table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Montant</th>
+        <th>Statut PJ</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let d of demandes">
+        <td>{{ d.date | date:'dd/MM/yyyy' }}</td>
+        <td>{{ d.description }}</td>
+        <td>{{ d.montant_total | number:'1.2-2' }}</td>
+        <td>
+          <span class="status-pas-encore">{{ d.pj_status }}</span>
+        </td>
+        <td>
+          <button class="btn-add" (click)="ajouterDemande(d)">Ajouter</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="!loading && demandes.length === 0" class="no-data">
+    Aucune demande avec PJ en attente.
+  </div>
+</div>

@@ -1,12 +1,18 @@
-// Fichier: dashboard-user.component.ts
+// dashboard-user.component.ts
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms'; // N'oubliez pas d'importer FormsModule pour ngModel
+import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { DemandeService } from '../../../services/demande.service';
 import { DemandeUpdateService } from '../../../services/demande-update.service';
+import { DemandeRecapService } from '../../../services/demande-recap.service';
 import { Demande } from '../../../models/demande';
+import { DemandeFormComponent } from '../demande-form/demande-form.component';
+import { DemandeListComponent } from '../demande-list/demande-list.component';
+import { DemandeRecapComponent } from '../demande-recap/demande-recap.component';
+import { Router } from '@angular/router';
+import { RapportdemandeComponent } from '../rapport-demande/rapport-demande.component';
+
 
 @Component({
   selector: 'app-dashboard-user',
@@ -14,122 +20,138 @@ import { Demande } from '../../../models/demande';
   styleUrls: ['./dashboard-user.component.scss'],
   standalone: true,
   imports: [
-    RouterModule,
     CommonModule,
-    FormsModule // Ajout de FormsModule pour la liaison bidirectionnelle ngModel
+    FormsModule,
+    DemandeFormComponent,
+    DemandeListComponent,
+    DemandeRecapComponent,
+    RapportdemandeComponent
   ]
 })
 export class DashboardUserComponent implements OnInit, OnDestroy {
-  totalDemandes: number = 0;
-  demandesEnAttente: number = 0;
-  demandesApprouvees: number = 0;
-  demandesRejetees: number = 0;
-
-  demandeStats: { status: string, count: number }[] = [];
-  
-  // Nouveaux tableaux et propriétés pour le filtrage
+  totalDemandes = 0;
+  demandesEnAttente = 0;
+  demandesApprouvees = 0;
+  demandesRejetees = 0;
   allDemandes: Demande[] = [];
   lastDemandes: Demande[] = [];
-  searchTerm: string = '';
-
-  errorMessage: string = '';
+  searchTerm = '';
+  demandeStats: { type: string, count: number, totalAmount: number }[] = [];
+  errorMessage = '';
   private updateSubscription!: Subscription;
+
+
+  showNewDemandeForm = false;
+  showDemandeList = false;
+  showDemandeRecap = false;
+  showRapportDemande = false;
 
   constructor(
     private demandeService: DemandeService,
-    private demandeUpdateService: DemandeUpdateService
-  ) { }
+    private demandeUpdateService: DemandeUpdateService,
+    private demandeRecapService: DemandeRecapService,
+    private router: Router,
+  ) {}
+  goToDemande(id?: number) {
+  if (id != null) {
+    this.router.navigate(['/demandes', id]);
+  }
+}
 
   ngOnInit(): void {
     this.loadDemandes();
     this.loadDemandeStats();
+    this.loadDemandeRecapStats();
 
     this.updateSubscription = this.demandeUpdateService.demandeUpdated$.subscribe(() => {
-      console.log('Notification de mise à jour reçue. Rafraîchissement des statistiques...');
-      this.loadDemandeStats();
       this.loadDemandes();
+      this.loadDemandeStats();
+      this.loadDemandeRecapStats();
     });
   }
 
   ngOnDestroy(): void {
-    if (this.updateSubscription) {
-      this.updateSubscription.unsubscribe();
-    }
+    this.updateSubscription?.unsubscribe();
+  }
+  
+  toggleNewDemandeForm(state: boolean) {
+    this.showNewDemandeForm = state;
+    this.showDemandeList = false;
+    this.showDemandeRecap = false;
   }
 
-  loadDemandes(): void {
-    console.log("Chargement des demandes...");
-    
+  toggleDemandeList(state: boolean) {
+    this.showDemandeList = state;
+    this.showNewDemandeForm = false;
+    this.showDemandeRecap = false;
+  }
+
+  toggleDemandeRecap(state: boolean) {
+    this.showDemandeRecap = state;
+    this.showNewDemandeForm = false;
+    this.showDemandeList = false;
+  }
+  
+
+toggleRapportDemande(state: boolean) {
+  this.showRapportDemande = state;
+  this.showNewDemandeForm = false;
+  this.showDemandeList = false;
+  this.showDemandeRecap = false;
+}
+
+  onFormSubmitted() {
+    this.showNewDemandeForm = false;
+    this.loadDemandes();
+    this.loadDemandeStats();
+    this.loadDemandeRecapStats();
+  }
+
+  loadDemandes() {
     this.demandeService.getAllDemandes().subscribe({
       next: (data: any[]) => {
-        // Conversion de la chaîne de date en un objet Date pour le formatage dans le template
-        this.allDemandes = data.map(demande => ({
-          ...demande,
-          date: new Date(demande.date)
-        }));
-
-        this.lastDemandes = this.allDemandes; // Affiche toutes les demandes
-        console.log("Demandes chargées :", this.allDemandes);
-        
-        // Applique le filtre initial si l'utilisateur avait déjà un terme de recherche
-        if (this.searchTerm) {
-          this.applyFilter();
-        }
+        this.allDemandes = data.map(d => ({ ...d, date: new Date(d.date) }));
+        this.lastDemandes = this.allDemandes;
+        if (this.searchTerm) this.applyFilter();
       },
-      error: (err) => {
-        this.errorMessage = 'Erreur lors du chargement des demandes : ' + err.message;
-        console.error(this.errorMessage, err);
-      }
+      error: (err) => this.errorMessage = 'Erreur lors du chargement des demandes : ' + err.message
     });
   }
 
-  loadDemandeStats(): void {
-    console.log("Chargement des statistiques de demandes...");
+  loadDemandeStats() {
     this.demandeService.getDemandeStats().subscribe({
-      next: (stats) => {
-        console.log("Statistiques reçues du backend :", stats);
-        
+      next: stats => {
         this.totalDemandes = stats.total;
         this.demandesEnAttente = stats.enAttente;
         this.demandesApprouvees = stats.finalisees;
         this.demandesRejetees = 0;
-        
-        console.log("Statistiques agrégées :", {
-          totalDemandes: this.totalDemandes,
-          demandesEnAttente: this.demandesEnAttente,
-          demandesApprouvees: this.demandesApprouvees,
-          demandesRejetees: this.demandesRejetees
-        });
       },
-      error: (err) => {
-        this.errorMessage = 'Erreur lors du chargement des statistiques : ' + (err.error?.message || err.message);
-        console.error(this.errorMessage, err);
-      }
+      error: err => this.errorMessage = 'Erreur lors du chargement des stats : ' + (err.error?.message || err.message)
     });
   }
 
-  /**
-   * Applique le filtre de recherche sur la liste des demandes.
-   */
-  applyFilter(): void {
+  loadDemandeRecapStats() {
+    this.demandeRecapService.getRecapByDemandeType().subscribe({
+      next: stats => this.demandeStats = stats,
+      error: err => this.errorMessage = 'Erreur lors du chargement du récap : ' + (err.error?.message || err.message)
+    });
+  }
+
+  applyFilter() {
     const term = this.searchTerm.toLowerCase();
-    
     if (!term) {
-      // Si le champ de recherche est vide, on affiche toutes les demandes
       this.lastDemandes = this.allDemandes;
     } else {
-      // Sinon, on filtre toutes les demandes
-      this.lastDemandes = this.allDemandes.filter(demande => {
-        // Formatage de la date pour la recherche
-        const dateFormatted = (demande.date as any) instanceof Date ?
-          `${(demande.date as any).getDate().toString().padStart(2, '0')}-${((demande.date as any).getMonth() + 1).toString().padStart(2, '0')}-${(demande.date as any).getFullYear()}` : '';
-
-        // On vérifie si le terme de recherche est inclus dans le type, le montant, le statut ou la date
-        return (demande.type && demande.type.toLowerCase().includes(term)) ||
-               (demande.montant_total && demande.montant_total.toString().toLowerCase().includes(term)) ||
-               (demande.status && demande.status.toLowerCase().includes(term)) ||
-               (dateFormatted.includes(term));
+      this.lastDemandes = this.allDemandes.filter(d => {
+        const dateFormatted = (d.date as any) instanceof Date ?
+          `${(d.date as any).getDate().toString().padStart(2,'0')}-${((d.date as any).getMonth()+1).toString().padStart(2,'0')}-${(d.date as any).getFullYear()}` : '';
+        return (d.type?.toLowerCase().includes(term) ||
+                d.montant_total?.toString().includes(term) ||
+                d.status?.toLowerCase().includes(term) ||
+                dateFormatted.includes(term));
       });
     }
   }
+  
+
 }

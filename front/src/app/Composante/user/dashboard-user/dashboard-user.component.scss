@@ -1,4 +1,10 @@
-/* Couleurs */
+/*
+ * Fichier SCSS principal pour le tableau de bord
+ */
+
+/* ====================================
+   Variables et mixins
+   ==================================== */
 $primary: #3f51b5;
 $success: #4caf50;
 $warning: #ff9800;
@@ -6,16 +12,104 @@ $danger: #f44336;
 $gray: #9e9e9e;
 $card-bg: rgba(255, 255, 255, 0.85);
 $shadow: 0 6px 20px rgba(0,0,0,0.15);
+$font-stack: 'Poppins', sans-serif;
 
-/* Conteneur */
-.dashboard-container {
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ====================================
+   Mise en page globale
+   ==================================== */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: $font-stack;
+  background-color: #f0f2f5;
+  color: #333;
+}
+
+.dashboard-wrapper {
+  display: flex;
   min-height: 100vh;
-  padding: 30px;
   background: linear-gradient(135deg, #e3f2fd, #f3e5f5);
-  font-family: 'Poppins', sans-serif;
   animation: fadeIn 0.8s ease-in-out;
 }
 
+.main-content {
+  flex-grow: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+/* ====================================
+   Barre latérale (Sidebar)
+   ==================================== */
+.sidebar {
+  width: 250px;
+  background: #fff;
+  padding: 30px 20px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.sidebar-logo {
+  width: 80px;
+  height: auto;
+  margin-bottom: 10px;
+  border-radius: 50%;
+}
+
+.sidebar-title {
+  font-size: 0.9em;
+  color: #555;
+  font-weight: 500;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  border-radius: 8px;
+  color: #555;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s, color 0.3s, transform 0.2s;
+  
+  i {
+    margin-right: 12px;
+    font-size: 1.2em;
+  }
+
+  &:hover {
+    background-color: #f0f2f5;
+    color: $primary;
+    transform: translateX(5px);
+  }
+  
+  &.active {
+    background-color: $primary;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba($primary, 0.4);
+  }
+}
+
+/* ====================================
+   En-tête du tableau de bord
+   ==================================== */
 .dashboard-header {
   text-align: center;
   margin-bottom: 40px;
@@ -37,7 +131,9 @@ $shadow: 0 6px 20px rgba(0,0,0,0.15);
   }
 }
 
-/* Cartes statistiques */
+/* ====================================
+   Cartes statistiques
+   ==================================== */
 .dashboard-stats {
   display: flex;
   justify-content: center;
@@ -72,12 +168,14 @@ $shadow: 0 6px 20px rgba(0,0,0,0.15);
   .stat-value { font-size: 2.2em; font-weight: 700; }
 }
 
-.stat-card.total   { border-top: 5px solid $primary;   .icon { color: $primary; } }
-.stat-card.pending { border-top: 5px solid $warning;   .icon { color: $warning; } }
-.stat-card.approved{ border-top: 5px solid $success;   .icon { color: $success; } }
-.stat-card.rejected{ border-top: 5px solid $danger;    .icon { color: $danger; } }
+.stat-card.total { border-top: 5px solid $primary; .icon { color: $primary; } }
+.stat-card.pending { border-top: 5px solid $warning; .icon { color: $warning; } }
+.stat-card.approved { border-top: 5px solid $success; .icon { color: $success; } }
+.stat-card.rejected { border-top: 5px solid $danger; .icon { color: $danger; } }
 
-/* Actions */
+/* ====================================
+   Boutons d'action
+   ==================================== */
 .dashboard-actions {
   display: flex;
   justify-content: center;
@@ -92,6 +190,10 @@ $shadow: 0 6px 20px rgba(0,0,0,0.15);
   border: none;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+
+  i { margin-right: 8px; }
 
   &.primary { background: $primary; color: #fff; }
   &.secondary { background: $gray; color: #fff; }
@@ -99,6 +201,9 @@ $shadow: 0 6px 20px rgba(0,0,0,0.15);
   &:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 }
 
+/* ====================================
+   Section tableau
+   ==================================== */
 .section-title {
   margin: 25px 0 15px;
   font-size: 1.4em;
@@ -108,7 +213,6 @@ $shadow: 0 6px 20px rgba(0,0,0,0.15);
   i { margin-right: 6px; color: $primary; }
 }
 
-/* Recherche */
 .search-container {
   position: relative;
   margin-bottom: 20px;
@@ -137,12 +241,12 @@ $shadow: 0 6px 20px rgba(0,0,0,0.15);
   }
 }
 
-/* Tableau */
 .table-container {
   background: #fff;
   border-radius: 12px;
   box-shadow: $shadow;
   overflow-x: auto;
+  animation: fadeIn 0.8s ease-in-out;
 }
 
 .data-table {
@@ -165,20 +269,70 @@ $shadow: 0 6px 20px rgba(0,0,0,0.15);
   tbody tr:hover { background: #f1f1f1; }
 }
 
-/* Badges de statut */
+/* ====================================
+   Badges de statut
+   ==================================== */
 .status-badge {
   padding: 6px 14px;
   border-radius: 20px;
   font-weight: 600;
   font-size: 0.85em;
+  display: inline-block;
 }
 
 .status-pending { background: $warning; color: #000; }
 .status-approved { background: $success; color: #fff; }
 .status-rejected { background: $danger; color: #fff; }
 
-/* Responsive */
+.text-center { text-align: center; }
+.text-danger { color: $danger; }
+
+/* ====================================
+   Réactivité (Responsive)
+   ==================================== */
 @media (max-width: 768px) {
+  .dashboard-wrapper {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    padding: 10px;
+    flex-direction: row;
+    justify-content: space-around;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar-header, .sidebar-title {
+    display: none;
+  }
+  
+  .sidebar-nav {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+  }
+  
+  .nav-item {
+    flex-direction: column;
+    text-align: center;
+    padding: 8px;
+    
+    span {
+      font-size: 0.7em;
+      margin-top: 5px;
+    }
+  }
+
+  .main-content {
+    padding: 20px;
+    margin-bottom: 70px; /* Espace pour la barre de navigation du bas */
+  }
+
   .dashboard-stats { flex-direction: column; }
   .dashboard-actions { flex-direction: column; }
 }

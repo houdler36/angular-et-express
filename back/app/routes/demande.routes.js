@@ -22,7 +22,9 @@ router.get('/stats/general', verifyToken, demandeController.getDemandeStats);
 // Récupérer les demandes de plus de 70000 à valider par le DAF
 router.get('/daf-a-valider', verifyToken, demandeController.getDemandesDAFAValider);
 
-
+router.get('/pj-non-fournies', verifyToken, demandeController.getDemandesPJNonFournies);
+//demanderapport
+router.get('/rapport/:journalId', demandeController.getRapportDemandesApprouvees);
 // ─── Routes par ID ────────────────────────────────────────
 
 // Création d'une demande
@@ -41,9 +43,13 @@ router.delete('/:id', verifyToken, demandeController.delete);
 router.put('/:id/valider', verifyToken, demandeController.validerDemande);
 router.put('/:id/refuser', verifyToken, demandeController.refuserDemande);
 
+// Mise à jour du pj_status d'un DED
+router.put('/:id/pj_status', verifyToken, demandeController.updatePjStatus);
+
 // ─── Routes générales ────────────────────────────────────
 
 // J'ai corrigé cette ligne pour qu'elle renvoie toutes les demandes de l'utilisateur.
 router.get('/', verifyToken, demandeController.findAllUserDemandes);
+
 
 module.exports = router;

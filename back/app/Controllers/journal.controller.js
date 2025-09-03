@@ -12,7 +12,7 @@ const { Op } = require("sequelize");
 
 // ─── Création de journal ──────────────────────────────────────────────
 exports.create = async (req, res) => {
-    const { nom_journal, nom_projet, budgetIds, valideurs } = req.body;
+    const { nom_journal, nom_projet, budgetIds, valideurs, solde } = req.body;
 
     if (!nom_journal || !nom_projet || !budgetIds || budgetIds.length === 0) {
         return res.status(400).send({ message: "Le nom du journal, du projet et les budgets sont obligatoires." });
@@ -20,8 +20,8 @@ exports.create = async (req, res) => {
 
     const t = await db.sequelize.transaction();
     try {
-        // Créer le journal
-        const journal = await Journal.create({ nom_journal, nom_projet }, { transaction: t });
+        // Créer le journal avec solde si fourni
+        const journal = await Journal.create({ nom_journal, nom_projet, solde: solde || 0 }, { transaction: t });
 
         // Associer les budgets
         if (budgetIds.length > 0) {
@@ -56,7 +56,7 @@ exports.create = async (req, res) => {
 
         await t.commit();
 
-        // Récupérer le journal avec ses budgets et validateurs RH
+        // Récupérer le journal avec ses budgets et valideurs RH
         const newJournal = await Journal.findByPk(journal.id_journal, {
             include: [
                 { model: Budget, as: 'budgets', through: { attributes: [] } },
@@ -73,12 +73,10 @@ exports.create = async (req, res) => {
     }
 };
 
-
-// ─── Mise à jour d'un journal ─────────────────────────────────────────
 // ─── Mise à jour d'un journal ─────────────────────────────────────────
 exports.update = async (req, res) => {
     const id = req.params.id;
-    const { nom_journal, nom_projet, budgetIds, valideurs } = req.body;
+    const { nom_journal, nom_projet, budgetIds, valideurs, solde } = req.body;
 
     const t = await db.sequelize.transaction();
     try {
@@ -88,8 +86,8 @@ exports.update = async (req, res) => {
             return res.status(404).send({ message: "Journal introuvable." });
         }
 
-        // Mettre à jour le nom et le projet
-        await journal.update({ nom_journal, nom_projet }, { transaction: t });
+        // Mettre à jour le nom, projet et solde
+        await journal.update({ nom_journal, nom_projet, solde }, { transaction: t });
 
         // Gestion des budgets
         if (budgetIds && budgetIds.length > 0) {
@@ -137,12 +135,12 @@ exports.update = async (req, res) => {
     }
 };
 
-
-// Fonction utilitaire pour transformer un journal
+// ─── Fonction utilitaire pour transformer un journal
 const transformJournal = (journal) => {
     const data = journal.toJSON();
     return {
         ...data,
+        solde: data.solde, // 👈 inclure solde
         valideurs: (data.validationsConfig || []).map(vc => ({
             username: vc.user?.username || null,
             email: vc.user?.email || null,
@@ -153,8 +151,7 @@ const transformJournal = (journal) => {
     };
 };
 
-// ─── Récupération de tous les journaux ────────────────────────────────────────────────
-// ─── Récupération de tous les journaux avec RH uniquement ───────────────
+// ─── Récupération de tous les journaux
 exports.findAll = async (req, res) => {
     try {
         const journals = await Journal.findAll({
@@ -172,18 +169,19 @@ exports.findAll = async (req, res) => {
                             model: User,
                             as: 'user',
                             attributes: ['username', 'email', 'role'],
-                            where: { role: 'rh' } // ← filtrer uniquement les RH
+                            where: { role: 'rh' }
                         }
                     ]
                 }
             ]
         });
 
-        // Transformation pour ne garder que les champs utiles
+        // Transformation pour inclure solde
         const result = journals.map(journal => {
             const data = journal.toJSON();
             return {
                 ...data,
+                solde: data.solde, // 👈 ajouté
                 valideurs: (data.validationsConfig || []).map(vc => ({
                     user_id: vc.user_id,
                     username: vc.user?.username,
@@ -191,7 +189,7 @@ exports.findAll = async (req, res) => {
                     ordre: vc.ordre,
                     statut: vc.statut
                 })),
-                validationsConfig: undefined // on supprime la config brute
+                validationsConfig: undefined
             };
         });
 
@@ -203,7 +201,7 @@ exports.findAll = async (req, res) => {
     }
 };
 
-// ─── Récupération d'un journal par ID ────────────────────────────────────────────────
+// ─── Récupération d'un journal par ID
 exports.findOne = async (req, res) => {
     const id = req.params.id;
     try {
@@ -235,7 +233,7 @@ exports.findOne = async (req, res) => {
     }
 };
 
-// ─── Suppression d'un journal ─────────────────────────────────────────
+// ─── Suppression d'un journal
 exports.delete = async (req, res) => {
     const id = req.params.id;
     const t = await db.sequelize.transaction();
