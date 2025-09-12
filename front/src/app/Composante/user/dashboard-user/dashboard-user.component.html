@@ -1,37 +1,51 @@
 <div class="dashboard-wrapper">
+
   <aside class="sidebar">
+
     <div class="sidebar-header">
       <img src="images/salafan.jpg" alt="Logo SALFA" class="sidebar-logo">
       <h6 class="sidebar-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
     </div>
+
     <nav class="sidebar-nav">
-      <a (click)="toggleNewDemandeForm(false)" class="nav-item" [class.active]="!showNewDemandeForm && !showDemandeList && !showDemandeRecap && !showRapportDemande">
+      <a (click)="toggleNewDemandeForm(false)" class="nav-item" 
+         [class.active]="!showNewDemandeForm && !showDemandeList && !showDemandeRecap && !showRapportDemande && !showProfile">
         <i class="fas fa-chart-line"></i>
         <span>Tableau de bord</span>
       </a>
+
       <a (click)="toggleNewDemandeForm(true)" class="nav-item" [class.active]="showNewDemandeForm">
         <i class="fas fa-plus-circle"></i>
         <span>Nouvelle demande</span>
       </a>
+
       <a (click)="toggleDemandeList(true)" class="nav-item" [class.active]="showDemandeList">
         <i class="fas fa-list"></i>
         <span>Liste des demandes</span>
       </a>
+
       <a (click)="toggleDemandeRecap(true)" class="nav-item" [class.active]="showDemandeRecap">
         <i class="fas fa-chart-pie"></i>
         <span>Récapitulatif des dépenses</span>
       </a>
-      <a (click)="toggleRapportDemande(true)" class="nav-item" [class.active]="showRapportDemande">
-  <i class="fas fa-file-alt"></i>
-  <span>Rapport des demandes</span>
-</a>
 
+      <a (click)="toggleRapportDemande(true)" class="nav-item" [class.active]="showRapportDemande">
+        <i class="fas fa-file-alt"></i>
+        <span>Rapport des demandes</span>
+      </a>
+
+      <a (click)="toggleProfile(true)" class="nav-item" [class.active]="showProfile">
+        <i class="fas fa-user"></i>
+        <span>Mon Profil</span>
+      </a>
     </nav>
+
   </aside>
 
   <div class="main-content">
-    <!-- Tableau de bord principal -->
-    <div *ngIf="!showNewDemandeForm && !showDemandeList && !showDemandeRecap && !showRapportDemande">
+
+    <!-- Tableau de bord -->
+    <div *ngIf="!showNewDemandeForm && !showDemandeList && !showDemandeRecap && !showRapportDemande && !showProfile">
       <div class="dashboard-header">
         <h2><i class="fas fa-chart-line"></i> Bienvenue sur votre Tableau de Bord</h2>
         <p>Accédez rapidement à vos statistiques et actions principales.</p>
@@ -68,8 +82,7 @@
           <i class="fas fa-list"></i> Voir toutes mes demandes
         </button>
       </div>
-
-      <h3 class="section-title"><i class="fas fa-history"></i> Vos dernières demandes</h3>
+          <h3 class="section-title"><i class="fas fa-history"></i> Vos dernières demandes</h3>
 
       <div class="search-container">
         <i class="fas fa-search search-icon"></i>
@@ -80,7 +93,9 @@
         <table class="data-table">
           <thead>
             <tr>
+              <th>id</th> 
               <th>Type</th>
+           <th>demandeur</th>
               <th>Montant</th>
               <th>Statut</th>
               <th>Date</th>
@@ -92,7 +107,9 @@
               <td colspan="5">Aucune demande récente à afficher.</td>
             </tr>
             <tr *ngFor="let demande of lastDemandes">
-              <td>{{ demande.type }}</td>
+              <td>{{ demande.id }}</td>
+          <td>{{ demande.type }}</td>
+          <td>{{ demande.responsible_pj?.nom }} {{ demande.responsible_pj?.prenom }}</td>
               <td>{{ demande.montant_total | currency:'Ariary':'symbol':'1.2-2':'fr' }}</td>
               <td>
                 <span [ngClass]="{
@@ -118,8 +135,9 @@
         </table>
       </div>
     </div>
+    
 
-    <!-- Formulaire de nouvelle demande -->
+    <!-- Nouvelle demande -->
     <div *ngIf="showNewDemandeForm">
       <app-demande-form
         (formSubmitted)="onFormSubmitted()"
@@ -136,10 +154,45 @@
     <div *ngIf="showDemandeRecap">
       <app-demande-recap></app-demande-recap>
     </div>
+
     <!-- Rapport des demandes -->
-<div *ngIf="showRapportDemande">
-  <app-rapport-demande></app-rapport-demande>
+    <div *ngIf="showRapportDemande">
+      <app-rapport-demande></app-rapport-demande>
+    </div>
+
+    <!-- Profil utilisateur -->
+    <div *ngIf="showProfile" class="profile-container">
+      <h2>Modifier mon profil</h2>
+
+      <form (ngSubmit)="updateProfile()" #profileForm="ngForm">
+
+        <div class="form-group">
+          <label for="username">Nom d'utilisateur</label>
+          <input type="text" id="username" [(ngModel)]="currentUser.username" name="username" required>
+        </div>
+
+       <div class="form-group">
+  <label for="currentPassword">Mot de passe actuel</label>
+  <input type="password" id="currentPassword" [(ngModel)]="currentPassword" name="currentPassword">
 </div>
+
+<div class="form-group">
+  <label for="newPassword">Nouveau mot de passe</label>
+  <input type="password" id="newPassword" [(ngModel)]="newPassword" name="newPassword">
+</div>
+
+<div class="form-group">
+  <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+  <input type="password" id="confirmPassword" [(ngModel)]="confirmPassword" name="confirmPassword">
+</div>
+
+        <button type="submit" class="btn primary">Enregistrer</button>
+        <button type="button" class="btn secondary" (click)="toggleProfile(false)">Annuler</button>
+
+      </form>
+
+      <div *ngIf="profileMessage" class="profile-message">{{ profileMessage }}</div>
+    </div>
 
   </div>
 </div>

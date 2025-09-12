@@ -1,176 +1,158 @@
 <div class="flex-container">
-    <aside class="sidebar">
-        <div class="header-container">
-            <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
-            <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="header-container">
+      <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo" />
+      <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
+    </div>
+    <nav>
+      <a role="button" [class.active]="activePage === 'Dashboard'" (click)="setActivePage('Dashboard')">
+        🏠 <span class="hidden-mobile">Tableau de Bord</span>
+      </a>
+      <a role="button" [class.active]="activePage === 'demandesATraiter'" (click)="setActivePage('demandesATraiter')">
+        📑 <span class="hidden-mobile">Demandes à traiter</span>
+      </a>
+      <a role="button" [class.active]="activePage === 'demandesEnAttente'" (click)="setActivePage('demandesEnAttente')">
+        ⏳ <span class="hidden-mobile">Demandes en attente</span>
+      </a>
+      <a role="button" [class.active]="activePage === 'demandesFinalisees'" (click)="setActivePage('demandesFinalisees')">
+        ✅ <span class="hidden-mobile">Demandes finalisées</span>
+      </a>
+      <a role="button" [class.active]="activePage === 'rapports'" (click)="setActivePage('rapports')">
+        📊 <span class="hidden-mobile">Rapports</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <div class="card">
+      <!-- Tableau de Bord -->
+      <div *ngIf="activePage === 'Dashboard'" class="content-section">
+        <h1 class="page-title">Tableau de Bord DAF</h1>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Demandes à traiter</h3>
+            <p class="stat-number">{{ demandesATraiter.length }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Demandes en attente</h3>
+            <p class="stat-number">{{ demandesEnAttente.length }}</p>
+          </div>
+          <div class="stat-card">
+            <h3>Demandes finalisées</h3>
+            <p class="stat-number">{{ demandesFinalisees.length }}</p>
+          </div>
         </div>
-        <nav>
-            <a role="button" [class.active]="activePage === 'Dashboard'" (click)="setActivePage('Dashboard')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                    <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-                <span class="hidden-mobile">Tableau de Bord</span>
-            </a>
-            <a role="button" [class.active]="activePage === 'demandesATraiter'" (click)="setActivePage('demandesATraiter')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                    <polyline points="14 2 14 8 20 8" />
-                </svg>
-                <span class="hidden-mobile">Demandes à traiter</span>
-            </a>
-            <a role="button" [class.active]="activePage === 'demandesEnAttente'" (click)="setActivePage('demandesEnAttente')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span class="hidden-mobile">Demandes en attente</span>
-            </a>
-            <a role="button" [class.active]="activePage === 'demandesFinalisees'" (click)="setActivePage('demandesFinalisees')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                </svg>
-                <span class="hidden-mobile">Demandes finalisées</span>
-            </a>
-        </nav>
-    </aside>
+      </div>
 
-    <main class="main-content">
-        <div class="card">
-            <!-- Tableau de Bord -->
-            <div *ngIf="activePage === 'Dashboard'" class="content-section">
-                <h1 class="page-title">Tableau de Bord DAF</h1>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <h3>Demandes à traiter</h3>
-                        <p class="stat-number">{{ demandesATraiter.length }}</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Demandes en attente</h3>
-                        <p class="stat-number">{{ demandesEnAttente.length }}</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3>Demandes finalisées</h3>
-                        <p class="stat-number">{{ demandesFinalisees.length }}</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demandes à traiter -->
-            <div *ngIf="activePage === 'demandesATraiter'" class="content-section">
-                <div class="p-4 mt-8">
-                    <h2 class="text-2xl font-bold mb-4 page-title">Demandes à traiter (DAF)</h2>
-                    <p *ngIf="loadingATraiter" class="text-gray-500 loading-text">Chargement...</p>
-                    <table *ngIf="!loadingATraiter && demandesATraiter.length > 0" class="fade-in-table">
-                        <thead>
-                            <tr>
-                                <th>Titre</th>
-                                <th>Montant</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                                <th>Détails</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let demande of demandesATraiter">
-                                <td>{{ demande.description || '—' }}</td>
-                                <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
-                                <td>{{ demande.status }}</td>
-                                <td>
-                                    <button *ngIf="demande.estTourUtilisateur" (click)="valider(demande.id)"
-                                        class="icon-btn text-green-600 hover:text-green-800" title="Valider">
-                                        ✅
-                                    </button>
-                                    <button *ngIf="demande.estTourUtilisateur" (click)="refuser(demande.id)"
-                                        class="icon-btn text-red-600 hover:text-red-800" title="Refuser">
-                                        ❌
-                                    </button>
-                                    <span *ngIf="!demande.estTourUtilisateur" class="icon-btn text-gray-400" title="Pas votre tour">🔒</span>
-                                </td>
-                                <td>
-                                    <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800"
-                                        title="Voir détails">👁️</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <p *ngIf="!loadingATraiter && demandesATraiter.length === 0" class="text-gray-500 italic empty-message">
-                        Aucune demande à traiter actuellement
-                    </p>
-                </div>
-            </div>
-
-            <!-- Demandes en attente -->
-            <div *ngIf="activePage === 'demandesEnAttente'" class="content-section">
-                <div class="p-4 mt-8">
-                    <h2 class="text-2xl font-bold mb-4 page-title">Demandes en attente (DAF)</h2>
-                    <p *ngIf="loadingEnAttente" class="text-gray-500 loading-text">Chargement...</p>
-                    <table *ngIf="!loadingEnAttente && demandesEnAttente.length > 0" class="fade-in-table">
-                        <thead>
-                            <tr>
-                                <th>Titre</th>
-                                <th>Montant</th>
-                                <th>Status</th>
-                                <th>Validateur actuel</th>
-                                <th>Détails</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let demande of demandesEnAttente">
-                                <td>{{ demande.description || '—' }}</td>
-                                <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
-                                <td>{{ demande.status }}</td>
-                                <td>{{ demande.currentValidator || '—' }}</td>
-                                <td>
-                                    <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800"
-                                        title="Voir détails">👁️</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <p *ngIf="!loadingEnAttente && demandesEnAttente.length === 0" class="text-gray-500 italic empty-message">
-                        Aucune demande en attente chez d'autres validateurs
-                    </p>
-                </div>
-            </div>
-
-            <!-- Demandes finalisées -->
-            <div *ngIf="activePage === 'demandesFinalisees'" class="content-section">
-                <div class="p-4 mt-8">
-                    <h2 class="text-2xl font-bold mb-4 page-title">Demandes finalisées (DAF)</h2>
-                    <p *ngIf="loadingFinalisees" class="text-gray-500 loading-text">Chargement...</p>
-                    <table *ngIf="!loadingFinalisees && demandesFinalisees.length > 0" class="fade-in-table">
-                        <thead>
-                            <tr>
-                                <th>Titre</th>
-                                <th>Montant</th>
-                                <th>Status</th>
-                                <th>Validateur final</th>
-                                <th>Détails</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr *ngFor="let demande of demandesFinalisees">
-                                <td>{{ demande.description || '—' }}</td>
-                                <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
-                                <td>{{ demande.status }}</td>
-                                <td>{{ demande.finalValidatorName || '—' }}</td>
-                                <td>
-                                    <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800"
-                                        title="Voir détails">👁️</button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <p *ngIf="!loadingFinalisees && demandesFinalisees.length === 0" class="text-gray-500 italic empty-message">
-                        Aucune demande finalisée pour le moment
-                    </p>
-                </div>
-            </div>
+      <!-- Demandes à traiter -->
+      <div *ngIf="activePage === 'demandesATraiter'" class="content-section">
+        <div class="p-4 mt-8">
+          <h2 class="text-2xl font-bold mb-4 page-title">Demandes à traiter (DAF)</h2>
+          <p *ngIf="loadingATraiter" class="text-gray-500 loading-text">Chargement...</p>
+          <table *ngIf="!loadingATraiter && demandesATraiter.length > 0" class="fade-in-table">
+            <thead>
+              <tr>
+                <th>Titre</th>
+                <th>Montant</th>
+                <th>Status</th>
+                <th>Actions</th>
+                <th>Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let demande of demandesATraiter">
+                <td>{{ demande.description || '—' }}</td>
+                <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
+                <td>{{ demande.status }}</td>
+                <td>
+                  <button *ngIf="demande.estTourUtilisateur" (click)="valider(demande.id)" class="icon-btn text-green-600 hover:text-green-800">✅</button>
+                  <button *ngIf="demande.estTourUtilisateur" (click)="refuser(demande.id)" class="icon-btn text-red-600 hover:text-red-800">❌</button>
+                  <span *ngIf="!demande.estTourUtilisateur" class="icon-btn text-gray-400">🔒</span>
+                </td>
+                <td>
+                  <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800">👁️</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p *ngIf="!loadingATraiter && demandesATraiter.length === 0" class="text-gray-500 italic">Aucune demande à traiter actuellement</p>
         </div>
-    </main>
+      </div>
+
+      <!-- Demandes en attente -->
+      <div *ngIf="activePage === 'demandesEnAttente'" class="content-section">
+        <div class="p-4 mt-8">
+          <h2 class="text-2xl font-bold mb-4 page-title">Demandes en attente (DAF)</h2>
+          <p *ngIf="loadingEnAttente" class="text-gray-500">Chargement...</p>
+          <table *ngIf="!loadingEnAttente && demandesEnAttente.length > 0" class="fade-in-table">
+            <thead>
+              <tr>
+                <th>Titre</th>
+                <th>Montant</th>
+                <th>Status</th>
+                <th>Validateur actuel</th>
+                <th>Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let demande of demandesEnAttente">
+                <td>{{ demande.description || '—' }}</td>
+                <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
+                <td>{{ demande.status }}</td>
+                <td>{{ demande.currentValidator || '—' }}</td>
+                <td>
+                  <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800">👁️</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p *ngIf="!loadingEnAttente && demandesEnAttente.length === 0" class="text-gray-500 italic">
+            Aucune demande en attente chez d'autres validateurs
+          </p>
+        </div>
+      </div>
+
+      <!-- Demandes finalisées -->
+      <div *ngIf="activePage === 'demandesFinalisees'" class="content-section">
+        <div class="p-4 mt-8">
+          <h2 class="text-2xl font-bold mb-4 page-title">Demandes finalisées (DAF)</h2>
+          <p *ngIf="loadingFinalisees" class="text-gray-500">Chargement...</p>
+          <table *ngIf="!loadingFinalisees && demandesFinalisees.length > 0" class="fade-in-table">
+            <thead>
+              <tr>
+                <th>Titre</th>
+                <th>Montant</th>
+                <th>Status</th>
+                <th>Validateur final</th>
+                <th>Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let demande of demandesFinalisees">
+                <td>{{ demande.description || '—' }}</td>
+                <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
+                <td>{{ demande.status }}</td>
+                <td>{{ demande.finalValidatorName || '—' }}</td>
+                <td>
+                  <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800">👁️</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p *ngIf="!loadingFinalisees && demandesFinalisees.length === 0" class="text-gray-500 italic">
+            Aucune demande finalisée pour le moment
+          </p>
+        </div>
+      </div>
+
+      <!-- 📊 Section Rapports -->
+      <div *ngIf="activePage === 'rapports'" class="content-section">
+        <h2 class="text-2xl font-bold mb-4 page-title">Rapports (DAF)</h2>
+        <!-- Import direct du composant standalone -->
+        <app-rapport-projet></app-rapport-projet>
+      </div>
+    </div>
+  </main>
 </div>

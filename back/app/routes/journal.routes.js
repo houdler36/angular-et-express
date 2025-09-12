@@ -16,7 +16,8 @@ router.use((req, res, next) => {
 // ─── Routes Journaux ──────────────────────────
 
 // Récupérer tous les journaux (admin uniquement)
-router.get('/all', [authJwt.verifyToken, authJwt.isAdmin], journalController.findAll);
+router.get('/all', authJwt.verifyToken, journalController.findAll);
+
 
 // Récupérer un journal par ID (admin uniquement)
 router.get('/:id', [authJwt.verifyToken, authJwt.isAdmin], journalController.findOne);

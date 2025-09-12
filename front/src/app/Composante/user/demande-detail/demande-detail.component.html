@@ -1,215 +1,139 @@
-<!--
-  Template HTML pour le composant DemandeDetailComponent.
-  Ce fichier utilise les classes Tailwind CSS pour le style.
-  Il affiche les détails d'une demande, la liste des validations, et les boutons d'action.
--->
+<div *ngIf="demande" class="demande-container">
+    <div class="demande-header">
+      <h1 class="demande-title">
+        {{ demande.type === 'DED' ? "DEMANDE D'ENGAGEMENT DE DEPENSES (DED)" :
+            demande.type === 'Recette' ? "DEMANDE DE RECETTE" : "DEMANDE ERD" }}
+      </h1>
 
-<div class="demande-detail-container p-8 bg-white max-w-4xl mx-auto my-8 border border-black text-sm text-black">
-    <!-- Messages d'erreur et de succès -->
-    <div *ngIf="errorMessage" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <strong class="font-bold">Erreur !</strong>
-        <span class="block sm:inline">{{ errorMessage }}</span>
+      <div class="demande-info">
+        <div><strong>Date:</strong> {{ demande.date | date:'shortDate' }}</div>
+        <div><strong>Demandeur:</strong> {{ demande.responsible_pj?.prenom }} {{ demande.responsible_pj?.nom }}</div>
+        <div><strong>PJ:</strong> {{ demande.pj_status === 'oui' ? 'Oui' : 'Non' }}</div>
+      </div>
+
+      <div class="demande-motif">
+        <strong>Motif:</strong> {{ demande.description }}
+      </div>
     </div>
-    <div *ngIf="successMessage" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <strong class="font-bold">Succès !</strong>
-        <span class="block sm:inline">{{ successMessage }}</span>
-    </div>
 
-    <!-- Contenu de la demande -->
-    <div *ngIf="demande">
-        <div class="header-section mb-8">
-            <p class="text-right">Ariary</p>
-            <h2 class="text-center font-bold text-lg">DEMANDE D'ENGAGEMENT DE DEPENSES (DED)</h2>
-        </div>
+    <div class="demande-details">
+      <table>
+    <thead>
+      <tr>
+        <th>P/J de</th>
+        <th>Libellé</th>
+        <th>Code Budget</th>
+        <th *ngIf="currentUserRole === 'rh' || currentUserRole === 'daf'">NIF / STAT</th>
+        <th *ngIf="currentUserRole === 'rh' || currentUserRole === 'daf'">N° Compte</th>
+        <th>Débit</th>
+        <th>Crédit</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let detail of demande.details; let i = index">
+        <td>{{ detail.beneficiaire }}</td>
+        <td>{{ detail.libelle }}</td>
 
-        <div class="info-table border border-black">
-            <div class="info-row flex border-b border-black">
-                <div class="info-cell flex-1 p-2 border-r border-black">
-                    <span class="label font-bold">Date:</span> {{ demande.date | date:'shortDate' }}
-                </div>
-               <div class="info-cell flex-1 p-2">
-    <span class="label font-bold">Demandeur:</span> {{ demande.responsible_pj?.prenom }} {{ demande.responsible_pj?.nom }}
-</div>    </div>
-            <div class="info-row flex border-b border-black">
-                <div class="info-cell full-width flex-2 p-2">
-                    <span class="label font-bold">Motif:</span> {{ demande.description }}
-                </div>
-            </div>
-            <div class="info-row flex">
-                <div class="info-cell flex-1 p-2">
-                    <span class="label font-bold">Pour les P.J., voir pièce:</span> {{ demande.pj_status === 'oui' ? 'Oui' : 'Non' }}
-                </div>
-            </div>
-        </div>
-
-        <div class="details-table-container mt-4">
-            <table class="w-full border-collapse border border-black">
-                <thead>
-                    <tr>
-                        <th class="border-r border-b border-black p-2 text-left font-normal">
-                            <div class="table-header">P/J de</div>
-                        </th>
-                        <th class="border-r border-b border-black p-2 text-left font-normal">
-                            <div class="table-header">Libelle</div>
-                        </th>
-                        <th class="border-r border-b border-black p-2 text-left font-normal">
-                            <div class="table-header">Cod. Budget</div>
-                        </th>
-                        <th class="border-r border-b border-black p-2 text-left font-normal">
-                            <div class="table-header">NIF / STAT</div>
-                        </th>
-                        <th class="border-r border-b border-black p-2 text-left font-normal">
-                            <div class="table-header">N° Compte</div>
-                        </th>
-                        <th class="border-b border-black p-2 text-left font-normal">
-                            <div class="table-header">Montant</div>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let detail of demande.details">
-                        <td class="border-r border-black p-2"></td>
-                        <td class="border-r border-black p-2">{{ detail.libelle }}</td>
-                        <td class="border-r border-black p-2">{{ detail.budget_id }}</td>
-                        <td class="border-r border-black p-2">
-                            <div *ngIf="detail.nif">NIF: {{ detail.nif }}</div>
-                            <div *ngIf="detail.stat">STAT: {{ detail.stat }}</div>
-                        </td>
-                        <td class="border-r border-black p-2">{{ detail.numero_compte }}</td>
-                        <td class="p-2 text-right">{{ detail.amount | currency:'MGA' }}</td>
-                    </tr>
-                    <tr *ngFor="let i of [1,2,3,4,5,6,7,8,9,10]">
-                        <td class="border-r border-black p-2 h-8"></td>
-                        <td class="border-r border-black p-2"></td>
-                        <td class="border-r border-black p-2"></td>
-                        <td class="border-r border-black p-2"></td>
-                        <td class="border-r border-black p-2"></td>
-                        <td class="p-2"></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="montant-total-section border border-black border-t-0 p-2 flex justify-between font-bold">
-            <span>MONTANT TOTAL</span>
-            <span class="total-amount">{{ demande.montant_total | currency:'MGA' }}</span>
-        </div>
-
-     <p class="montant-text mt-4 px-4">
-    <span class="font-bold">Arrêtée à la somme totale de</span> {{ montantEnLettres }} Ariary
-</p>
-        <div class="validation-table-section mt-8">
-            <table class="w-full border-collapse border border-black">
-                <thead>
-                    <tr>
-                        <th class="text-center font-bold border-b border-black p-4">Validateur 1</th>
-                        <th class="text-center font-bold border-b border-black p-4">Validateur 2</th>
-                        <th class="text-center font-bold border-b border-black p-4">Validateur 3</th>
-                        <th class="text-center font-bold border-b border-black p-4">Validateur 4</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td *ngFor="let v of displayValidators" class="signature-cell border-r border-black p-2 align-bottom h-32 text-center">
-                            <div class="signature-container flex flex-col justify-end items-center h-full p-2">
-                                <ng-container *ngIf="v.statut === 'validé' && v.user && v.user.signature_image_url; else fallback">
-                                    <img
-                                        [src]="serverUrl + v.user.signature_image_url"
-                                        alt="Signature de {{ v.user.username }}"
-                                        class="signature-image max-h-10 max-w-20 object-contain mb-2 border border-gray-200 p-0.5"
-                                        (error)="handleImageError(v)"
-                                    />
-                                    <p class="validator-name font-bold text-xs m-0">{{ v.user.username }}</p>
-                                    <p class="validator-status valid text-xs text-green-600 m-0">(Validé)</p>
-                                </ng-container>
-
-                                <ng-template #fallback>
-                                    <div class="signature-placeholder h-10 w-20 flex items-center justify-center bg-gray-50 border border-dashed border-gray-300 mb-2 text-gray-400">
-                                        <i class="fas fa-signature text-xl"></i>
-                                    </div>
-                                    <p class="validator-name font-bold text-xs m-0">{{ v.user?.username || '–' }}</p>
-                                    <p *ngIf="v.statut && v.statut !== 'initial'" class="validator-status text-xs m-0" [ngClass]="{
-                                        'text-yellow-600': v.statut === 'en attente',
-                                        'text-red-600': v.statut === 'rejeté'
-                                    }">
-                                        ({{ v.statut | titlecase }})
-                                    </p>
-                                </ng-template>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div *ngIf="finalValidatorName && (demande.status === 'approuvée' || demande.status === 'rejetée')" class="final-validation mt-4 text-center">
-            <p class="final-status font-semibold text-lg" [ngClass]="{'text-green-600': demande.status === 'approuvée', 'text-red-600': demande.status === 'rejetée'}">
-                <i class="fas fa-check-circle mr-2" *ngIf="demande.status === 'approuvée'"></i>
-                <i class="fas fa-times-circle mr-2" *ngIf="demande.status === 'rejetée'"></i>
-                {{ demande.status === 'approuvée' ? 'Approuvée' : 'Rejetée' }} par {{ finalValidatorName }}
-            </p>
-        </div>
-
-        <div class="action-buttons flex flex-wrap justify-center gap-4 mt-8">
-            <button class="btn-secondary px-4 py-2 rounded shadow bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300" routerLink="/rh/validation">
-                <i class="fas fa-arrow-left mr-2"></i> Retour à la liste
-            </button>
-            <ng-container *ngIf="demande.status === 'en attente'">
-                <button class="btn-primary px-4 py-2 rounded shadow bg-indigo-600 text-white font-semibold hover:bg-indigo-700" (click)="editDemande()">
-                    <i class="fas fa-edit mr-2"></i> Modifier
-                </button>
-                <button class="btn-danger px-4 py-2 rounded shadow bg-red-600 text-white font-semibold hover:bg-red-700" (click)="openDeleteConfirmModal()">
-                    <i class="fas fa-trash-alt mr-2"></i> Supprimer
-                </button>
-                <button class="btn-success px-4 py-2 rounded shadow bg-green-600 text-white font-semibold hover:bg-green-700" (click)="approveDemande()">
-                    <i class="fas fa-check-circle mr-2"></i> Approuver
-                </button>
-                <button class="btn-warning px-4 py-2 rounded shadow bg-yellow-600 text-white font-semibold hover:bg-yellow-700" (click)="openRejectModal()">
-                    <i class="fas fa-times-circle mr-2"></i> Rejeter
-                </button>
+        <td class="code-budget-cell">
+          <div class="tooltip-container"
+            (mouseenter)="showBudgetTooltip(detail)"
+            (mouseleave)="hideBudgetTooltip()">
+            
+            <ng-container *ngIf="detail.budget; else noBudget">
+              {{ detail.budget.code_budget }} - {{ detail.budget.description }}
             </ng-container>
-            <ng-container *ngIf="demande.status === 'approuvée'">
-                <span class="status-badge approved px-4 py-2 rounded font-semibold text-green-700 bg-green-100"><i class="fas fa-check-circle mr-2"></i> Cette demande a été approuvée.</span>
-            </ng-container>
-            <ng-container *ngIf="demande.status === 'rejetée'">
-                <span class="status-badge rejected px-4 py-2 rounded font-semibold text-red-700 bg-red-100"><i class="fas fa-times-circle mr-2"></i> Cette demande a été rejetée.</span>
-            </ng-container>
-        </div>
 
-        <!-- Modals -->
-        <div *ngIf="showDeleteConfirmModal" class="modal-overlay fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="modal-content bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
-                <h3 class="modal-title text-lg font-bold text-gray-800 mb-4">Confirmer la suppression</h3>
-                <p class="modal-message text-gray-700 mb-6">Êtes-vous sûr de vouloir supprimer cette demande ? Cette action est irréversible.</p>
-                <div class="modal-actions flex justify-end gap-3">
-                    <button class="btn-secondary px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300" (click)="cancelDelete()">Annuler</button>
-                    <button class="btn-danger px-4 py-2 rounded font-semibold bg-red-600 text-white hover:bg-red-700" (click)="confirmDelete()">Supprimer</button>
-                </div>
-            </div>
-        </div>
+            <ng-template #noBudget>
+              <span>-</span>
+            </ng-template>
 
-        <div *ngIf="showRejectModal" class="modal-overlay fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="modal-content bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
-                <h3 class="modal-title text-lg font-bold text-gray-800 mb-4">Rejeter la demande</h3>
-                <div class="modal-input mb-6">
-                    <label for="rejectReason" class="input-label block font-semibold text-gray-700 mb-2">Raison du rejet:</label>
-                    <textarea id="rejectReason" [(ngModel)]="rejectReason" rows="3"
-                                class="input-field w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                placeholder="Veuillez expliquer la raison du rejet..."></textarea>
-                </div>
-                <div class="modal-actions flex justify-end gap-3">
-                    <button class="btn-secondary px-4 py-2 rounded font-semibold bg-gray-200 text-gray-800 hover:bg-gray-300" (click)="cancelReject()">Annuler</button>
-                    <button class="btn-warning px-4 py-2 rounded font-semibold bg-yellow-600 text-white hover:bg-yellow-700" (click)="confirmReject()">Rejeter</button>
-                </div>
+            <div *ngIf="(currentUserRole === 'rh' || currentUserRole === 'daf') && showTooltip && selectedDetail === detail"
+                class="budget-tooltip">
+              <p><strong>Budget Annuel:</strong> {{ detail.budget?.budget_annuel | currency:'MGA':'symbol':'1.0-0' }}</p>
+              <p><strong>Budget Trimestre:</strong> {{ getBudgetTrimestre(detail, demande.date) | currency:'MGA':'symbol':'1.0-0' }}</p>
             </div>
-        </div>
+          </div>
+        </td>
+
+        <td *ngIf="currentUserRole === 'rh' || currentUserRole === 'daf'">
+          <div *ngIf="detail.nif">NIF: {{ detail.nif }}</div>
+          <div *ngIf="detail.stat">STAT: {{ detail.stat }}</div>
+        </td>
+
+        <td *ngIf="currentUserRole === 'rh' || currentUserRole === 'daf'">{{ detail.numero_compte }}</td>
+
+        <td class="text-right">
+          {{ (demande.type !== 'ERD' || i > 0) ? (detail.amount | currency:'MGA':'symbol':'1.0-0') : '-' }}
+        </td>
+
+        <td class="text-right">
+          {{ (demande.type === 'ERD' && i === 0) ? (detail.amount | currency:'MGA':'symbol':'1.0-0') : '-' }}
+        </td>
+      </tr>
+
+      <tr class="totals">
+        <td [attr.colspan]="currentUserRole === 'rh' || currentUserRole === 'daf' ? 5 : 3" class="text-right">
+          TOTAUX:
+        </td>
+        <td class="text-right">{{ totalDebit | currency:'MGA':'symbol':'1.0-0' }}</td>
+        <td class="text-right">{{ totalCredit | currency:'MGA':'symbol':'1.0-0' }}</td>
+      </tr>
+
+      <tr class="solde">
+        <td [attr.colspan]="currentUserRole === 'rh' || currentUserRole === 'daf' ? 5 : 3" class="text-right">
+          SOLDE (Débit - Crédit):
+        </td>
+        <td colspan="2" class="text-center">{{ solde | currency:'MGA':'symbol':'1.0-0' }}</td>
+      </tr>
+    </tbody>
+</table>
+    <p class="montant-lettres">
+      <strong>Arrêtée à la somme totale de:</strong> {{ montantEnLettres }} Ariary
+    </p>
     </div>
-    
-    <!-- États de chargement et d'erreur si la demande n'est pas chargée -->
-    <div *ngIf="!demande && demandeId" class="loading-state text-center py-8">
-        <p class="loading-message text-gray-500">Chargement des détails de la demande...</p>
+
+    <div class="validators-section">
+      <table>
+        <thead>
+          <tr>
+            <th *ngFor="let v of displayValidators">{{ v.user?.username || 'Validateur' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td *ngFor="let v of displayValidators">
+              <div class="signature-container">
+                <ng-container *ngIf="v.statut === 'validé' && (v.signature_validation_url || v.user?.signature_image_url); else placeholderSignature">
+                  <img [src]="serverUrl + (v.signature_validation_url || v.user?.signature_image_url)"
+                       alt="Signature de {{ v.user?.username }}"
+                       class="signature-image"
+                       (error)="handleImageError(v)">
+                  <p class="validator-name">{{ v.user?.username }}</p>
+                  <p class="validator-status valid">(Validé)</p>
+                </ng-container>
+
+                <ng-template #placeholderSignature>
+                  <div class="signature-placeholder">
+                    <i class="fas fa-signature"></i>
+                  </div>
+                  <p class="validator-name">{{ v.user?.username || '–' }}</p>
+                  <p class="validator-status"
+                     [ngClass]="{
+                       'text-yellow': v.statut==='en attente',
+                       'text-red': v.statut==='rejeté'
+                     }">({{ v.statut | titlecase }})</p>
+                </ng-template>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <div *ngIf="!demande && !demandeId" class="error-state text-center py-8">
-        <p class="error-message text-red-600">ID de demande non fourni ou demande introuvable.</p>
-        <button class="btn-secondary mt-4 px-4 py-2 rounded shadow bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300" routerLink="/demandes">Retour à la liste</button>
+
+    <div class="action-buttons">
+      <button class="btn-back" routerLink="/demandes"><i class="fas fa-arrow-left"></i> Retour</button>
+      <button *ngIf="demande.status==='en attente'" class="btn-edit" (click)="editDemande()"><i class="fas fa-edit"></i> Modifier</button>
+      <button *ngIf="demande.status==='en attente'" class="btn-approve" (click)="approveDemande()"><i class="fas fa-check-circle"></i> Approuver</button>
+      <button *ngIf="demande.status==='en attente'" class="btn-reject" (click)="openRejectModal()"><i class="fas fa-times-circle"></i> Rejeter</button>
     </div>
 </div>

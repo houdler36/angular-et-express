@@ -6,7 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 // Services nécessaires pour les opérations du tableau de bord
 import { DemandeService } from '../../services/demande.service';
 import { AuthService } from '../../services/auth.service';
-
+import { RapportProjetComponent } from './rapport-projet/rapport-projet.component';
 // Interface pour garantir la cohérence des données des validateurs.
 interface JournalValidator {
   id: number;
@@ -34,7 +34,7 @@ export interface StatistiqueDemande {
 @Component({
   selector: 'app-daf-dashboard',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, CurrencyPipe],
+  imports: [CommonModule, NgIf, NgFor, CurrencyPipe,RapportProjetComponent],
   templateUrl: './daf-dashboard.component.html',
   styleUrls: ['./daf-dashboard.component.css']
 })

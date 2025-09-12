@@ -1,109 +1,91 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, CurrencyPipe, NgIf, NgFor } from '@angular/common';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { DemandeService } from '../../../services/demande.service';
 import { AuthService } from '../../../services/auth.service';
-
-// Interfaces pour la structure des données des demandes de validation et des validateurs.
-// Ces interfaces garantissent la cohérence des données dans l'application.
-interface DemandeValidation {
-  id: number;
-  demande_id: number;
-  user_id: number;
-  statut: string;
-  ordre: number;
-  commentaire?: string;
-  signature_image_url?: string;
-  date_validation?: Date;
-}
-
-interface JournalValidator {
-  id: number;
-  journal_id: number;
-  user_id: number;
-  ordre: number;
-  statut: string;
-  date_validation?: Date;
-  commentaire?: string;
-  signature_image_url?: string;
-  user: {
-    id: number;
-    username: string;
-  };
-}
+import { UserService } from '../../../services/user.service';
 
 @Component({
   selector: 'app-validation-rh',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, CurrencyPipe],
+  imports: [CommonModule, NgIf, NgFor, CurrencyPipe, ReactiveFormsModule, FormsModule],
   templateUrl: './rh-dashboard.component.html',
   styleUrls: ['./rh-dashboard.component.css']
 })
 export class RhDashboardComponent implements OnInit {
-  // L'ID de l'utilisateur actuel, stocké pour les vérifications de validation.
   currentUserId: number | null = null;
+  currentUser: any = null;
 
-  // Tableaux pour stocker les différentes catégories de demandes.
   demandesATraiter: any[] = [];
   demandesEnAttente: any[] = [];
   demandesFinalisees: any[] = [];
 
-  // Indicateurs de chargement pour afficher un message à l'utilisateur pendant que les données se chargent.
   loadingATraiter = false;
   loadingEnAttente = false;
   loadingFinalisees = false;
   activePage: string = 'Dashboard';
 
-  // Le constructeur initialise les services et récupère l'ID de l'utilisateur.
+  // ------------------ Mon Profil ------------------
+  profilForm: FormGroup;
+  messageSuccess: string = '';
+  messageError: string = '';
+
+  // ------------------ Changement de signature ------------------
+  selectedFile: File | null = null;
+  messageSignature: string = '';
+
+  // ------------------ Remplaçant RH ------------------
+  autresRH: any[] = [];
+  selectedDelegueId: number | null = null;
+  messageDelegue: string = '';
+
   constructor(
     private demandeService: DemandeService,
     private authService: AuthService,
-    private router: Router // Injecte le service Router pour la navigation.
+    private userService: UserService,
+    private router: Router,
+    private fb: FormBuilder
   ) {
     this.currentUserId = this.authService.getUserId();
+
+    this.profilForm = this.fb.group({
+      currentPassword: ['', Validators.required],
+      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', Validators.required]
+    });
   }
 
-  // ngOnInit est appelé à l'initialisation du composant. Il déclenche le chargement des données.
   ngOnInit(): void {
     this.loadDemandesATraiter();
     this.loadDemandesEnAttente();
     this.loadDemandesFinalisees();
+    this.loadUserProfile();
   }
 
-  // Méthode pour définir la page active et basculer l'affichage.
+  // ------------------ Gestion des pages ------------------
   setActivePage(page: string) {
     this.activePage = page;
   }
 
-  /**
-   * Charge les demandes que l'utilisateur doit valider.
-   */
+  // ------------------ Chargement des demandes ------------------
   loadDemandesATraiter() {
     this.loadingATraiter = true;
     this.demandeService.getDemandesAValider().subscribe({
       next: (demandes: any[]) => {
         this.demandesATraiter = demandes.map(demande => {
-          // Filtrer les validations pour l'équipe RH.
-          const validationsRH = demande.validations.filter(
-            (v: any) => v.user.role === 'rh'
-          );
-
+          const validationsRH = demande.validations.filter((v: any) => v.user.role === 'rh');
           if (validationsRH.length === 0) return null;
 
-          // Trouver l'ordre de la validation la plus ancienne en attente pour les RH.
           const ordreMinEnAttente = Math.min(
-            ...validationsRH
-              .filter((v: any) => v.statut === 'en attente')
-              .map((v: any) => v.ordre)
+            ...validationsRH.filter((v: any) => v.statut === 'en attente').map((v: any) => v.ordre)
           );
 
-          // Vérifier si c'est le tour de l'utilisateur actuel.
           const estTourUtilisateur = validationsRH.some(
             (v: any) => v.user.id === this.currentUserId && v.ordre === ordreMinEnAttente && v.statut === 'en attente'
           );
 
-          // Identifier le nom du validateur actuel.
           const currentValidator = validationsRH.find(
             (v: any) => v.ordre === ordreMinEnAttente && v.statut === 'en attente'
           )?.user.username || null;
@@ -121,23 +103,14 @@ export class RhDashboardComponent implements OnInit {
     });
   }
 
-  /**
-   * Charge les demandes qui sont en attente chez d'autres validateurs.
-   */
   loadDemandesEnAttente() {
     this.loadingEnAttente = true;
     this.demandeService.getDemandesEnAttenteAutres().subscribe({
       next: (data) => {
         this.demandesEnAttente = data.map((demande: any) => {
           const validations = demande.validations || [];
-          const currentValidation = validations.find(
-            (v: any) => v.statut === 'en attente'
-          );
-
-          // Associer la validation actuelle au validateur du journal pour obtenir le nom d'utilisateur.
-          const journalValidator = demande.journal?.journal_validers?.find(
-            (v: any) => v.user_id === currentValidation?.user_id
-          );
+          const currentValidation = validations.find((v: any) => v.statut === 'en attente');
+          const journalValidator = demande.journal?.journal_validers?.find((v: any) => v.user_id === currentValidation?.user_id);
 
           return {
             ...demande,
@@ -150,42 +123,26 @@ export class RhDashboardComponent implements OnInit {
     });
   }
 
-  /**
-   * Charge les demandes qui ont été finalisées (approuvées ou rejetées).
-   */
   loadDemandesFinalisees() {
     this.loadingFinalisees = true;
     this.demandeService.getDemandesFinalisees().subscribe({
       next: (data) => {
         this.demandesFinalisees = data.map((demande: any) => {
           const validations = demande.validations || [];
-
-          // Trouver la dernière validation pour déterminer le validateur final.
-          const finalValidation = validations.find(
-            (v: any) => v.statut === 'validé' || v.statut === 'rejeté'
-          );
-
+          const finalValidation = validations.find((v: any) => v.statut === 'validé' || v.statut === 'rejeté');
           const finalValidatorName = finalValidation?.user?.username || 'Inconnu';
-
           return {
             ...demande,
             finalValidatorName
           };
         });
-
         this.loadingFinalisees = false;
       },
-      error: () => {
-        console.error('Erreur lors du chargement des demandes finalisées.');
-        this.loadingFinalisees = false;
-      }
+      error: () => this.loadingFinalisees = false
     });
   }
 
-  /**
-   * Valide une demande et met à jour les listes.
-   * @param id L'identifiant de la demande.
-   */
+  // ------------------ Actions sur les demandes ------------------
   valider(id: number) {
     this.demandeService.validateDemande(id).subscribe(() => {
       this.loadDemandesATraiter();
@@ -194,10 +151,6 @@ export class RhDashboardComponent implements OnInit {
     });
   }
 
-  /**
-   * Refuse une demande et met à jour les listes.
-   * @param id L'identifiant de la demande.
-   */
   refuser(id: number) {
     this.demandeService.refuseDemande(id, '').subscribe(() => {
       this.loadDemandesATraiter();
@@ -206,12 +159,108 @@ export class RhDashboardComponent implements OnInit {
     });
   }
 
-  /**
-   * Gère l'action "Voir" pour une demande en naviguant vers sa page de détails.
-   * @param id L'identifiant de la demande.
-   */
   voirDetails(id: number) {
-    console.log(`Bouton "Voir" cliqué pour la demande avec l'ID : ${id}`);
     this.router.navigate(['/demandes', id]);
+  }
+
+  // ------------------ Mon Profil ------------------
+loadUserProfile() {
+  console.log('[loadUserProfile] Début du chargement du profil utilisateur');
+
+  this.userService.getCurrentUser().subscribe({
+    next: (user) => {
+      this.currentUser = user;
+      console.log('[loadUserProfile] Profil utilisateur chargé:', user);
+
+      // Charger les autres RH pour le remplaçant uniquement si role RH
+      if (user.role === 'rh') {
+        this.userService.getRhUsersList().subscribe({
+          next: (rhs: any[]) => {
+            this.autresRH = rhs.filter(rh => rh.id !== user.id);
+            console.log('[loadUserProfile] Liste autres RH:', this.autresRH);
+
+            this.selectedDelegueId = user.delegue_id ? Number(user.delegue_id) : null;
+            console.log('[loadUserProfile] Remplaçant actuel (selectedDelegueId):', this.selectedDelegueId);
+          },
+          error: (err) => {
+            console.error('[loadUserProfile] Erreur lors du chargement des autres RH:', err);
+            // Fallback : afficher message et désactiver le <select>
+            this.autresRH = [];
+            this.messageDelegue = "Non autorisé à consulter la liste des RH";
+            this.selectedDelegueId = null;
+          }
+        });
+      } else {
+        console.log('[loadUserProfile] L’utilisateur n’est pas RH, pas de liste à charger');
+        this.autresRH = [];
+        this.selectedDelegueId = null;
+      }
+    },
+    error: (err) => {
+      console.error('[loadUserProfile] Erreur lors du chargement du profil utilisateur:', err);
+      this.currentUser = null;
+    }
+  });
+}
+
+
+
+
+  changerMotDePasse() {
+    this.messageSuccess = '';
+    this.messageError = '';
+
+    const { currentPassword, newPassword, confirmPassword } = this.profilForm.value;
+
+    if (newPassword !== confirmPassword) {
+      this.messageError = 'Le nouveau mot de passe et sa confirmation ne correspondent pas.';
+      return;
+    }
+
+    const updateData = { currentPassword, newPassword };
+
+    this.userService.updateUserProfile(updateData).subscribe({
+      next: () => {
+        this.messageSuccess = 'Mot de passe modifié avec succès !';
+        this.profilForm.reset();
+      },
+      error: (err) => {
+        console.error(err);
+        this.messageError = err.error?.message || 'Erreur lors de la modification du mot de passe.';
+      }
+    });
+  }
+
+  // ------------------ Changement de signature ------------------
+  onFileSelected(event: any) {
+    this.selectedFile = event.target.files[0] || null;
+  }
+
+  changerSignature() {
+    if (!this.selectedFile) {
+      this.messageSignature = 'Veuillez sélectionner un fichier.';
+      return;
+    }
+
+    this.userService.uploadSignature(this.selectedFile).subscribe({
+      next: () => {
+        this.messageSignature = 'Signature mise à jour avec succès !';
+        this.selectedFile = null;
+      },
+      error: (err) => {
+        console.error(err);
+        this.messageSignature = err.error?.message || 'Erreur lors de la mise à jour de la signature.';
+      }
+    });
+  }
+
+  // ------------------ Remplaçant RH ------------------
+  changerDelegue() {
+    this.messageDelegue = '';
+
+    this.userService.setDelegue({ delegue_id: this.selectedDelegueId }).subscribe({
+      next: () => this.messageDelegue = 'Remplaçant mis à jour avec succès.',
+      error: (err) => this.messageDelegue = err.error?.message || 'Erreur lors de la mise à jour.'
+    });
   }
 }

@@ -1,4 +1,5 @@
 <div class="flex-container">
+  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="header-container">
       <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
@@ -36,9 +37,18 @@
         </svg>
         <span class="hidden-mobile">Demandes approuvées</span>
       </a>
+      <a role="button" [class.active]="activePage === 'profil'" (click)="setActivePage('profil')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="7" r="4" />
+          <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+        </svg>
+        <span class="hidden-mobile">Mon Profil</span>
+      </a>
     </nav>
   </aside>
 
+  <!-- Main Content -->
   <main class="main-content">
     <div class="card">
       <!-- Tableau de Bord -->
@@ -62,138 +72,178 @@
 
       <!-- Demandes à traiter -->
       <div *ngIf="activePage === 'demandesATraiter'" class="content-section">
-        <div class="p-4 mt-8">
-          <h2 class="text-2xl font-bold mb-4 page-title">Demandes à traiter</h2>
-          <p *ngIf="loadingATraiter" class="text-gray-500 loading-text">Chargement...</p>
-          <table *ngIf="!loadingATraiter && demandesATraiter.length > 0" class="fade-in-table">
-            <thead>
-              <tr>
-                <th>Titre</th>
-                <th>Montant</th>
-                <th>Status</th>
-                <th>Validateurs du journal</th>
-                <th>Actions</th>
-                <th>Détails</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let demande of demandesATraiter">
-                <td>{{ demande.description || '—' }}</td>
-                <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
-                <td>{{ demande.status }}</td>
-                <td>
-                  <ul>
-                    <li *ngFor="let validateur of demande.journal?.journal_validers || []">
-                      {{ validateur.user?.username || 'N/A' }} (Ordre {{ validateur.ordre }})
-                    </li>
-                  </ul>
-                </td>
-                <td>
-                  <button *ngIf="demande.estTourUtilisateur" (click)="valider(demande.id)"
-                    class="icon-btn text-green-600 hover:text-green-800" title="Valider">
-                    ✅
-                  </button>
-                  <button *ngIf="demande.estTourUtilisateur" (click)="refuser(demande.id)"
-                    class="icon-btn text-red-600 hover:text-red-800" title="Refuser">
-                    ❌
-                  </button>
-                  <span *ngIf="!demande.estTourUtilisateur" class="icon-btn text-gray-400" title="Pas votre tour">🔒</span>
-                </td>
-                <td>
-                  <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800"
-                    title="Voir détails">👁️</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <p *ngIf="!loadingATraiter && demandesATraiter.length === 0" class="text-gray-500 italic empty-message">
-            Aucune demande à traiter actuellement
-          </p>
-        </div>
+        <h2 class="text-2xl font-bold mb-4 page-title">Demandes à traiter</h2>
+        <p *ngIf="loadingATraiter" class="text-gray-500 loading-text">Chargement...</p>
+        <table *ngIf="!loadingATraiter && demandesATraiter.length > 0" class="fade-in-table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Montant</th>
+              <th>Status</th>
+              <th>Validateurs du journal</th>
+              <th>Actions</th>
+              <th>Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let demande of demandesATraiter">
+              <td>{{ demande.description || '—' }}</td>
+              <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
+              <td>{{ demande.status }}</td>
+              <td>
+                <ul>
+                  <li *ngFor="let validateur of demande.journal?.journal_validers || []">
+                    {{ validateur.user?.username || 'N/A' }} (Ordre {{ validateur.ordre }})
+                  </li>
+                </ul>
+              </td>
+              <td>
+                <button *ngIf="demande.estTourUtilisateur" (click)="valider(demande.id)" class="icon-btn text-green-600 hover:text-green-800">✅</button>
+                <button *ngIf="demande.estTourUtilisateur" (click)="refuser(demande.id)" class="icon-btn text-red-600 hover:text-red-800">❌</button>
+                <span *ngIf="!demande.estTourUtilisateur" class="icon-btn text-gray-400">🔒</span>
+              </td>
+              <td>
+                <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800">👁️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p *ngIf="!loadingATraiter && demandesATraiter.length === 0" class="text-gray-500 italic">Aucune demande à traiter actuellement</p>
       </div>
 
       <!-- Demandes en attente -->
       <div *ngIf="activePage === 'demandesEnAttente'" class="content-section">
-        <div class="p-4 mt-8">
-          <h2 class="text-2xl font-bold mb-4 page-title">Demandes en attente</h2>
-          <p *ngIf="loadingEnAttente" class="text-gray-500 loading-text">Chargement...</p>
-          <table *ngIf="!loadingEnAttente && demandesEnAttente.length > 0" class="fade-in-table">
-            <thead>
-              <tr>
-                <th>Titre</th>
-                <th>Montant</th>
-                <th>Status</th>
-                <th>Validateurs du journal</th>
-                <th>Validateur actuel</th>
-                <th>Détails</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let demande of demandesEnAttente">
-                <td>{{ demande.description || '—' }}</td>
-                <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
-                <td>{{ demande.status }}</td>
-                <td>
-                  <ul>
-                    <li *ngFor="let validateur of demande.journal?.journal_validers || []">
-                      {{ validateur.user?.username || 'N/A' }} (Ordre {{ validateur.ordre }})
-                    </li>
-                  </ul>
-                </td>
-                <td>{{ demande.currentValidator || '—' }}</td>
-                <td>
-                  <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800"
-                    title="Voir détails">👁️</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <p *ngIf="!loadingEnAttente && demandesEnAttente.length === 0" class="text-gray-500 italic empty-message">
-            Aucune demande en attente chez d'autres validateurs
-          </p>
-        </div>
+        <h2 class="text-2xl font-bold mb-4 page-title">Demandes en attente</h2>
+        <p *ngIf="loadingEnAttente" class="text-gray-500">Chargement...</p>
+        <table *ngIf="!loadingEnAttente && demandesEnAttente.length > 0" class="fade-in-table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Montant</th>
+              <th>Status</th>
+              <th>Validateurs du journal</th>
+              <th>Validateur actuel</th>
+              <th>Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let demande of demandesEnAttente">
+              <td>{{ demande.description || '—' }}</td>
+              <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
+              <td>{{ demande.status }}</td>
+              <td>
+                <ul>
+                  <li *ngFor="let validateur of demande.journal?.journal_validers || []">
+                    {{ validateur.user?.username || 'N/A' }} (Ordre {{ validateur.ordre }})
+                  </li>
+                </ul>
+              </td>
+              <td>{{ demande.currentValidator || '—' }}</td>
+              <td>
+                <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800">👁️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p *ngIf="!loadingEnAttente && demandesEnAttente.length === 0" class="text-gray-500 italic">
+          Aucune demande en attente chez d'autres validateurs
+        </p>
       </div>
 
       <!-- Demandes approuvées -->
       <div *ngIf="activePage === 'demandesApprouvees'" class="content-section">
+        <h2 class="text-2xl font-bold mb-4 page-title">Demandes approuvées</h2>
+        <p *ngIf="loadingFinalisees" class="text-gray-500">Chargement...</p>
+        <table *ngIf="!loadingFinalisees && demandesFinalisees.length > 0" class="fade-in-table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Montant</th>
+              <th>Status</th>
+              <th>Validateurs du journal</th>
+              <th>Validateur final</th>
+              <th>Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let demande of demandesFinalisees">
+              <td>{{ demande.description || '—' }}</td>
+              <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
+              <td>{{ demande.status }}</td>
+              <td>
+                <ul>
+                  <li *ngFor="let validateur of demande.journal?.journal_validers || []">
+                    {{ validateur.user?.username || 'N/A' }} (Ordre {{ validateur.ordre }})
+                  </li>
+                </ul>
+              </td>
+              <td>{{ demande.finalValidatorName || '—' }}</td>
+              <td>
+                <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800">👁️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p *ngIf="!loadingFinalisees && demandesFinalisees.length === 0" class="text-gray-500 italic">
+          Aucune demande approuvée pour le moment
+        </p>
+      </div>
+
+      <!-- Mon Profil -->
+      <div *ngIf="activePage === 'profil'" class="content-section">
+        <h2 class="text-2xl font-bold mb-4 page-title">Mon Profil</h2>
+
+        <!-- Formulaire mot de passe -->
+        <form [formGroup]="profilForm" (ngSubmit)="changerMotDePasse()" class="profil-form">
+          <div class="form-group mb-4">
+            <label>Mot de passe actuel</label>
+            <input type="password" formControlName="currentPassword" placeholder="Mot de passe actuel" class="input-field">
+          </div>
+          <div class="form-group mb-4">
+            <label>Nouveau mot de passe</label>
+            <input type="password" formControlName="newPassword" placeholder="Nouveau mot de passe" class="input-field">
+          </div>
+          <div class="form-group mb-4">
+            <label>Confirmer le mot de passe</label>
+            <input type="password" formControlName="confirmPassword" placeholder="Confirmer le nouveau mot de passe" class="input-field">
+          </div>
+          <button type="submit" class="btn-submit bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Changer le mot de passe</button>
+          <p class="text-green-600 mt-2" *ngIf="messageSuccess">{{ messageSuccess }}</p>
+          <p class="text-red-600 mt-2" *ngIf="messageError">{{ messageError }}</p>
+        </form>
+
+        <!-- Changement signature -->
         <div class="p-4 mt-8">
-          <h2 class="text-2xl font-bold mb-4 page-title">Demandes approuvées</h2>
-          <p *ngIf="loadingFinalisees" class="text-gray-500 loading-text">Chargement...</p>
-          <table *ngIf="!loadingFinalisees && demandesFinalisees.length > 0" class="fade-in-table">
-            <thead>
-              <tr>
-                <th>Titre</th>
-                <th>Montant</th>
-                <th>Status</th>
-                <th>Validateurs du journal</th>
-                <th>Validateur final</th>
-                <th>Détails</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let demande of demandesFinalisees">
-                <td>{{ demande.description || '—' }}</td>
-                <td>{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
-                <td>{{ demande.status }}</td>
-                <td>
-                  <ul>
-                    <li *ngFor="let validateur of demande.journal?.journal_validers || []">
-                      {{ validateur.user?.username || 'N/A' }} (Ordre {{ validateur.ordre }})
-                    </li>
-                  </ul>
-                </td>
-                <td>{{ demande.finalValidatorName || '—' }}</td>
-                <td>
-                  <button (click)="voirDetails(demande.id)" class="icon-btn text-blue-600 hover:text-blue-800"
-                    title="Voir détails">👁️</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <p *ngIf="!loadingFinalisees && demandesFinalisees.length === 0" class="text-gray-500 italic empty-message">
-            Aucune demande approuvée pour le moment
-          </p>
+          <h2 class="text-2xl font-bold mb-4 page-title">Changer ma signature</h2>
+          <div class="form-group mb-4">
+            <input type="file" (change)="onFileSelected($event)" class="input-field">
+          </div>
+          <button (click)="changerSignature()" class="btn-submit bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+            Mettre à jour la signature
+          </button>
+          <p class="text-green-600 mt-2" *ngIf="messageSignature">{{ messageSignature }}</p>
         </div>
+
+        <!-- Remplaçant RH -->
+       <div *ngIf="currentUser && currentUser.role === 'rh'" class="p-4 mt-8">
+  <h2 class="text-2xl font-bold mb-4 page-title">Définir mon remplaçant</h2>
+  <div class="form-group mb-4" *ngIf="currentUser?.role === 'rh'">
+  <label>Choisir un remplaçant RH</label>
+  <select [(ngModel)]="selectedDelegueId" class="input-field" [disabled]="autresRH.length === 0">
+    <option [value]="null">-- Aucun --</option>
+    <option *ngIf="autresRH.length === 0" disabled>{{ messageDelegue }}</option>
+    <option *ngFor="let rh of autresRH" [value]="rh.id">{{ rh.username }}</option>
+  </select>
+</div>
+
+  <button (click)="changerDelegue()" 
+          class="btn-submit bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+          [disabled]="autresRH.length === 0">
+    Mettre à jour le remplaçant
+  </button>
+  <p class="text-green-600 mt-2" *ngIf="messageDelegue">{{ messageDelegue }}</p>
+</div>
+
       </div>
     </div>
   </main>

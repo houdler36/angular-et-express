@@ -68,6 +68,13 @@ const demandeModel = (sequelize, Sequelize) => {
             allowNull: true,
             comment: 'Numéro séquentiel de la demande approuvée par journal'
         },
+
+        date_approuvee: {
+    type: Sequelize.DATE,   // ou Sequelize.DATEONLY si tu n’as pas besoin de l’heure
+    allowNull: true,        // peut être null si non approuvé
+    comment: 'Date d\'approbation de la demande'
+},
+
     }, {
         // Désactive les timestamps pour les tables qui n'ont pas les colonnes 'createdAt' et 'updatedAt'
         timestamps: false,

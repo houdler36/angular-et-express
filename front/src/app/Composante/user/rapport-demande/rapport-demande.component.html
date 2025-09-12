@@ -19,6 +19,7 @@
     <thead>
       <tr>
         <th>Date Approuvé</th>
+        <th>id</th>
         <th>Numéro Journal</th>
         <th>Motif</th>
         <th>Encaissement</th>
@@ -29,6 +30,7 @@
     <tbody>
   <tr *ngFor="let demande of demandes">
     <td>{{ formatDateTime(demande.date_approuve) }}</td>
+     <td>{{ demande.id }}</td>
     <td>{{ demande.numero_journal_approuve || '-' }}</td>
     <td>{{ demande.motif || demande.description }}</td>
     <td>{{ (demande.type === 'Recette' || demande.type === 'ERD') ? formatCurrency(demande.montant_total) : '-' }}</td>

@@ -1,16 +1,15 @@
-/* src/app/Composante/user/demande-list/demande-list.component.scss */
-
 .demande-list-container {
-  padding: 20px;
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  padding: 25px;
+  background-color: #f9f9fb;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 
   h2 {
     text-align: center;
     color: #3f51b5;
-    margin-bottom: 30px;
-    font-size: 2em;
+    margin-bottom: 25px;
+    font-size: 2rem;
+    font-weight: 600;
   }
 
   .list-header-actions {
@@ -19,40 +18,103 @@
     margin-bottom: 20px;
 
     .btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       padding: 10px 20px;
-      font-size: 1em;
+      font-size: 1rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
     }
   }
 
   .table-container {
-    overflow-x: auto; /* Permet le défilement horizontal sur petits écrans */
+    overflow-x: auto;
   }
 
   .data-table {
-    min-width: 800px; /* S'assure que le tableau n'est pas trop compressé */
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+    font-size: 0.95rem;
+    min-width: 900px;
+
+    th {
+      text-align: left;
+      padding: 12px;
+      color: #555;
+      background-color: #eef1f7;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 12px;
+      background-color: #ffffff;
+      color: #333;
+      vertical-align: middle;
+
+      &:first-child {
+        font-weight: 600;
+      }
+    }
+
+    tr {
+      border-radius: 10px;
+    }
+
+    .empty-message {
+      text-align: center;
+      padding: 20px;
+      font-style: italic;
+      color: #777;
+    }
   }
 
   .action-buttons {
     display: flex;
-    gap: 8px; /* Espacement entre les boutons d'action */
+    gap: 6px;
 
     .btn-sm {
       padding: 6px 10px;
-      font-size: 0.85em;
-      border-radius: 5px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+      }
     }
+
+    .primary { background-color: #3f51b5; color: #fff; }
+    .secondary { background-color: #607d8b; color: #fff; }
+    .danger { background-color: #f44336; color: #fff; }
   }
 
   .status-badge {
     padding: 5px 10px;
-    border-radius: 5px;
-    font-weight: bold;
-    color: white;
-    font-size: 0.9em;
-    display: inline-block; /* Permet un bon rendu des paddings */
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #fff;
+    display: inline-block;
 
-    &.status-pending { background-color: #ff9800; } // Orange
-    &.status-approved { background-color: #4caf50; } // Vert
-    &.status-rejected { background-color: #f44336; } // Rouge
+    &.status-pending { background-color: #ff9800; }
+    &.status-approved { background-color: #4caf50; }
+    &.status-rejected { background-color: #f44336; }
+  }
+
+  .message-box {
+    margin-top: 20px;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-weight: 500;
+
+    &.message-success { background-color: #e8f5e9; color: #2e7d32; }
+    &.message-error { background-color: #ffebee; color: #c62828; }
   }
 }

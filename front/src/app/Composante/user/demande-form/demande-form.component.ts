@@ -12,12 +12,12 @@ import { TokenStorageService } from '../../../services/token-storage.service';
 @Component({
   selector: 'app-demande-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DatePipe, DecimalPipe],
+  imports: [CommonModule, ReactiveFormsModule,DecimalPipe],
   templateUrl: './demande-form.component.html',
   styleUrls: ['./demande-form.component.css']
 })
 export class DemandeFormComponent implements OnInit {
-  // Le groupe de formulaire principal
+  // Le groupe de formulaire principala
   demandeForm: FormGroup;
   // Montant total calculé à partir des détails
   totalAmount = 0;

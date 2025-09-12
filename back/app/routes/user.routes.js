@@ -34,5 +34,11 @@ router.delete("/admin/users/:id", [authJwt.verifyToken, authJwt.isAdmin], contro
 
 // Route pour récupérer tous les journaux (protégé, pas forcément admin)
 router.get("/journals", [authJwt.verifyToken], controller.getJournals);
+// Profil connecté
+// Définir un remplaçant RH
+router.put("/me/delegue", [authJwt.verifyToken], controller.setDelegue);
+
+router.get("/me", [authJwt.verifyToken], controller.getCurrentUser);
+router.put("/me", [authJwt.verifyToken], controller.updateCurrentUser);
 
 module.exports = router;

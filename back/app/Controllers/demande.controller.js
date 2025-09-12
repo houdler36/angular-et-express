@@ -1,6 +1,121 @@
 const db = require('../Models');
 const { Op } = require("sequelize");
 const { SEUIL_VALIDATION_DAF } = require('../Config/businessRules');
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+
+
+// Fichier: demande.controller.js
+
+
+exports.validerDemande = async (req, res) => {
+    const demandeId = Number(req.params.id);
+    const userId = Number(req.userId);
+    const { commentaire, signatureBase64 } = req.body;
+
+    let transaction;
+    try {
+        transaction = await db.sequelize.transaction();
+
+        const currentUser = await db.user.findByPk(userId, { transaction });
+        if (!currentUser || (currentUser.role !== 'rh' && currentUser.role !== 'daf')) {
+            await transaction.rollback();
+            return res.status(403).send({ message: "Seuls les utilisateurs RH et DAF peuvent valider cette demande." });
+        }
+
+        const demande = await db.demande.findByPk(demandeId, {
+            include: [{ 
+                model: db.demande_validation,
+                as: 'validations', 
+                include: [{ model: db.user, as: 'user' }]
+            }],
+            transaction
+        });
+
+        if (!demande) {
+            await transaction.rollback();
+            return res.status(404).send({ message: "Demande introuvable." });
+        }
+
+        // Trouver la validation correcte de manière sûre
+        const validationActuelle = await db.demande_validation.findOne({
+            where: {
+                demande_id: demandeId,
+                user_id: userId,
+                statut: 'en attente' // S'assurer qu'on ne modifie que la validation en attente
+            },
+            transaction,
+            order: [['ordre', 'ASC']] // S'assurer que c'est le bon tour
+        });
+
+        if (!validationActuelle) {
+            await transaction.rollback();
+            return res.status(403).send({ message: "Ce n'est pas votre tour ou la demande est déjà validée/rejetée." });
+        }
+
+        let signatureUrl = null;
+        if (signatureBase64) {
+            const uploadDir = path.join(__dirname, '..', 'public', 'signatures');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+
+            const filename = `signature-${demandeId}-${userId}-${uuidv4()}.png`;
+            const filePath = path.join(uploadDir, filename);
+
+            const base64Data = signatureBase64.replace(/^data:image\/png;base64,/, "");
+            fs.writeFileSync(filePath, base64Data, 'base64');
+            signatureUrl = `/signatures/${filename}`;
+        }
+        
+        // Mettez à jour la validation en utilisant la nouvelle URL de signature
+        await validationActuelle.update(
+            { 
+                statut: 'validé', 
+                commentaire, 
+                signature_validation_url: signatureUrl,
+                date_validation: new Date() 
+            },
+            { transaction }
+        );
+
+        // ... (Le reste de votre logique pour passer au tour suivant)
+        const validationsEnAttente = await db.demande_validation.findAll({
+            where: { demande_id: demandeId, statut: 'en attente' },
+            transaction
+        });
+
+        if (validationsEnAttente.length > 0) {
+            await transaction.commit();
+            return res.status(200).send({ message: "Validation enregistrée. En attente des autres validateurs du même ordre." });
+        } else {
+            // ... (Le reste de votre logique de finalisation)
+            await db.demande.update({ status: DEMANDE_STATUS.APPROUVEE }, { where: { id: demandeId }, transaction });
+
+            const journal = await db.journal.findByPk(demande.journal_id, { transaction });
+            let nouveauSolde = parseFloat(journal.solde || 0);
+            if (demande.type === 'DED') nouveauSolde -= parseFloat(demande.montant_total);
+            else if (demande.type === 'Recette' || demande.type === 'ERD') nouveauSolde += parseFloat(demande.montant_total);
+
+            const now = new Date();
+            await demande.update({
+                date_approuvee: now,
+                soldeProgressif: nouveauSolde 
+            }, { transaction });
+
+            await journal.update({ solde: nouveauSolde }, { transaction });
+        }
+
+        await transaction.commit();
+        res.status(200).send({ message: "Demande validée avec succès." });
+
+    } catch (err) {
+        if (transaction && !transaction.finished) await transaction.rollback();
+        console.error(err);
+        res.status(500).send({ message: "Erreur interne lors de la validation." });
+    }
+};
 
 // Fichier de constantes pour éviter les chaînes de caractères littérales
 const DEMANDE_STATUS = {
@@ -196,31 +311,71 @@ exports.findOne = async (req, res) => {
                     as: 'user'
                 },
                 {
-                    model: db.personne, // AJOUTEZ CETTE LIGNE
-                    as: 'responsible_pj' // ET CETTE LIGNE
+                    model: db.personne,
+                    as: 'responsible_pj'
                 },
                 {
                     model: db.journal,
-                    as: 'journal',
+                    as: 'journal'
                 },
                 {
                     model: db.demande_detail,
-                    as: 'details'
+                    as: 'details',
+                    include: [
+                        {
+                            model: db.budget,
+                            as: 'budget',
+                            attributes: [
+                                'id_budget',
+                                'code_budget',
+                                'description',
+                                'annee_fiscale',
+                                'budget_annuel',
+                                'budget_trimestre_1',
+                                'budget_trimestre_2',
+                                'budget_trimestre_3',
+                                'budget_trimestre_4'
+                            ]
+                        }
+                    ]
                 },
                 {
                     model: db.demande_validation,
                     as: 'validations',
+                    // On demande la colonne 'signature_validation_url' ici
+                    attributes: [
+                        'id',
+                        'statut',
+                        'ordre',
+                        'date_validation',
+                        'commentaire',
+                        'signature_validation_url' // Cette colonne est bien dans la table 'demande_validations'
+                    ],
                     include: [{
                         model: db.user,
                         as: 'user',
+                        // On ne demande que les attributs qui se trouvent dans la table 'users'
                         attributes: ['username', 'signature_image_url']
                     }]
                 }
             ]
         });
 
-        if (!demande) return res.status(404).send({ message: `Demande ${id} introuvable.` });
-        res.send(demande);
+        if (!demande) {
+            return res.status(404).send({ message: `Demande ${id} introuvable.` });
+        }
+
+        // --- Logique pour choisir la bonne signature ---
+        const demandeAvecSignaturesStatiques = demande.toJSON();
+        demandeAvecSignaturesStatiques.validations = demandeAvecSignaturesStatiques.validations.map(validation => {
+            const signatureFinale = validation.signature_validation_url || (validation.user ? validation.user.signature_image_url : null);
+            return {
+                ...validation,
+                signature_image_url_finale: signatureFinale
+            };
+        });
+
+        res.send(demandeAvecSignaturesStatiques);
     } catch (err) {
         console.error(err);
         res.status(500).send({ message: "Erreur lors de la récupération de la demande." });
@@ -236,6 +391,11 @@ exports.findAllUserDemandes = async (req, res) => {
             include: [
                 { model: db.user, attributes: ['id', 'username'], as: 'user' },
                 { model: db.demande_detail, as: 'details' },
+                { 
+    model: db.personne, 
+    as: 'responsible_pj', 
+    attributes: ['nom', 'prenom'] 
+}, // CORRECTION: retrait des attributs nom et prenom
                 {
                     model: db.journal,
                     as: 'journal',
@@ -268,6 +428,7 @@ exports.getDemandesPJNonFournies = async (req, res) => {
             include: [
                 { model: db.user, attributes: ['id', 'username'], as: 'user' },
                 { model: db.demande_detail, as: 'details' },
+                { model: db.personne, as: 'responsible_pj' }, // CORRECTION: retrait des attributs nom et prenom
                 {
                     model: db.journal,
                     as: 'journal',
@@ -330,97 +491,147 @@ exports.delete = async (req, res) => {
 };
 
 // --- Validation d'une demande (RH et DAF) ────────────────────────────────
-// --- Validation d'une demande (RH et DAF) ────────────────────────────────
+// Fichier: demande.controller.js
+
+
+
+
+// (Le reste de votre code, comme exports.create, exports.findOne, etc., est inchangé)
+
 exports.validerDemande = async (req, res) => {
-    const demandeId = Number(req.params.id);
-    const userId = Number(req.userId);
-    const { commentaire, signatureBase64 } = req.body;
+    const demandeId = Number(req.params.id);
+    const userId = Number(req.userId);
+    const { commentaire, signatureBase64 } = req.body;
 
-    let transaction;
-    try {
-        transaction = await db.sequelize.transaction();
+    let transaction;
+    try {
+        transaction = await db.sequelize.transaction();
 
-        const currentUser = await db.user.findByPk(userId, { transaction });
-        if (!currentUser || (currentUser.role !== 'rh' && currentUser.role !== 'daf')) {
-            await transaction.rollback();
-            return res.status(403).send({ message: "Seuls les utilisateurs RH et DAF peuvent valider cette demande." });
-        }
+        const currentUser = await db.user.findByPk(userId, { transaction });
+        if (!currentUser || (currentUser.role !== 'rh' && currentUser.role !== 'daf')) {
+            await transaction.rollback();
+            return res.status(403).send({ message: "Seuls les utilisateurs RH et DAF peuvent valider cette demande." });
+        }
 
-        const demande = await db.demande.findByPk(demandeId, {
-            include: [{ model: db.demande_validation, as: 'validations', include: [{ model: db.user, as: 'user' }] }],
-            transaction
-        });
+        // 1. Trouver la validation spécifique à mettre à jour de manière sécurisée
+        const validationActuelle = await db.demande_validation.findOne({
+            where: {
+                demande_id: demandeId,
+                user_id: userId,
+                statut: 'en attente'
+            },
+            transaction,
+            order: [['ordre', 'ASC']]
+        });
 
-        if (!demande) {
-            await transaction.rollback();
-            return res.status(404).send({ message: "Demande introuvable." });
-        }
+        if (!validationActuelle) {
+            await transaction.rollback();
+            return res.status(403).send({ message: "Ce n'est pas votre tour ou la demande est déjà validée/rejetée." });
+        }
 
-        // Validation tour par tour
-        const validationsEnAttente = demande.validations.filter(v => v.statut === 'en attente');
-        if (validationsEnAttente.length === 0) {
-            await transaction.rollback();
-            return res.status(400).send({ message: "La demande est déjà validée ou rejetée." });
-        }
+        // 2. Vérifier si c'est bien le bon tour de validation
+        const minOrdreEnAttente = await db.demande_validation.min('ordre', {
+            where: {
+                demande_id: demandeId,
+                statut: 'en attente'
+            },
+            transaction
+        });
 
-        const minOrdreEnAttente = Math.min(...validationsEnAttente.map(v => v.ordre));
-        const validationActuelle = validationsEnAttente.find(v => Number(v.user_id) === userId && v.ordre === minOrdreEnAttente);
+        if (validationActuelle.ordre !== minOrdreEnAttente) {
+            await transaction.rollback();
+            return res.status(403).send({ message: "Ce n'est pas votre tour pour valider cette demande." });
+        }
 
-        if (!validationActuelle) {
-            await transaction.rollback();
-            return res.status(403).send({ message: "Ce n'est pas votre tour pour valider cette demande." });
-        }
+        let signatureUrl = null;
+        if (signatureBase64) {
+            const uploadDir = path.join(__dirname, '..', 'public', 'signatures');
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
 
-        await db.demande_validation.update(
-            { statut: 'validé', commentaire, signature_image_url: signatureBase64, date_validation: new Date() },
-            { where: { id: validationActuelle.id }, transaction }
-        );
+            const filename = `signature-${demandeId}-${userId}-${uuidv4()}.png`;
+            const filePath = path.join(uploadDir, filename);
 
-        const validationsSameOrder = demande.validations.filter(v => v.ordre === minOrdreEnAttente);
-        const allSameOrderCompleted = validationsSameOrder.every(v => v.statut === 'validé' || v.statut === 'rejeté' || v.user.id === userId);
+            const base64Data = signatureBase64.replace(/^data:image\/png;base64,/, "");
+            fs.writeFileSync(filePath, base64Data, 'base64');
+            signatureUrl = `/signatures/${filename}`;
+        }
+        
+        // 3. Mettre à jour la validation en utilisant la nouvelle URL de signature statique
+        await validationActuelle.update(
+            { 
+                statut: 'validé', 
+                commentaire, 
+                signature_validation_url: signatureUrl, // La signature est maintenant statique
+                date_validation: new Date() 
+            },
+            { transaction }
+        );
 
-        if (!allSameOrderCompleted) {
-            await transaction.commit();
-            return res.status(200).send({ message: "Validation enregistrée. En attente des autres validateurs du même ordre." });
-        }
+        // 4. Vérifier si d'autres validateurs du même ordre ont encore un statut 'en attente'
+        const validationsDuMemeOrdre = await db.demande_validation.count({
+            where: {
+                demande_id: demandeId,
+                ordre: validationActuelle.ordre,
+                statut: 'en attente'
+            },
+            transaction
+        });
 
-        const nextOrder = minOrdreEnAttente + 1;
-        const nextValidations = demande.validations.filter(v => v.ordre === nextOrder);
+        if (validationsDuMemeOrdre > 0) {
+            await transaction.commit();
+            return res.status(200).send({ message: "Validation enregistrée. En attente des autres validateurs du même ordre." });
+        }
 
-        if (nextValidations.length > 0) {
-            await db.demande_validation.update(
-                { statut: 'en attente' },
-                { where: { demande_id: demandeId, ordre: nextOrder }, transaction }
-            );
-        } else {
-            // --- Demande approuvée : mise à jour solde et soldeProgressif ---
-            await db.demande.update({ status: DEMANDE_STATUS.APPROUVEE }, { where: { id: demandeId }, transaction });
+        // 5. Si toutes les validations de cet ordre sont terminées, passer au suivant ou finaliser
+        const nextOrder = validationActuelle.ordre + 1;
+        const nextValidations = await db.demande_validation.count({
+            where: {
+                demande_id: demandeId,
+                ordre: nextOrder
+            },
+            transaction
+        });
 
-            const journal = await db.journal.findByPk(demande.journal_id, { transaction });
-            let nouveauSolde = parseFloat(journal.solde || 0);
-            if (demande.type === 'DED') nouveauSolde -= parseFloat(demande.montant_total);
-            else if (demande.type === 'Recette' || demande.type === 'ERD') nouveauSolde += parseFloat(demande.montant_total);
+        if (nextValidations > 0) {
+            // Passer au prochain ordre
+            await db.demande_validation.update(
+                { statut: 'en attente' },
+                { where: { demande_id: demandeId, ordre: nextOrder }, transaction }
+            );
+        } else {
+            // Finaliser la demande, car il n'y a plus de validateurs
+            const demande = await db.demande.findByPk(demandeId, { transaction });
+            if (!demande) {
+                await transaction.rollback();
+                return res.status(404).send({ message: "Demande introuvable lors de la finalisation." });
+            }
+            await demande.update({ status: 'approuvée' }, { transaction });
+            
+            // Logique pour les soldes, etc.
+            const journal = await db.journal.findByPk(demande.journal_id, { transaction });
+            let nouveauSolde = parseFloat(journal.solde || 0);
+            if (demande.type === 'DED') nouveauSolde -= parseFloat(demande.montant_total);
+            else if (demande.type === 'Recette' || demande.type === 'ERD') nouveauSolde += parseFloat(demande.montant_total);
 
-            // Mise à jour des champs supplémentaires dans la demande
-            const now = new Date();
-            await demande.update({
-                date_approuvee: now,
-                soldeProgressif: nouveauSolde 
-            }, { transaction });
+            await demande.update({
+                date_approuvee: new Date(),
+                soldeProgressif: nouveauSolde 
+            }, { transaction });
 
-            await journal.update({ solde: nouveauSolde }, { transaction });
-        }
+            await journal.update({ solde: nouveauSolde }, { transaction });
+        }
 
-        await transaction.commit();
-        res.status(200).send({ message: "Demande validée avec succès." });
+        await transaction.commit();
+        res.status(200).send({ message: "Demande validée avec succès." });
 
-    } catch (err) {
-        if (transaction && !transaction.finished) await transaction.rollback();
-        console.error(err);
-        res.status(500).send({ message: "Erreur interne lors de la validation." });
-    }
+    } catch (err) {
+        if (transaction && !transaction.finished) await transaction.rollback();
+        console.error(err);
+        res.status(500).send({ message: "Erreur interne lors de la validation." });
+    }
 };
-
 // --- Refus d'une demande ───────────────────────────────────────────────
 exports.refuserDemande = async (req, res) => {
     const demandeId = Number(req.params.id);
@@ -503,6 +714,7 @@ exports.getDemandesAValider = async (req, res) => {
         const demandes = await db.demande.findAll({
             include: [
                 { model: db.demande_detail, as: 'details' },
+                { model: db.personne, as: 'responsible_pj' }, // CORRECTION: retrait des attributs nom et prenom
                 {
                     model: db.demande_validation,
                     as: 'validations',
@@ -564,6 +776,7 @@ exports.getDemandesEnAttenteAutres = async (req, res) => {
                 }
             },
             include: [
+                { model: db.personne, as: 'responsible_pj' }, // CORRECTION: retrait des attributs nom et prenom
                 {
                     model: db.demande_validation,
                     as: 'validations',
@@ -598,6 +811,7 @@ exports.getDemandesFinalisees = async (req, res) => {
                 status: { [Op.in]: ['approuvée', 'rejetée'] }
             },
             include: [
+                { model: db.personne, as: 'responsible_pj' }, // CORRECTION: retrait des attributs nom et prenom
                 { model: db.demande_detail, as: 'details' },
                 {
                     model: db.demande_validation,
@@ -623,13 +837,25 @@ exports.getDemandesFinalisees = async (req, res) => {
 };
 
 // --- Statistiques simples ─────────────────────────────────────────────
+// Récupérer les stats des demandes pour l'utilisateur connecté uniquement
 exports.getDemandeStats = async (req, res) => {
     try {
-        const total = await db.demande.count();
-        const enAttente = await db.demande.count({ where: { status: 'en attente' } });
-        const finalisees = await db.demande.count({ where: { status: { [Op.in]: ['approuvée', 'rejetée'] } } });
-        res.json({ total, enAttente, finalisees });
+        const userId = req.userId; // récupéré par verifyToken
+
+        const stats = await db.demande.findAll({
+            attributes: [
+                [db.Sequelize.fn('COUNT', db.Sequelize.col('id')), 'total'],
+                [db.Sequelize.fn('SUM', db.Sequelize.literal(`CASE WHEN status = 'en attente' THEN 1 ELSE 0 END`)), 'enAttente'],
+                [db.Sequelize.fn('SUM', db.Sequelize.literal(`CASE WHEN status = 'approuvée' THEN 1 ELSE 0 END`)), 'approuvees'],
+                [db.Sequelize.fn('SUM', db.Sequelize.literal(`CASE WHEN status = 'rejetée' THEN 1 ELSE 0 END`)), 'rejetees']
+            ],
+            where: { userId }
+        });
+
+        res.json(stats[0] || { total: 0, enAttente: 0, approuvees: 0, rejetees: 0 });
+
     } catch (err) {
+        console.error(err);
         res.status(500).send({ message: err.message });
     }
 };
@@ -658,6 +884,7 @@ exports.getRapportDemandesApprouvees = async (req, res) => {
             ],
             include: [
                 { model: db.user, as: 'user', attributes: ['username'] },
+                { model: db.personne, as: 'responsible_pj' }, // CORRECTION: retrait des attributs nom et prenom
                 { model: db.journal, as: 'journal', attributes: [['nom_journal', 'nom']] }
             ]
         });
@@ -678,5 +905,109 @@ exports.getRapportDemandesApprouvees = async (req, res) => {
         console.error(err);
         res.status(500).json({ message: 'Erreur lors de la récupération du rapport', error: err.message });
     }
+};
+
+// demande.controller.js
+exports.getDemandesByProjectName = async (req, res) => {
+  const nomProjet = req.params.nomProjet;
+
+  try {
+    const demandes = await db.demande.findAll({
+      include: [
+        {
+          model: db.journal,
+          as: 'journal',
+          where: { nom_projet: nomProjet } // filtre sur le projet
+        },
+        {
+          model: db.demande_detail,
+          as: 'details',
+          include: [
+            {
+              model: db.budget,
+              as: 'budget'
+            }
+          ]
+        },
+        {
+          model: db.user,
+          as: 'user',
+          attributes: ['id', 'username']
+        }
+      ],
+      order: [['date_approuvee', 'DESC']]
+    });
+
+    if (!demandes || demandes.length === 0) {
+      return res.status(200).send([]); // retourne un tableau vide si aucune demande
+    }
+
+    res.status(200).send(demandes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message || "Erreur serveur" });
+  }
+};
+// exports.getBudgetInfoByCode
+exports.getBudgetInfoByCode = async (req, res) => {
+  const codeBudget = req.params.codeBudget;
+
+  try {
+    const budgetInfo = await db.budget.findAll({
+      attributes: ['code_budget', 'budget_annuel'],
+      where: { code_budget: codeBudget },
+      limit: 25,
+      include: [
+        {
+          model: db.journal,
+          as: 'journals', // L'alias 'journals' est défini dans index.js
+          attributes: ['nom_projet'],
+          required: true,
+          through: {
+            attributes: []
+          }
+        }
+      ]
+    });
+
+    if (!budgetInfo || budgetInfo.length === 0) {
+      return res.status(404).send({ message: "Aucune information de budget trouvée pour ce code." });
+    }
+
+    const formattedResults = budgetInfo.flatMap(info =>
+      info.get('journals').map(journal => ({
+        code_budget: info.get('code_budget'),
+        nom_projet: journal.get('nom_projet'),
+        budget_annuel: info.get('budget_annuel')
+      }))
+    );
+
+    res.status(200).send(formattedResults);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message || "Erreur serveur" });
+  }
+};
+// demande.controller.js
+exports.getProjetsWithBudgets = async (req, res) => {
+  try {
+    const projetsBudgets = await db.journal.findAll({
+      attributes: ['id_journal', 'nom_projet', 'nom_journal'],
+      include: [
+        {
+          model: db.budget,
+          as: 'budgets',       // alias défini dans index.js
+          attributes: ['id_budget', 'code_budget', 'description', 'budget_annuel'],
+          through: { attributes: [] } // ignore journal_budget
+        }
+      ],
+      order: [['nom_projet', 'ASC'], ['id_journal', 'ASC']]
+    });
+
+    res.status(200).send(projetsBudgets);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message || "Erreur serveur" });
+  }
 };
 

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import {of, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TokenStorageService } from './token-storage.service';
+
 
 @Injectable({
   providedIn: 'root'
@@ -74,6 +75,14 @@ export class DemandeService {
   );
 }
 
+
+
+getCurrentUserRole(): Observable<string> {
+  // Récupérer le rôle depuis le token ou le localStorage
+  const user = this.tokenStorageService.getUser();
+  const role = user?.role || 'UTILISATEUR'; // par défaut si non défini
+  return of(role);
+}
 
   getDemandeById(id: number): Observable<any> {
     const headers = this.getAuthHeaders();
@@ -177,6 +186,13 @@ getDemandesEnAttenteAutres(): Observable<any[]> {
       catchError(this.handleError)
     );
   }
+  // ✅ NOUVELLE FONCTION POUR RÉCUPÉRER LES INFORMATIONS DU BUDGET PAR CODE
+  getBudgetInfoByCode(codeBudget: string): Observable<any[]> {
+    const headers = this.getAuthHeaders();
+    return this.http.get<any[]>(`${this.apiUrl}/budgets/info/${codeBudget}`, { headers }).pipe(
+      catchError(this.handleError)
+    );
+  }
 
   getBudgetsCurrentYear(): Observable<any[]> {
     const headers = this.getAuthHeaders();
@@ -192,12 +208,16 @@ getDemandesEnAttenteAutres(): Observable<any[]> {
     );
   }
 
-  getDemandeStats(): Observable<any> {
-    const headers = this.getAuthHeaders();
-    return this.http.get(`${this.apiUrl}/stats/general`, { headers: headers }).pipe(
-      catchError(this.handleError)
-    );
-  }
+// Récupérer les stats pour l'utilisateur connecté uniquement
+// Récupérer les stats pour l'utilisateur connecté uniquement
+getDemandeStats(): Observable<any> {
+  const headers = this.getAuthHeaders();
+  return this.http.get<any>(`${this.apiUrl}/stats/general`, { headers }).pipe(
+    catchError(this.handleError)
+  );
+}
+
+
 
   updateDemandeStatus(id: number, updateData: { status: string; comments?: string }): Observable<any> {
     const headers = this.getAuthHeaders();
@@ -208,21 +228,36 @@ getDemandesEnAttenteAutres(): Observable<any[]> {
 
 // Récupérer les demandes approuvées filtrées par journal
 getRapportDemandesApprouvees(journalId: number): Observable<any[]> {
+  const headers = this.getAuthHeaders();
+  return this.http.get<any[]>(`${this.apiUrl}/rapport/${journalId}`, { headers }).pipe(
+    catchError(this.handleError)
+  );
+}
+// ✅ NOUVELLE FONCTION POUR LES RAPPORTS PAR NOM DE PROJET
+getRapportByNomProjet(nomProjet: string): Observable<any[]> {
+  const headers = this.getAuthHeaders();
+  // Utiliser encodeURIComponent pour s'assurer que le nom de projet dans l'URL est correct
+  return this.http.get<any[]>(`${this.apiUrl}/rapport-projet/${encodeURIComponent(nomProjet)}`, { headers }).pipe(
+    catchError(this.handleError)
+  );
+}
+// Récupérer tous les projets avec leurs budgets associés
+getProjetsWithBudgets(): Observable<any[]> {
   const headers = this.getAuthHeaders();
-  return this.http.get<any[]>(`${this.apiUrl}/rapport/${journalId}`, { headers }).pipe(
+  return this.http.get<any[]>(`${this.apiUrl}/projets-budgets`, { headers }).pipe(
     catchError(this.handleError)
   );
 }
 
 // Récupérer les demandes dont les PJ ne sont pas encore fournies
 getDemandesPJNonFournies(): Observable<any[]> {
-  const headers = this.getAuthHeaders();
-  return this.http.get<any[]>(`${this.apiUrl}/pj-non-fournies`, { headers }).pipe(
-    catchError(this.handleError)
-  );
+  const headers = this.getAuthHeaders();
+  return this.http.get<any[]>(`${this.apiUrl}/pj-non-fournies`, { headers }).pipe(
+    catchError(this.handleError)
+  );
 }
 updateDedStatus(dedId: number, status: string) {
-  return this.http.put(`http://localhost:8081/api/demandes/${dedId}/pj_status`, { pj_status: status });
+  return this.http.put(`http://localhost:8081/api/demandes/${dedId}/pj_status`, { pj_status: status });
 }
 
 

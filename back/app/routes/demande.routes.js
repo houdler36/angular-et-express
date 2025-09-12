@@ -1,4 +1,3 @@
-// Fichier: routes/demande.routes.js
 const express = require('express');
 const router = express.Router();
 const demandeController = require('../Controllers/demande.controller');
@@ -18,13 +17,23 @@ router.get('/finalisees', verifyToken, demandeController.getDemandesFinalisees);
 // Statistiques générales des demandes
 router.get('/stats/general', verifyToken, demandeController.getDemandeStats);
 
-// ✅ NOUVELLE ROUTE POUR LE DAF
 // Récupérer les demandes de plus de 70000 à valider par le DAF
 router.get('/daf-a-valider', verifyToken, demandeController.getDemandesDAFAValider);
 
 router.get('/pj-non-fournies', verifyToken, demandeController.getDemandesPJNonFournies);
-//demanderapport
+
+// Rapports par journal ID
 router.get('/rapport/:journalId', demandeController.getRapportDemandesApprouvees);
+
+// ✅ NOUVELLE ROUTE POUR LE RAPPORT PAR NOM DE PROJET
+router.get('/rapport-projet/:nomProjet', verifyToken, demandeController.getDemandesByProjectName);
+
+// ✅ NOUVELLE ROUTE POUR RÉCUPÉRER LES INFORMATIONS DU BUDGET PAR CODE
+router.get('/budgets/info/:codeBudget', verifyToken, demandeController.getBudgetInfoByCode);
+// Récupérer tous les projets avec leurs budgets
+router.get('/projets-budgets', verifyToken, demandeController.getProjetsWithBudgets);
+
+
 // ─── Routes par ID ────────────────────────────────────────
 
 // Création d'une demande
@@ -36,7 +45,7 @@ router.get('/:id', verifyToken, demandeController.findOne);
 // Mise à jour d'une demande
 router.put('/:id', verifyToken, demandeController.update);
 
-// Suppression d'une demande
+// Suppression d'une demandea
 router.delete('/:id', verifyToken, demandeController.delete);
 
 // Validation et refus d'une demande (RH-only)
