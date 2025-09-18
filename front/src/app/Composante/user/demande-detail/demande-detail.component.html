@@ -130,10 +130,28 @@
       </table>
     </div>
 
+    <!-- ✅ SECTION ACTION BUTTONS MODIFIÉE -->
     <div class="action-buttons">
-      <button class="btn-back" routerLink="/demandes"><i class="fas fa-arrow-left"></i> Retour</button>
-      <button *ngIf="demande.status==='en attente'" class="btn-edit" (click)="editDemande()"><i class="fas fa-edit"></i> Modifier</button>
-      <button *ngIf="demande.status==='en attente'" class="btn-approve" (click)="approveDemande()"><i class="fas fa-check-circle"></i> Approuver</button>
-      <button *ngIf="demande.status==='en attente'" class="btn-reject" (click)="openRejectModal()"><i class="fas fa-times-circle"></i> Rejeter</button>
+      <button class="btn-back" routerLink="/demandes">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+
+      <!-- Bouton Modifier : reste accessible si en attente -->
+      <button *ngIf="demande.status==='en attente'" class="btn-edit" (click)="editDemande()">
+        <i class="fas fa-edit"></i> Modifier
+      </button>
+
+      <!-- Boutons Approuver/Rejeter visibles uniquement pour RH & DAF -->
+      <button *ngIf="demande.status==='en attente' && (currentUserRole === 'rh' || currentUserRole === 'daf')" 
+              class="btn-approve" 
+              (click)="approveDemande()">
+        <i class="fas fa-check-circle"></i> Approuver
+      </button>
+
+      <button *ngIf="demande.status==='en attente' && (currentUserRole === 'rh' || currentUserRole === 'daf')" 
+              class="btn-reject" 
+              (click)="openRejectModal()">
+        <i class="fas fa-times-circle"></i> Rejeter
+      </button>
     </div>
 </div>

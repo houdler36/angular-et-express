@@ -2,38 +2,40 @@
 
 .rapport-container {
   background-color: #f9f9f9;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease-in-out;
 
-  h2 {
-    font-size: 1.5rem;
+  h2, h3 {
     font-weight: bold;
     margin-bottom: 1rem;
-    color: #333;
+    color: #1e3a8a; /* Bleu profond */
   }
 
   .input-field {
-    width: 250px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 0.5rem;
-    margin-right: 0.5rem;
-    font-size: 1rem;
+    width: 280px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease-in-out;
 
     &:focus {
       outline: none;
       border-color: #3b82f6; /* bleu tailwind */
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
   }
 
   .btn {
     cursor: pointer;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
     font-weight: 500;
     transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 
     &.bg-blue-600 {
       background-color: #2563eb;
@@ -41,6 +43,12 @@
 
       &:hover {
         background-color: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      &:active {
+        transform: scale(0.98);
       }
     }
   }
@@ -49,31 +57,47 @@
     width: 100%;
     border-collapse: collapse;
     margin-top: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
 
     th, td {
-      border: 1px solid #ddd;
-      padding: 0.5rem;
+      border: 1px solid #e5e7eb;
+      padding: 0.6rem;
       text-align: left;
+      font-size: 0.9rem;
     }
 
     th {
-      background-color: #f3f4f6;
+      background-color: #eff6ff; /* Bleu clair */
       font-weight: 600;
+      color: #1e40af;
     }
 
-    tbody tr:nth-child(even) {
-      background-color: #f9fafb;
-    }
+    tbody tr {
+      transition: background-color 0.2s ease-in-out;
+      cursor: pointer;
 
-    tbody tr:hover {
-      background-color: #e0f2fe; /* léger bleu pour survol */
+      &:nth-child(even) {
+        background-color: #f9fafb;
+      }
+
+      &:hover {
+        background-color: #dbeafe; /* bleu plus visible pour hover */
+      }
+
+      &.selected-row {
+        background-color: #bfdbfe !important;
+        font-weight: 600;
+      }
     }
   }
 
   p {
     margin-top: 0.5rem;
+
     &.text-red-600 {
       color: #dc2626;
+      font-weight: 500;
     }
 
     &.text-gray-500 {

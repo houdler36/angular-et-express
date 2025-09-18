@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpErrorResponse,HttpParams } from '@angular/common/http';
 import {of, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TokenStorageService } from './token-storage.service';
@@ -256,8 +256,24 @@ getDemandesPJNonFournies(): Observable<any[]> {
     catchError(this.handleError)
   );
 }
-updateDedStatus(dedId: number, status: string) {
-  return this.http.put(`http://localhost:8081/api/demandes/${dedId}/pj_status`, { pj_status: status });
+updateDedStatus(dedId: number, status: string): Observable<any> {
+  const headers = this.getAuthHeaders();
+  return this.http.put<any>(
+    `${this.apiUrl}/${dedId}/pj_status`,
+    { pj_status: status },
+    { headers }
+  ).pipe(catchError(this.handleError));
+}
+getRapportFiltre(nomProjet: string, codeBudget: string): Observable<any[]> {
+  const headers = this.getAuthHeaders();
+  let params = new HttpParams();
+  params = params.append('nom_projet', nomProjet);
+  params = params.append('code_budget', codeBudget);
+
+  // L'URL doit correspondre à la route que vous avez configurée dans votre backend
+  return this.http.get<any[]>(`${this.apiUrl}/rapports/demandes-filtered`, { headers, params }).pipe(
+    catchError(this.handleError)
+  );
 }
 
 

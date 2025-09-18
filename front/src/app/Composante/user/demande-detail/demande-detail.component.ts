@@ -288,19 +288,20 @@ export class DemandeDetailComponent implements OnInit {
   }
 
   approveDemande(): void {
-    if (this.demandeId) {
-      this.demandeService.updateDemandeStatus(this.demandeId, { status: 'approuvée' }).subscribe({
-        next: () => {
-          this.successMessage = 'Demande approuvée avec succès !';
-          this.loadDemandeDetails(this.demandeId!);
-        },
-        error: (err: any) => {
-          console.error("Erreur lors de l'approbation de la demande:", err);
-          this.errorMessage = 'Erreur lors de l\'approbation de la demande. Vérifiez vos permissions.';
-        }
-      });
-    }
+  if (this.demandeId) {
+    this.demandeService.updateDemandeStatus(this.demandeId, { status: 'approuvée' }).subscribe({
+      next: () => {
+        this.successMessage = 'Demande approuvée avec succès !';
+        this.loadDemandeDetails(this.demandeId!);
+      },
+      error: (err: any) => {
+        console.error("Erreur lors de l'approbation de la demande:", err);
+        this.errorMessage = 'Erreur lors de l\'approbation de la demande. Vérifiez vos permissions.';
+      }
+    });
   }
+}
+
 
   openRejectModal(): void {
     this.showRejectModal = true;

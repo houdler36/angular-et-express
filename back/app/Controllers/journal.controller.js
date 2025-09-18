@@ -1,5 +1,3 @@
-// Fichier: journal.controller.js
-
 const db = require("../Models");
 const Journal = db.journal;
 const Budget = db.budget;
@@ -20,6 +18,23 @@ exports.create = async (req, res) => {
 
     const t = await db.sequelize.transaction();
     try {
+        // Nouvelle vérification : s'assurer que les budgets ne sont pas déjà associés à un autre journal.
+        const existingBudgetLinks = await JournalBudget.findAll({
+            where: {
+                id_budget: { [Op.in]: budgetIds } // CORRECTION APPORTÉE ICI
+            },
+            transaction: t
+        });
+
+        if (existingBudgetLinks.length > 0) {
+            await t.rollback();
+            const usedBudgetIds = existingBudgetLinks.map(link => link.id_budget);
+            return res.status(409).send({
+                message: "Un ou plusieurs budgets sont déjà associés à un autre journal.",
+                usedBudgetIds: usedBudgetIds
+            });
+        }
+        
         // Créer le journal avec solde si fourni
         const journal = await Journal.create({ nom_journal, nom_projet, solde: solde || 0 }, { transaction: t });
 
@@ -71,7 +86,8 @@ exports.create = async (req, res) => {
         console.error("Erreur lors de la création du journal :", err);
         res.status(500).send({ message: err.message || "Une erreur est survenue lors de la création du journal." });
     }
-};
+}
+
 
 // ─── Mise à jour d'un journal ─────────────────────────────────────────
 exports.update = async (req, res) => {
@@ -86,11 +102,28 @@ exports.update = async (req, res) => {
             return res.status(404).send({ message: "Journal introuvable." });
         }
 
-        // Mettre à jour le nom, projet et solde
+        // Mettre à jour les informations de base
         await journal.update({ nom_journal, nom_projet, solde }, { transaction: t });
 
-        // Gestion des budgets
+        // Nouvelle vérification pour les budgets
         if (budgetIds && budgetIds.length > 0) {
+            const existingBudgetLinks = await JournalBudget.findAll({
+                where: {
+                    id_budget: { [Op.in]: budgetIds }, // CORRECTION APPORTÉE ICI
+                    journal_id: { [Op.ne]: id } // Exclure le journal en cours de modification
+                },
+                transaction: t
+            });
+
+            if (existingBudgetLinks.length > 0) {
+                await t.rollback();
+                const usedBudgetIds = existingBudgetLinks.map(link => link.id_budget);
+                return res.status(409).send({
+                    message: "Un ou plusieurs budgets sont déjà associés à un autre journal.",
+                    usedBudgetIds: usedBudgetIds
+                });
+            }
+
             const budgets = await Budget.findAll({
                 where: { id_budget: { [Op.in]: budgetIds } },
                 transaction: t
@@ -98,7 +131,7 @@ exports.update = async (req, res) => {
             await journal.setBudgets(budgets, { transaction: t });
         }
 
-        // Gestion des validateurs RH uniquement
+        // Gestion des valideurs RH uniquement
         if (valideurs && valideurs.length > 0) {
             // Récupérer les RH uniquement
             const rhUsers = await User.findAll({
@@ -140,7 +173,7 @@ const transformJournal = (journal) => {
     const data = journal.toJSON();
     return {
         ...data,
-        solde: data.solde, // 👈 inclure solde
+        solde: data.solde,
         valideurs: (data.validationsConfig || []).map(vc => ({
             username: vc.user?.username || null,
             email: vc.user?.email || null,
@@ -176,12 +209,11 @@ exports.findAll = async (req, res) => {
             ]
         });
 
-        // Transformation pour inclure solde
         const result = journals.map(journal => {
             const data = journal.toJSON();
             return {
                 ...data,
-                solde: data.solde, // 👈 ajouté
+                solde: data.solde,
                 valideurs: (data.validationsConfig || []).map(vc => ({
                     user_id: vc.user_id,
                     username: vc.user?.username,

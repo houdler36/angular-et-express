@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-
+//ssssconst Op = db.Sequelize.Op; // Assuming you have this line
 // Fichier: demande.controller.js
 
 
@@ -950,64 +950,152 @@ exports.getDemandesByProjectName = async (req, res) => {
 };
 // exports.getBudgetInfoByCode
 exports.getBudgetInfoByCode = async (req, res) => {
-  const codeBudget = req.params.codeBudget;
-
-  try {
-    const budgetInfo = await db.budget.findAll({
-      attributes: ['code_budget', 'budget_annuel'],
-      where: { code_budget: codeBudget },
-      limit: 25,
-      include: [
-        {
-          model: db.journal,
-          as: 'journals', // L'alias 'journals' est défini dans index.js
-          attributes: ['nom_projet'],
-          required: true,
-          through: {
-            attributes: []
-          }
-        }
-      ]
-    });
-
-    if (!budgetInfo || budgetInfo.length === 0) {
-      return res.status(404).send({ message: "Aucune information de budget trouvée pour ce code." });
-    }
-
-    const formattedResults = budgetInfo.flatMap(info =>
-      info.get('journals').map(journal => ({
-        code_budget: info.get('code_budget'),
-        nom_projet: journal.get('nom_projet'),
-        budget_annuel: info.get('budget_annuel')
-      }))
-    );
-
-    res.status(200).send(formattedResults);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: err.message || "Erreur serveur" });
-  }
+  const codeBudget = req.params.codeBudget;
+  try {
+    const budgetInfo = await db.budget.findAll({
+      attributes: [
+        'code_budget',
+        'budget_annuel',
+        'budget_trimestre_1',
+        'budget_trimestre_2',
+        'budget_trimestre_3',
+        'budget_trimestre_4'
+      ],
+      where: { code_budget: codeBudget },
+      limit: 25,
+      include: [
+        {
+          model: db.journal,
+          as: 'journals',
+          attributes: ['nom_projet'],
+          required: true,
+          through: {
+            attributes: [] // Les attributs doivent être vides ici
+          }
+        }
+      ]
+    });
+    if (!budgetInfo || budgetInfo.length === 0) {
+      return res.status(404).send({ message: "Aucune information de budget trouvée pour ce code." });
+    }
+    // Le reste du code de formatage était correct, car il renvoie les noms que votre frontend attend.
+    const formattedResults = budgetInfo.flatMap(info =>
+      info.get('journals').map(journal => ({
+        code_budget: info.get('code_budget'),
+        nom_projet: journal.get('nom_projet'),
+        budget_annuel: info.get('budget_annuel'),
+        budget_trimestre_1: info.get('budget_trimestre_1'),
+        budget_trimestre_2: info.get('budget_trimestre_2'),
+        budget_trimestre_3: info.get('budget_trimestre_3'),
+        budget_trimestre_4: info.get('budget_trimestre_4'),
+      }))
+    );
+    res.status(200).send(formattedResults);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message || "Erreur serveur" });
+  }
 };
 // demande.controller.js
+// demande.controller.js
 exports.getProjetsWithBudgets = async (req, res) => {
-  try {
-    const projetsBudgets = await db.journal.findAll({
-      attributes: ['id_journal', 'nom_projet', 'nom_journal'],
-      include: [
-        {
-          model: db.budget,
-          as: 'budgets',       // alias défini dans index.js
-          attributes: ['id_budget', 'code_budget', 'description', 'budget_annuel'],
-          through: { attributes: [] } // ignore journal_budget
-        }
-      ],
-      order: [['nom_projet', 'ASC'], ['id_journal', 'ASC']]
-    });
+  try {
+    const projetsBudgets = await db.journal.findAll({
+      attributes: ['id_journal', 'nom_projet', 'nom_journal'],
+      include: [
+        {
+          model: db.budget,
+          as: 'budgets',
+          attributes: [
+            'id_budget',
+            'code_budget',
+            'description',
+            'budget_annuel',
+            'budget_trimestre_1', // Ajouté
+            'budget_trimestre_2', // Ajouté
+            'budget_trimestre_3', // Ajouté
+            'budget_trimestre_4'  // Ajouté
+        ],
+          through: { attributes: [] }
+        }
+      ],
+      order: [['nom_projet', 'ASC'], ['id_journal', 'ASC']]
+    });
+    res.status(200).send(projetsBudgets);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message || "Erreur serveur" });
+  }
+};
+exports.updateStatus = async (req, res) => {
+  const id = req.params.id;
+  const { status, comments } = req.body;
 
-    res.status(200).send(projetsBudgets);
+  try {
+    // Utiliser db.demande au lieu de Demande
+    const demande = await db.demande.findByPk(id);
+    if (!demande) return res.status(404).json({ message: "Demande non trouvée" });
+
+    demande.status = status;
+    demande.comments = comments || demande.comments;
+
+    await demande.save();
+    res.json(demande);
   } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: err.message || "Erreur serveur" });
+    console.error("Erreur updateStatus:", err);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 };
+// Dans demande.controller.js
+exports.getRapportByProjetAndBudget = async (req, res) => {
+    try {
+        const { nom_projet, code_budget } = req.query;
 
+        if (!nom_projet || !code_budget) {
+            return res.status(400).send({ message: "Les paramètres 'nom_projet' et 'code_budget' sont requis." });
+        }
+
+        const demandes = await db.demande.findAll({
+            include: [
+                {
+                    model: db.demande_detail,
+                    as: 'details',
+                    required: true,
+                    include: [
+                        {
+                            model: db.budget,
+                            as: 'budget', // This is the correct alias for the nested model
+                            required: true
+                        }
+                    ]
+                },
+                {
+                    model: db.journal,
+                    as: 'journal',
+                    attributes: ['id_journal', 'nom_journal'],
+                    required: true
+                },
+                {
+                    model: db.user,
+                    as: 'user',
+                    attributes: ['id', 'username', 'email']
+                }
+            ],
+            // ✅ CORRECTION: Move all filtering logic to a single, top-level `where` clause
+            where: {
+                // The filter for 'nom_projet' is on the 'journal' model
+                '$journal.nom_projet$': {
+                    [Op.like]: `%${nom_projet}%`
+                },
+                // The filter for 'code_budget' is on the 'budget' model, nested inside 'details'
+                '$details.budget.code_budget$': code_budget
+            },
+            order: [['date', 'DESC']]
+        });
+
+        res.status(200).json(demandes);
+    } catch (err) {
+        console.error("Erreur lors de la récupération du rapport:", err);
+        res.status(500).send({ message: "Erreur lors de la récupération du rapport par projet et budget.", error: err.message });
+    }
+};
