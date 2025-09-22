@@ -29,6 +29,8 @@
         <th class="border p-2">Code Budget</th>
         <th class="border p-2">Nom Budget</th>
         <th class="border p-2">Budget Annuel</th>
+        <th class="border p-2">reste budget</th>
+
         <th class="border p-2">T1</th>
         <th class="border p-2">T2</th>
         <th class="border p-2">T3</th>
@@ -45,6 +47,7 @@
             <td class="border p-2 text-blue-700 font-medium">{{ b.code_budget }}</td>
             <td class="border p-2">{{ b.description }}</td>
             <td class="border p-2">{{ b.budget_annuel | currency:'MGA':'symbol':'1.0-0' }}</td>
+             <td class="border p-2">{{ b.reste_budget | currency:'MGA':'symbol':'1.0-0' }}</td>
             <td class="border p-2">{{ b.budget_trimestre_1 | currency:'MGA':'symbol':'1.0-0' }}</td>
             <td class="border p-2">{{ b.budget_trimestre_2 | currency:'MGA':'symbol':'1.0-0' }}</td>
             <td class="border p-2">{{ b.budget_trimestre_3 | currency:'MGA':'symbol':'1.0-0' }}</td>

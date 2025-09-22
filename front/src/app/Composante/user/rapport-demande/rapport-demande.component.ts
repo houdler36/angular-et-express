@@ -16,6 +16,8 @@ export class RapportdemandeComponent implements OnInit {
   demandes: any[] = [];
   loading = false;
   errorMessage = '';
+   startDate: string = ''; // Ajoutez cette ligne
+  endDate: string = '';   // Ajoutez cette ligne
 
   constructor(private demandeService: DemandeService) {}
 
@@ -30,25 +32,43 @@ export class RapportdemandeComponent implements OnInit {
     });
   }
 
-  loadRapport() {
-    if (!this.selectedJournalId) return;
-
-    this.loading = true;
-    this.errorMessage = '';
-    this.demandes = [];
-
-    this.demandeService.getRapportDemandesApprouvees(this.selectedJournalId).subscribe({
-      next: data => {
-        this.demandes = data;
-        this.loading = false;
-      },
-      error: err => {
-        this.errorMessage = 'Erreur lors du chargement du rapport';
-        this.loading = false;
-        console.error(err);
-      }
+ loadRapport() {
+  if (!this.selectedJournalId || !this.startDate || !this.endDate) {
+    console.log('Paramètres manquants:', {
+      journalId: this.selectedJournalId,
+      startDate: this.startDate,
+      endDate: this.endDate
     });
+    return;
   }
+
+  this.loading = true;
+  this.errorMessage = '';
+  this.demandes = [];
+
+  console.log('Envoi de la requête avec:', {
+    journalId: this.selectedJournalId,
+    startDate: this.startDate,
+    endDate: this.endDate
+  });
+
+  this.demandeService.getRapportDemandesApprouvees(
+    this.selectedJournalId,
+    this.startDate,
+    this.endDate
+  ).subscribe({
+    next: data => {
+      console.log('Réponse reçue:', data);
+      this.demandes = data;
+      this.loading = false;
+    },
+    error: err => {
+      console.error('Erreur détaillée:', err);
+      this.errorMessage = 'Erreur lors du chargement du rapport';
+      this.loading = false;
+    }
+  });
+}
 
   // Format date avec heure
   formatDateTime(dateStr: string | null | undefined): string {

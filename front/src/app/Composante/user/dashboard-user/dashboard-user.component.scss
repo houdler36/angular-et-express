@@ -252,7 +252,10 @@ body {
 .data-table {
   width: 100%;
   border-collapse: collapse;
-
+.data-table th:nth-child(5),
+.data-table td:nth-child(5) {
+  text-align: right;
+}
   th, td {
     padding: 12px;
     text-align: center;

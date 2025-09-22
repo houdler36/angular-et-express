@@ -51,6 +51,7 @@ router.get('/budgets/info/:codeBudget', verifyToken, demandeController.getBudget
 
 // Récupérer tous les projets avec leurs budgets
 router.get('/projets-budgets', verifyToken, demandeController.getProjetsWithBudgets);
+router.get("/rapports/demandes-filtered", verifyToken, demandeController.getRapportByProjetAndBudget);
 
 
 // ─── Routes par ID ────────────────────────────────────────

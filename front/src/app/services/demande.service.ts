@@ -227,11 +227,15 @@ getDemandeStats(): Observable<any> {
   }
 
 // Récupérer les demandes approuvées filtrées par journal
-getRapportDemandesApprouvees(journalId: number): Observable<any[]> {
-  const headers = this.getAuthHeaders();
-  return this.http.get<any[]>(`${this.apiUrl}/rapport/${journalId}`, { headers }).pipe(
-    catchError(this.handleError)
-  );
+getRapportDemandesApprouvees(journalId: number, startDate: string, endDate: string): Observable<any[]> {
+  const headers = this.getAuthHeaders();
+  const params = new HttpParams()
+    .set('startDate', startDate)
+    .set('endDate', endDate);
+
+  return this.http.get<any[]>(`${this.apiUrl}/rapport/${journalId}`, { headers, params }).pipe(
+    catchError(this.handleError)
+  );
 }
 // ✅ NOUVELLE FONCTION POUR LES RAPPORTS PAR NOM DE PROJET
 getRapportByNomProjet(nomProjet: string): Observable<any[]> {
@@ -275,6 +279,7 @@ getRapportFiltre(nomProjet: string, codeBudget: string): Observable<any[]> {
     catchError(this.handleError)
   );
 }
+
 
 
 }

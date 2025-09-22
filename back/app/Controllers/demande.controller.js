@@ -860,15 +860,27 @@ exports.getDemandeStats = async (req, res) => {
     }
 };
 
+//const { Op } = require('sequelize');
+
 exports.getRapportDemandesApprouvees = async (req, res) => {
     const journalId = req.params.journalId;
+    const { startDate, endDate } = req.query;
 
     try {
+        let whereCondition = {
+            status: 'approuvée', // Assurez-vous que c'est la bonne valeur
+            journal_id: journalId
+        };
+
+        // Ajouter le filtrage par date si les paramètres sont fournis
+        if (startDate && endDate) {
+            whereCondition.date_approuvee = {
+                [Op.between]: [new Date(startDate), new Date(endDate + 'T23:59:59.999')]
+            };
+        }
+
         const demandes = await db.demande.findAll({
-            where: {
-                status: DEMANDE_STATUS.APPROUVEE,
-                journal_id: journalId
-            },
+            where: whereCondition,
             attributes: [
                 'id',
                 'type',
@@ -881,29 +893,26 @@ exports.getRapportDemandesApprouvees = async (req, res) => {
             order: [
                 ['date_approuvee', 'ASC'],
                 ['numero_approuve_journal', 'ASC']
-            ],
-            include: [
-                { model: db.user, as: 'user', attributes: ['username'] },
-                { model: db.personne, as: 'responsible_pj' }, // CORRECTION: retrait des attributs nom et prenom
-                { model: db.journal, as: 'journal', attributes: [['nom_journal', 'nom']] }
             ]
         });
 
-        // Formater la date côté serveur
+        // Formater la date pour l'affichage
         const demandesFormatees = demandes.map(d => {
             const obj = d.toJSON();
-            obj.date_approuve = obj.date_approuvee 
-                ? new Date(obj.date_approuvee).toISOString().split('T')[0] 
-                : null;
-            delete obj.date_approuvee; // facultatif si tu veux supprimer l’original
+            // Renommer date_approuvee en date_approuve pour correspondre au frontend
+            obj.date_approuve = obj.date_approuvee;
+            delete obj.date_approuvee;
             return obj;
         });
 
         res.status(200).json(demandesFormatees);
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Erreur lors de la récupération du rapport', error: err.message });
+        console.error('Erreur détaillée:', err);
+        res.status(500).json({ 
+            message: 'Erreur lors de la récupération du rapport', 
+            error: err.message 
+        });
     }
 };
 
@@ -956,6 +965,7 @@ exports.getBudgetInfoByCode = async (req, res) => {
       attributes: [
         'code_budget',
         'budget_annuel',
+        'reste_budget',
         'budget_trimestre_1',
         'budget_trimestre_2',
         'budget_trimestre_3',
@@ -984,6 +994,7 @@ exports.getBudgetInfoByCode = async (req, res) => {
         code_budget: info.get('code_budget'),
         nom_projet: journal.get('nom_projet'),
         budget_annuel: info.get('budget_annuel'),
+        reste_budget: info.get('budget_annuel'),
         budget_trimestre_1: info.get('budget_trimestre_1'),
         budget_trimestre_2: info.get('budget_trimestre_2'),
         budget_trimestre_3: info.get('budget_trimestre_3'),
@@ -1011,6 +1022,7 @@ exports.getProjetsWithBudgets = async (req, res) => {
             'code_budget',
             'description',
             'budget_annuel',
+             'reste_budget',
             'budget_trimestre_1', // Ajouté
             'budget_trimestre_2', // Ajouté
             'budget_trimestre_3', // Ajouté

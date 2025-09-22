@@ -2,15 +2,24 @@
   <h2>Rapport des demandes approuvées</h2>
 
   <div class="filters">
-    <label for="journal">Sélectionner le journal:</label>
-    <select id="journal" [(ngModel)]="selectedJournalId">
-      <option [ngValue]="null">-- Choisir un journal --</option>
-      <option *ngFor="let journal of journals" [ngValue]="journal.id_journal">
-        {{ journal.nom_journal }}
-      </option>
-    </select>
-    <button (click)="loadRapport()" [disabled]="!selectedJournalId">Afficher</button>
-  </div>
+  <label for="journal">Sélectionner le journal:</label>
+  <select id="journal" [(ngModel)]="selectedJournalId">
+    <option [ngValue]="null">-- Choisir un journal --</option>
+    <option *ngFor="let journal of journals" [ngValue]="journal.id_journal">
+      {{ journal.nom_journal }}
+    </option>
+  </select>
+
+  <label for="startDate">Date début:</label>
+  <input type="date" id="startDate" [(ngModel)]="startDate">
+
+  <label for="endDate">Date fin:</label>
+  <input type="date" id="endDate" [(ngModel)]="endDate">
+
+  <button (click)="loadRapport()" [disabled]="!selectedJournalId || !startDate || !endDate">
+    Afficher
+  </button>
+</div>
 
   <div *ngIf="loading" class="loading">Chargement...</div>
   <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
