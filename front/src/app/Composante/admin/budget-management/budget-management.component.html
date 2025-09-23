@@ -45,29 +45,40 @@
 <div class="table-container">
   <table>
     <thead>
-      <tr>
-        <th>ID</th>
-        <th>Code du budget</th>
-        <th>Description</th> <th>Année fiscale</th>
-        <th>Budget annuel</th>
-        <th>Budget T1</th>
-        <th>Budget T2</th>
-        <th>Budget T3</th>
-        <th>Budget T4</th>
-      </tr>
+     <tr>
+        <th>ID</th>
+        <th>Code du budget</th>
+        <th>Description</th>
+        <th>Année fiscale</th>
+        <th>Budget annuel</th>
+        <th>Reste annuel</th>
+        <th>Budget T1</th>
+        <th>Reste T1</th>
+        <th>Budget T2</th>
+        <th>Reste T2</th>
+        <th>Budget T3</th>
+        <th>Reste T3</th>
+        <th>Budget T4</th>
+        <th>Reste T4</th>
+      </tr>
     </thead>
     <tbody>
-  <tr *ngFor="let budget of budgetsAffiches">
-    <td>{{ budget.id_budget }}</td>
-    <td>{{ budget.code_budget }}</td>
-    <td>{{ budget.description }}</td>
-    <td>{{ budget.annee_fiscale }}</td>
-    <td>{{ budget.budget_annuel | currency:'Ar':'symbol':'1.0-0' }}</td>
-    <td>{{ budget.budget_trimestre_1 | currency:'Ar':'symbol':'1.0-0' }}</td>
-    <td>{{ budget.budget_trimestre_2 | currency:'Ar':'symbol':'1.0-0' }}</td>
-    <td>{{ budget.budget_trimestre_3 | currency:'Ar':'symbol':'1.0-0' }}</td>
-    <td>{{ budget.budget_trimestre_4 | currency:'Ar':'symbol':'1.0-0' }}</td>
-  </tr>
+   <tr *ngFor="let budget of budgetsAffiches">
+        <td>{{ budget.id_budget }}</td>
+        <td>{{ budget.code_budget }}</td>
+        <td>{{ budget.description }}</td>
+        <td>{{ budget.annee_fiscale }}</td>
+        <td>{{ budget.budget_annuel | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td>{{ budget.reste_budget | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td>{{ budget.budget_trimestre_1 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td>{{ budget.reste_trimestre_1 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td>{{ budget.budget_trimestre_2 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td>{{ budget.reste_trimestre_2 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td>{{ budget.budget_trimestre_3 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td>{{ budget.reste_trimestre_3 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td>{{ budget.budget_trimestre_4 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td>{{ budget.reste_trimestre_4 | currency:'Ar':'symbol':'1.0-0' }}</td>
+      </tr>
 </tbody>
   </table>
 </div>

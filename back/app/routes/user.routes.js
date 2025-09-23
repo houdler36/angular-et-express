@@ -41,4 +41,10 @@ router.put("/me/delegue", [authJwt.verifyToken], controller.setDelegue);
 router.get("/me", [authJwt.verifyToken], controller.getCurrentUser);
 router.put("/me", [authJwt.verifyToken], controller.updateCurrentUser);
 
+// **NOUVELLE ROUTE POUR LE CHANGEMENT DE MOT DE PASSE DU PROFIL CONNECTÉ**
+// La route put "/me" est plus appropriée car elle modifie le profil de l'utilisateur connecté
+// Le backend doit pouvoir gérer le champ "password" dans la requête PUT de cette route
+router.put("/me/change-password", [authJwt.verifyToken], controller.changePassword);
+
+
 module.exports = router;

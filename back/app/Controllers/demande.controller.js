@@ -959,92 +959,101 @@ exports.getDemandesByProjectName = async (req, res) => {
 };
 // exports.getBudgetInfoByCode
 exports.getBudgetInfoByCode = async (req, res) => {
-  const codeBudget = req.params.codeBudget;
-  try {
-    const budgetInfo = await db.budget.findAll({
-      attributes: [
-        'code_budget',
-        'budget_annuel',
+  const codeBudget = req.params.codeBudget;
+  try {
+    const budgetInfo = await db.budget.findAll({
+      attributes: [
+        'code_budget',
+        'budget_annuel',
         'reste_budget',
-        'budget_trimestre_1',
-        'budget_trimestre_2',
-        'budget_trimestre_3',
-        'budget_trimestre_4'
-      ],
-      where: { code_budget: codeBudget },
-      limit: 25,
-      include: [
-        {
-          model: db.journal,
-          as: 'journals',
-          attributes: ['nom_projet'],
-          required: true,
-          through: {
-            attributes: [] // Les attributs doivent être vides ici
-          }
-        }
-      ]
-    });
-    if (!budgetInfo || budgetInfo.length === 0) {
-      return res.status(404).send({ message: "Aucune information de budget trouvée pour ce code." });
-    }
-    // Le reste du code de formatage était correct, car il renvoie les noms que votre frontend attend.
-    const formattedResults = budgetInfo.flatMap(info =>
-      info.get('journals').map(journal => ({
-        code_budget: info.get('code_budget'),
-        nom_projet: journal.get('nom_projet'),
-        budget_annuel: info.get('budget_annuel'),
-        reste_budget: info.get('budget_annuel'),
-        budget_trimestre_1: info.get('budget_trimestre_1'),
-        budget_trimestre_2: info.get('budget_trimestre_2'),
-        budget_trimestre_3: info.get('budget_trimestre_3'),
-        budget_trimestre_4: info.get('budget_trimestre_4'),
-      }))
-    );
-    res.status(200).send(formattedResults);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: err.message || "Erreur serveur" });
-  }
+        'budget_trimestre_1',
+        'budget_trimestre_2',
+        'budget_trimestre_3',
+        'budget_trimestre_4',
+        'reste_trimestre_1', // Ajouté
+        'reste_trimestre_2', // Ajouté
+        'reste_trimestre_3', // Ajouté
+        'reste_trimestre_4'  // Ajouté
+      ],
+      where: { code_budget: codeBudget },
+      limit: 25,
+      include: [
+        {
+          model: db.journal,
+          as: 'journals',
+          attributes: ['nom_projet'],
+          required: true,
+          through: {
+            attributes: []
+          }
+        }
+      ]
+    });
+    if (!budgetInfo || budgetInfo.length === 0) {
+      return res.status(404).send({ message: "Aucune information de budget trouvée pour ce code." });
+    }
+    const formattedResults = budgetInfo.flatMap(info =>
+      info.get('journals').map(journal => ({
+        code_budget: info.get('code_budget'),
+        nom_projet: journal.get('nom_projet'),
+        budget_annuel: info.get('budget_annuel'),
+        reste_budget: info.get('reste_budget'),
+        budget_trimestre_1: info.get('budget_trimestre_1'),
+        budget_trimestre_2: info.get('budget_trimestre_2'),
+        budget_trimestre_3: info.get('budget_trimestre_3'),
+        budget_trimestre_4: info.get('budget_trimestre_4'),
+        reste_trimestre_1: info.get('reste_trimestre_1'),
+        reste_trimestre_2: info.get('reste_trimestre_2'),
+        reste_trimestre_3: info.get('reste_trimestre_3'),
+        reste_trimestre_4: info.get('reste_trimestre_4'),
+      }))
+    );
+    res.status(200).send(formattedResults);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message || "Erreur serveur" });
+  }
 };
 // demande.controller.js
-// demande.controller.js
 exports.getProjetsWithBudgets = async (req, res) => {
-  try {
-    const projetsBudgets = await db.journal.findAll({
-      attributes: ['id_journal', 'nom_projet', 'nom_journal'],
-      include: [
-        {
-          model: db.budget,
-          as: 'budgets',
-          attributes: [
-            'id_budget',
-            'code_budget',
-            'description',
-            'budget_annuel',
-             'reste_budget',
-            'budget_trimestre_1', // Ajouté
-            'budget_trimestre_2', // Ajouté
-            'budget_trimestre_3', // Ajouté
-            'budget_trimestre_4'  // Ajouté
-        ],
-          through: { attributes: [] }
-        }
-      ],
-      order: [['nom_projet', 'ASC'], ['id_journal', 'ASC']]
-    });
-    res.status(200).send(projetsBudgets);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: err.message || "Erreur serveur" });
-  }
+  try {
+    const projetsBudgets = await db.journal.findAll({
+      attributes: ['id_journal', 'nom_projet', 'nom_journal'],
+      include: [
+        {
+          model: db.budget,
+          as: 'budgets',
+          attributes: [
+            'id_budget',
+            'code_budget',
+            'description',
+            'budget_annuel',
+            'reste_budget',
+            'budget_trimestre_1',
+            'budget_trimestre_2',
+            'budget_trimestre_3',
+            'budget_trimestre_4',
+            'reste_trimestre_1', // Ajouté
+            'reste_trimestre_2', // Ajouté
+            'reste_trimestre_3', // Ajouté
+            'reste_trimestre_4'  // Ajouté
+          ],
+          through: { attributes: [] }
+        }
+      ],
+      order: [['nom_projet', 'ASC'], ['id_journal', 'ASC']]
+    });
+    res.status(200).send(projetsBudgets);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: err.message || "Erreur serveur" });
+  }
 };
 exports.updateStatus = async (req, res) => {
   const id = req.params.id;
   const { status, comments } = req.body;
 
   try {
-    // Utiliser db.demande au lieu de Demande
     const demande = await db.demande.findByPk(id);
     if (!demande) return res.status(404).json({ message: "Demande non trouvée" });
 

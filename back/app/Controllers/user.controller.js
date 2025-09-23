@@ -213,6 +213,42 @@ exports.updateCurrentUser = async (req, res) => {
   }
 };
 
+// **NOUVELLE FONCTION POUR LE CHANGEMENT DE MOT DE PASSE DU PROFIL CONNECTÉ**
+exports.changePassword = async (req, res) => {
+    try {
+        const { newPassword, currentPassword } = req.body;
+        const userId = req.userId; // L'ID de l'utilisateur est extrait du token par le middleware
+
+        // 1. Valider que le mot de passe actuel et le nouveau sont présents
+        if (!newPassword || !currentPassword) {
+            return res.status(400).json({ message: "Le mot de passe actuel et le nouveau sont requis." });
+        }
+
+        // 2. Récupérer l'utilisateur avec son mot de passe
+        const user = await User.findByPk(userId, { attributes: ['id', 'password'] });
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé." });
+        }
+
+        // 3. Comparer le mot de passe actuel fourni avec celui de la base de données
+        const passwordIsValid = bcrypt.compareSync(currentPassword, user.password);
+        if (!passwordIsValid) {
+            return res.status(401).json({ message: "Mot de passe actuel incorrect." });
+        }
+
+        // 4. Hacher le nouveau mot de passe et mettre à jour l'utilisateur
+        const hashedPassword = bcrypt.hashSync(newPassword, 8);
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({ message: "Mot de passe mis à jour avec succès." });
+
+    } catch (err) {
+        console.error("Erreur changePassword :", err);
+        res.status(500).json({ message: "Erreur lors de la mise à jour du mot de passe." });
+    }
+};
+
 exports.setDelegue = async (req, res) => {
   try {
     const { delegue_id } = req.body;

@@ -1,50 +1,68 @@
 /* Fichier: rapport-projet.component.scss */
 
 .rapport-container {
-  background-color: #f9f9f9;
-  border-radius: 12px;
-  padding: 1.25rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  margin-bottom: 1.5rem;
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 14px;
+  padding: 1.5rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.75rem;
   transition: all 0.3s ease-in-out;
+  border: 1px solid #e5e7eb;
 
-  h2, h3 {
-    font-weight: bold;
-    margin-bottom: 1rem;
-    color: #1e3a8a; /* Bleu profond */
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   }
 
-  .input-field {
-    width: 280px;
+  h2,
+  h3 {
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: #1e3a8a; /* Bleu profond */
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== Inputs et Sélecteurs ===== */
+  .input-field,
+  select {
+    width: 100%;
+    max-width: 300px;
     border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    padding: 0.65rem 0.8rem;
     font-size: 0.95rem;
     transition: all 0.2s ease-in-out;
+    background-color: #ffffff;
 
     &:focus {
       outline: none;
-      border-color: #3b82f6; /* bleu tailwind */
+      border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
   }
 
+  /* ===== Boutons ===== */
   .btn {
     cursor: pointer;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    font-weight: 500;
-    transition: all 0.2s ease-in-out;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    padding: 0.7rem 1.4rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.25s ease-in-out;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
     &.bg-blue-600 {
-      background-color: #2563eb;
-      color: white;
+      background: linear-gradient(90deg, #2563eb, #1d4ed8);
+      color: #ffffff;
 
       &:hover {
-        background-color: #1d4ed8;
-        transform: translateY(-1px);
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(90deg, #1e40af, #1d4ed8);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
       }
 
       &:active {
@@ -53,24 +71,29 @@
     }
   }
 
+  /* ===== Tableaux ===== */
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 1rem;
-    border-radius: 8px;
+    margin-top: 1.2rem;
+    border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 
-    th, td {
+    th,
+    td {
       border: 1px solid #e5e7eb;
-      padding: 0.6rem;
+      padding: 0.75rem;
       text-align: left;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
     }
 
     th {
-      background-color: #eff6ff; /* Bleu clair */
-      font-weight: 600;
+      background: linear-gradient(180deg, #eff6ff, #dbeafe);
+      font-weight: 700;
       color: #1e40af;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
     }
 
     tbody tr {
@@ -82,7 +105,7 @@
       }
 
       &:hover {
-        background-color: #dbeafe; /* bleu plus visible pour hover */
+        background-color: #e0f2fe; /* bleu clair au hover */
       }
 
       &.selected-row {
@@ -92,17 +115,40 @@
     }
   }
 
+  /* ===== Messages d'état ===== */
   p {
     margin-top: 0.5rem;
+    font-size: 0.9rem;
 
     &.text-red-600 {
       color: #dc2626;
       font-weight: 500;
+      background-color: #fee2e2;
+      padding: 0.4rem 0.6rem;
+      border-radius: 4px;
     }
 
     &.text-gray-500 {
       color: #6b7280;
       font-style: italic;
+    }
+  }
+}
+
+/* ===== Responsive design ===== */
+@media (max-width: 768px) {
+  .rapport-container {
+    padding: 1rem;
+
+    table {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .btn {
+      width: 100%;
+      text-align: center;
     }
   }
 }

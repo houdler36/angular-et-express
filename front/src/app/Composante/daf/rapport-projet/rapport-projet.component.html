@@ -3,55 +3,79 @@
   <h2 class="text-2xl font-bold mb-4 text-center text-blue-800">Rapports Financiers</h2>
   <hr class="mb-4">
 
-  <!-- ======================== RECHERCHE PAR NOM DE PROJET ======================== -->
+  <!-- ======================== FILTRES ======================== -->
   <div class="rapport-container bg-gray-50 p-6 rounded-lg mb-6 border border-gray-200">
     <h3 class="text-xl font-semibold mb-3 text-blue-700">Rechercher un projet</h3>
-   <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-4">
-  <select
-    [(ngModel)]="nomProjet"
-    class="p-3 border rounded-md focus:ring-2 focus:ring-blue-500 flex-grow mb-2 sm:mb-0"
-  >
-    <option value="" disabled selected>-- Sélectionnez un projet --</option>
-    <option *ngFor="let p of projets" [value]="p.nom_projet">
-      {{ p.nom_projet }}
-    </option>
-  </select>
-</div>
 
+    <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-4">
+      <!-- Sélecteur Projet -->
+      <select
+        [(ngModel)]="nomProjet"
+        (change)="loadDemandes()"
+        class="p-3 border rounded-md focus:ring-2 focus:ring-blue-500 flex-grow mb-2 sm:mb-0"
+      >
+        <option value="" disabled selected>-- Sélectionnez un projet --</option>
+        <option *ngFor="let p of projets" [value]="p.nom_projet">
+          {{ p.nom_projet }}
+        </option>
+      </select>
 
-    <!-- Tableau 1 : projets + budgets -->
-<!-- Tableau 1 : projets + budgets + trimestres -->
-<div *ngIf="projets.length > 0" class="overflow-x-auto">
+      <!-- Sélecteur Période -->
+      <select
+        [(ngModel)]="periode"
+        (change)="filterByPeriode()"
+        class="p-3 border rounded-md focus:ring-2 focus:ring-blue-500 flex-grow"
+      >
+        <option value="annee" selected>Par Année</option>
+        <option value="T1">1er Trimestre</option>
+        <option value="T2">2ème Trimestre</option>
+        <option value="T3">3ème Trimestre</option>
+        <option value="T4">4ème Trimestre</option>
+      </select>
+    </div>
+
+    <!-- ======================== TABLEAU 1 ======================== -->
+    <div *ngIf="projets.length > 0 && nomProjet" class="overflow-x-auto">
   <table class="w-full border-collapse border text-sm">
     <thead class="bg-blue-100">
       <tr>
         <th class="border p-2">Nom Projet</th>
         <th class="border p-2">Code Budget</th>
         <th class="border p-2">Nom Budget</th>
-        <th class="border p-2">Budget Annuel</th>
-        <th class="border p-2">reste budget</th>
-
-        <th class="border p-2">T1</th>
-        <th class="border p-2">T2</th>
-        <th class="border p-2">T3</th>
-        <th class="border p-2">T4</th>
+        <th class="border p-2">Budget</th>
+        <th class="border p-2">Reste Budget</th>
       </tr>
     </thead>
+
     <tbody>
       <ng-container *ngFor="let projet of projets">
         <ng-container *ngIf="projet.nom_projet === nomProjet">
           <tr *ngFor="let b of projet.budgets"
               class="hover:bg-blue-50 cursor-pointer transition-colors"
               (click)="loadDemandesByProjetAndBudget(projet.nom_projet, b.code_budget)">
+            
             <td class="border p-2">{{ projet.nom_projet }}</td>
             <td class="border p-2 text-blue-700 font-medium">{{ b.code_budget }}</td>
             <td class="border p-2">{{ b.description }}</td>
-            <td class="border p-2">{{ b.budget_annuel | currency:'MGA':'symbol':'1.0-0' }}</td>
-             <td class="border p-2">{{ b.reste_budget | currency:'MGA':'symbol':'1.0-0' }}</td>
-            <td class="border p-2">{{ b.budget_trimestre_1 | currency:'MGA':'symbol':'1.0-0' }}</td>
-            <td class="border p-2">{{ b.budget_trimestre_2 | currency:'MGA':'symbol':'1.0-0' }}</td>
-            <td class="border p-2">{{ b.budget_trimestre_3 | currency:'MGA':'symbol':'1.0-0' }}</td>
-            <td class="border p-2">{{ b.budget_trimestre_4 | currency:'MGA':'symbol':'1.0-0' }}</td>
+            
+            <!-- Budget selon la période -->
+            <td class="border p-2">
+              {{ periode === 'annee' ? b.budget_annuel :
+                 periode === 'T1' ? b.budget_trimestre_1 :
+                 periode === 'T2' ? b.budget_trimestre_2 :
+                 periode === 'T3' ? b.budget_trimestre_3 :
+                 periode === 'T4' ? b.budget_trimestre_4 : b.budget_annuel | number }}
+            </td>
+
+            <!-- Reste budget selon la période -->
+            <td class="border p-2">
+              {{ periode === 'annee' ? b.reste_budget :
+                 periode === 'T1' ? b.reste_trimestre_1 :
+                 periode === 'T2' ? b.reste_trimestre_2 :
+                 periode === 'T3' ? b.reste_trimestre_3 :
+                 periode === 'T4' ? b.reste_trimestre_4 : b.reste_budget | number }}
+            </td>
+
           </tr>
         </ng-container>
       </ng-container>
@@ -60,47 +84,50 @@
 </div>
 
 
-
-  <!-- ======================== table 3 RAPPORT DES DEMANDES ======================== -->
-  <div class="rapport-container bg-gray-50 p-6 rounded-lg border border-gray-200">
-    <h3 class="text-xl font-semibold mb-3 text-blue-700">Rapport des demandes</h3>
-
-    <p *ngIf="errorMessage" class="text-red-600 mb-2">{{ errorMessage }}</p>
-    <p *ngIf="loading" class="text-gray-500 italic">Chargement...</p>
-
-    <div *ngIf="!loading && demandes.length > 0" class="overflow-x-auto">
-        <table class="w-full border-collapse border mt-4 text-sm">
-            <thead class="bg-gray-200">
-                <tr>
-                    <th class="border p-2">Code Budget</th>
-                    <th class="border p-2">Date Approuvée</th>
-                    <th class="border p-2">Nom Journal</th>
-                    <th class="border p-2">Numéro Journal</th>
-                    <th class="border p-2">ID</th>
-                    <th class="border p-2">Motif</th>
-                    <th class="border p-2">Bénéficiaire</th>
-                    <th class="border p-2">Libellé</th>
-                    <th class="border p-2">Montant</th>
-                    <th class="border p-2">Numéro Compte</th>
-                </tr>
-            </thead>
-         <tbody>
-            <ng-container *ngFor="let d of demandes">
-                <tr *ngFor="let detail of d.details" class="hover:bg-gray-100 transition-colors">
-                    <td class="border p-2">{{ detail.budget?.code_budget || '—' }}</td>
-                    <td class="border p-2">{{ d.date_approuvee | date:'dd-MM-yyyy' }}</td>
-                    <td class="border p-2">{{ d.journal?.nom_journal || '—' }}</td>
-                    <td class="border p-2">{{ d.numero_approuve_journal }}</td>
-                    <td class="border p-2">{{ d.id }}</td>
-                    <td class="border p-2">{{ d.type }}</td>
-                    <td class="border p-2">{{ detail.beneficiaire || '—' }}</td>
-                    <td class="border p-2">{{ detail.libelle }}</td>
-                    <td class="border p-2">{{ detail.amount | currency:'MGA':'symbol':'1.0-0' }}</td>
-                    <td class="border p-2">{{ detail.numero_compte || '—' }}</td>
-                </tr>
-            </ng-container>
-         </tbody>
-        </table>
+    <div *ngIf="!nomProjet" class="mt-4 text-center text-gray-500 italic">
+      Sélectionnez un projet pour voir son rapport financier.
     </div>
+  </div>
+
+  <!-- ======================== TABLEAU 2 ======================== -->
+ <div *ngIf="demandesFiltrees.length > 0" class="rapport-container bg-gray-50 p-6 rounded-lg border border-gray-200">
+  <h3 class="text-xl font-semibold mb-3 text-blue-700">Rapport des demandes</h3>
+
+  <p *ngIf="errorMessage" class="text-red-600 mb-2">{{ errorMessage }}</p>
+  <p *ngIf="loading" class="text-gray-500 italic">Chargement...</p>
+
+  <div *ngIf="!loading" class="overflow-x-auto">
+    <table class="w-full border-collapse border mt-4 text-sm">
+      <thead class="bg-gray-200">
+        <tr>
+          <th class="border p-2">Code Budget</th>
+          <th class="border p-2">Date Approuvée</th>
+          <th class="border p-2">Nom Journal</th>
+          <th class="border p-2">Numéro Journal</th>
+          <th class="border p-2">ID</th>
+          <th class="border p-2">Motif</th>
+          <th class="border p-2">Bénéficiaire</th>
+          <th class="border p-2">Libellé</th>
+          <th class="border p-2">Montant</th>
+          <th class="border p-2">Numéro Compte</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let d of demandesFiltrees">
+          <tr *ngFor="let detail of d.details" class="hover:bg-gray-100 transition-colors">
+            <td class="border p-2">{{ detail.budget?.code_budget || '—' }}</td>
+            <td class="border p-2">{{ d.date_approuvee | date:'dd-MM-yyyy' }}</td>
+            <td class="border p-2">{{ d.journal?.nom_journal || '—' }}</td>
+            <td class="border p-2">{{ d.numero_approuve_journal }}</td>
+            <td class="border p-2">{{ d.id }}</td>
+            <td class="border p-2">{{ d.type }}</td>
+            <td class="border p-2">{{ detail.beneficiaire || '—' }}</td>
+            <td class="border p-2">{{ detail.libelle }}</td>
+            <td class="border p-2">{{ detail.amount | number }}</td>
+            <td class="border p-2">{{ detail.numero_compte || '—' }}</td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
   </div>
 </div>

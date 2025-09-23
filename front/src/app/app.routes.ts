@@ -19,6 +19,9 @@ import { DafDashboardComponent } from './Composante/daf/daf-dashboard.component'
 import { RhDashboardComponent } from './Composante/rh/rh-dashboard/rh-dashboard.component';
 import { ValidationRhComponent } from './Composante/rh/validation-rh/validation-rh.component';
 
+// Composant de changement de mot de passe
+import { ChangePasswordComponent } from './Composante/change-password/change-password.component';
+
 // Guard
 import { AuthGuardService } from './auth.guard';
 
@@ -60,15 +63,19 @@ export const routes: Routes = [
   },
 
   // Routes DAF
-  // Routes DAF corrigées
   {
     path: 'daf',
+    canActivate: [AuthGuardService],
     children: [
-      { path: 'dashboard', component: DafDashboardComponent, canActivate: [AuthGuardService] },
+      { path: 'dashboard', component: DafDashboardComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
 
+  // Routes de changement de mot de passe (pour tous les utilisateurs)
+  { path: 'change-password', component: ChangePasswordComponent, canActivate: [AuthGuardService] },
+  // Route Admin pour changer le mot de passe d'un autre utilisateur
+  { path: 'admin/change-password/:id', component: ChangePasswordComponent, canActivate: [AuthGuardService] },
 
   // Route joker
   { path: '**', redirectTo: 'login' },
