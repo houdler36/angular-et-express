@@ -1,56 +1,197 @@
 <div class="rapport-container">
-  <h2>Rapport des demandes approuvées</h2>
+  <div class="header-section">
+    <h2>Rapport des demandes approuvées</h2>
+    <p class="subtitle">Suivi financier des opérations approuvées</p>
+  </div>
 
-  <div class="filters">
-  <label for="journal">Sélectionner le journal:</label>
-  <select id="journal" [(ngModel)]="selectedJournalId">
-    <option [ngValue]="null">-- Choisir un journal --</option>
-    <option *ngFor="let journal of journals" [ngValue]="journal.id_journal">
-      {{ journal.nom_journal }}
-    </option>
-  </select>
+  <!-- Filtres améliorés -->
+  <div class="filters-card">
+    <h3>Filtres</h3>
+    <div class="filters">
+      <div class="filter-group">
+        <label for="journal">Sélectionner le journal:</label>
+        <div class="select-wrapper">
+          <select id="journal" [(ngModel)]="selectedJournalId">
+            <option [ngValue]="null">-- Choisir un journal --</option>
+            <option *ngFor="let journal of journals" [ngValue]="journal.id_journal">
+              {{ journal.nom_journal }}
+            </option>
+          </select>
+          <span class="select-arrow">▼</span>
+        </div>
+      </div>
 
-  <label for="startDate">Date début:</label>
-  <input type="date" id="startDate" [(ngModel)]="startDate">
+      <div class="filter-group">
+        <label for="startDate">Date début:</label>
+        <div class="date-wrapper">
+          <input type="date" id="startDate" [(ngModel)]="startDate">
+        </div>
+      </div>
 
-  <label for="endDate">Date fin:</label>
-  <input type="date" id="endDate" [(ngModel)]="endDate">
+      <div class="filter-group">
+        <label for="endDate">Date fin:</label>
+        <div class="date-wrapper">
+          <input type="date" id="endDate" [(ngModel)]="endDate">
+        </div>
+      </div>
 
-  <button (click)="loadRapport()" [disabled]="!selectedJournalId || !startDate || !endDate">
-    Afficher
-  </button>
-</div>
+      <button class="btn-primary" (click)="loadRapport()" [disabled]="!selectedJournalId || !startDate || !endDate">
+        <span class="btn-icon">📊</span>
+        Afficher le rapport
+      </button>
+    </div>
+  </div>
 
-  <div *ngIf="loading" class="loading">Chargement...</div>
-  <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+  <!-- Résumé statistique -->
+  <div *ngIf="demandes.length > 0" class="stats-summary">
+    <div class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ demandes.length }}</span>
+        <span class="stat-label">Demandes</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ formatCurrency(getTotalEncaissement()) }}</span>
+        <span class="stat-label">Total Encaissements</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💸</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ formatCurrency(getTotalDecaissement()) }}</span>
+        <span class="stat-label">Total Décaissements</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚖️</div>
+      <div class="stat-info">
+        <span class="stat-value">{{ formatCurrency(getEtatSolde()) }}</span>
+        <span class="stat-label">Solde Final</span>
+      </div>
+    </div>
+  </div>
 
-  <table *ngIf="demandes.length > 0" class="rapport-table">
-    <thead>
-      <tr>
-        <th>Date Approuvé</th>
-        <th>id</th>
-        <th>Numéro Journal</th>
-        <th>Motif</th>
-        <th>Encaissement</th>
-        <th>Décaissement</th>
-        <th>Solde Progressif</th>
-      </tr>
-    </thead>
-    <tbody>
-  <tr *ngFor="let demande of demandes">
-    <td>{{ formatDateTime(demande.date_approuve) }}</td>
-     <td>{{ demande.id }}</td>
-    <td>{{ demande.numero_journal_approuve || '-' }}</td>
-    <td>{{ demande.motif || demande.description }}</td>
-    <td>{{ (demande.type === 'Recette' || demande.type === 'ERD') ? formatCurrency(demande.montant_total) : '-' }}</td>
-    <td>{{ demande.type === 'DED' ? formatCurrency(demande.montant_total) : '-' }}</td>
-    <td>{{ formatCurrency(demande.soldeProgressif) }}</td>
-  </tr>
-</tbody>
+  <!-- Informations de solde -->
+  <div *ngIf="demandes.length > 0" class="solde-section">
+    <div class="solde-card">
+      <div class="solde-item">
+        <span class="solde-label">Début de solde :</span>
+        <span class="solde-value positive">{{ formatCurrency(getDebutSolde()) }}</span>
+      </div>
+      <div class="solde-item">
+        <span class="solde-label">État de solde :</span>
+        <span class="solde-value" [class.positive]="getEtatSolde() >= 0" [class.negative]="getEtatSolde() < 0">
+          {{ formatCurrency(getEtatSolde()) }}
+        </span>
+      </div>
+    </div>
+  </div>
 
-  </table>
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Chargement des données...</p>
+  </div>
+  
+  <div *ngIf="errorMessage" class="error-message">
+    <span class="error-icon">⚠️</span>
+    <p>{{ errorMessage }}</p>
+  </div>
 
-  <div *ngIf="demandes.length === 0 && !loading" class="no-data">
-    Aucune demande approuvée pour ce journal.
+  <!-- Tableau des demandes -->
+  <div *ngIf="demandes.length > 0" class="table-container">
+    <div class="table-header">
+      <h3>Détail des opérations</h3>
+      <button class="btn-export" (click)="exportToExcel()">
+        <span class="btn-icon">📥</span>
+        Exporter
+      </button>
+    </div>
+    
+    <div class="table-scroll">
+      <table class="rapport-table">
+        <thead>
+          <tr>
+            <th class="sortable" (click)="sortBy('date_approuve')">
+              Date Approuvé
+              <span class="sort-indicator" *ngIf="sortField === 'date_approuve'">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th class="sortable" (click)="sortBy('id')">
+              ID
+              <span class="sort-indicator" *ngIf="sortField === 'id'">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th>Numéro Journal</th>
+            <th class="sortable" (click)="sortBy('motif')">
+              Motif
+              <span class="sort-indicator" *ngIf="sortField === 'motif'">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th class="sortable text-right" (click)="sortBy('type')">
+              Type
+              <span class="sort-indicator" *ngIf="sortField === 'type'">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th class="text-right">Encaissement</th>
+            <th class="text-right">Décaissement</th>
+            <th class="text-right sortable" (click)="sortBy('soldeProgressif')">
+              Solde Progressif
+              <span class="sort-indicator" *ngIf="sortField === 'soldeProgressif'">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let demande of demandes; let i = index" [class.even-row]="i % 2 === 0">
+            <td>{{ formatDateTime(demande.date_approuve) }}</td>
+            <td class="id-cell">{{ demande.id }}</td>
+            <td>
+              <span class="journal-badge">{{ demande.numero_journal_approuve || '-' }}</span>
+            </td>
+            <td class="motif-cell">{{ demande.motif || demande.description }}</td>
+            <td class="text-right">
+              <span class="type-badge" [class.recette]="demande.type === 'Recette' || demande.type === 'ERD'" 
+                    [class.depense]="demande.type === 'DED'">
+                {{ demande.type }}
+              </span>
+            </td>
+            <td class="text-right encaissement">
+              {{ (demande.type === 'Recette' || demande.type === 'ERD') ? formatCurrency(demande.montant_total) : '-' }}
+            </td>
+            <td class="text-right decaissement">
+              {{ demande.type === 'DED' ? formatCurrency(demande.montant_total) : '-' }}
+            </td>
+            <td class="text-right solde" [class.negative]="demande.soldeProgressif < 0">
+              {{ formatCurrency(demande.soldeProgressif) }}
+            </td>
+          </tr>
+        </tbody>
+
+        <!-- Pied de tableau avec les totaux -->
+        <tfoot>
+          <tr>
+            <th colspan="5" class="text-right">Totaux</th>
+            <th class="text-right total-encaissement">{{ formatCurrency(getTotalEncaissement()) }}</th>
+            <th class="text-right total-decaissement">{{ formatCurrency(getTotalDecaissement()) }}</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Aucune donnée -->
+  <div *ngIf="demandes.length === 0 && !loading && !errorMessage" class="no-data">
+    <div class="no-data-icon">📋</div>
+    <h3>Aucune demande approuvée</h3>
+    <p>Aucune donnée n'est disponible pour ce journal et cette période.</p>
   </div>
 </div>

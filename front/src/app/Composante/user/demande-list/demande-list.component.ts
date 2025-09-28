@@ -9,7 +9,7 @@ import { DemandeService } from '../../../services/demande.service';
   templateUrl: './demande-list.component.html',
   styleUrls: ['./demande-list.component.scss'],
   standalone: true,
-  imports: [RouterModule, CommonModule, CurrencyPipe, DatePipe, FormsModule]
+  imports: [RouterModule, CommonModule, DatePipe, FormsModule]
 })
 export class DemandeListComponent implements OnInit {
   demandes: any[] = [];

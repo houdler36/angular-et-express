@@ -1,18 +1,23 @@
 <div class="dashboard-wrapper">
 
+  <!-- Sidebar -->
   <aside class="sidebar">
-
     <div class="sidebar-header">
       <img src="images/salafan.jpg" alt="Logo SALFA" class="sidebar-logo">
-      <h6 class="sidebar-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
     </div>
 
     <nav class="sidebar-nav">
-      <a (click)="toggleNewDemandeForm(false)" class="nav-item" 
-         [class.active]="!showNewDemandeForm && !showDemandeList && !showDemandeRecap && !showRapportDemande && !showProfile">
+      <a (click)="toggleAccueil(true)" class="nav-item" [class.active]="showAccueil">
+        <i class="fas fa-home"></i>
+        <span>Accueil</span>
+      </a>
+
+      <a (click)="toggleTableauDeBord(true)" class="nav-item" [class.active]="showTableauDeBord">
         <i class="fas fa-chart-line"></i>
         <span>Tableau de bord</span>
       </a>
+
+      <hr class="sidebar-divider">
 
       <a (click)="toggleNewDemandeForm(true)" class="nav-item" [class.active]="showNewDemandeForm">
         <i class="fas fa-plus-circle"></i>
@@ -24,32 +29,131 @@
         <span>Liste des demandes</span>
       </a>
 
+      <hr class="sidebar-divider">
+
       <a (click)="toggleDemandeRecap(true)" class="nav-item" [class.active]="showDemandeRecap">
         <i class="fas fa-chart-pie"></i>
-        <span>Récapitulatif des dépenses</span>
+        <span>ERD</span>
       </a>
 
       <a (click)="toggleRapportDemande(true)" class="nav-item" [class.active]="showRapportDemande">
         <i class="fas fa-file-alt"></i>
-        <span>Rapport des demandes</span>
+        <span>Rapport</span>
       </a>
+
+      <hr class="sidebar-divider">
 
       <a (click)="toggleProfile(true)" class="nav-item" [class.active]="showProfile">
         <i class="fas fa-user"></i>
         <span>Mon Profil</span>
       </a>
     </nav>
-
   </aside>
 
+  <!-- Main Content -->
   <div class="main-content">
 
-    <!-- Tableau de bord -->
-    <div *ngIf="!showNewDemandeForm && !showDemandeList && !showDemandeRecap && !showRapportDemande && !showProfile">
-      <div class="dashboard-header">
-        <h2><i class="fas fa-chart-line"></i> Bienvenue sur votre Tableau de Bord</h2>
-        <p>Accédez rapidement à vos statistiques et actions principales.</p>
+    <div *ngIf="showAccueil" class="dashboard-home">
+  <h2 class="accueil-title">Bienvenue {{ currentUser?.username }}</h2>
+  <p class="accueil-slogan">Gérez vos demandes facilement et restez informé en temps réel.</p>
+
+  <!-- Cartes de statistiques principales -->
+  <div class="accueil-highlights">
+    <div class="highlight-card">
+      <div class="highlight-icon pending">
+        <i class="fas fa-clock"></i>
       </div>
+      <div class="highlight-content">
+        <h3>Demandes en attente</h3>
+        <p class="highlight-value">{{ demandesEnAttente }}</p>
+        <p class="highlight-desc">nécessitent votre attention</p>
+      </div>
+    </div>
+
+    <div class="highlight-card">
+      <div class="highlight-icon approved">
+        <i class="fas fa-check-circle"></i>
+      </div>
+      <div class="highlight-content">
+        <h3>Demandes approuvées</h3>
+        <p class="highlight-value">{{ demandesApprouvees }}</p>
+        <p class="highlight-desc">ce mois-ci</p>
+      </div>
+    </div>
+
+    <div class="highlight-card">
+      <div class="highlight-icon efficiency">
+        <i class="fas fa-chart-line"></i>
+      </div>
+      <div class="highlight-content">
+        <h3>Efficacité</h3>
+        <p class="highlight-value">{{ calculateEfficiency() }}%</p>
+        <p class="highlight-desc">taux de traitement</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conteneur pour activités et conseils côte à côte -->
+  <div class="accueil-bottom-sections">
+    <!-- Section activités récentes -->
+    <div class="recent-activities">
+      <h3><i class="fas fa-history"></i> Activités récentes</h3>
+      <div class="activity-list">
+        <div class="activity-item" *ngFor="let activity of recentActivities">
+          <div class="activity-icon" [ngClass]="activity.type">
+            <i [class]="activity.icon"></i>
+          </div>
+          <div class="activity-details">
+            <p class="activity-text">{{ activity.text }}</p>
+            <span class="activity-time">{{ activity.time }}</span>
+          </div>
+        </div>
+        <div class="activity-item" *ngIf="recentActivities.length === 0">
+          <div class="activity-icon info">
+            <i class="fas fa-info-circle"></i>
+          </div>
+          <div class="activity-details">
+            <p class="activity-text">Aucune activité récente</p>
+            <span class="activity-time">Commencez par créer une demande</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section conseils rapides -->
+    <div class="quick-tips">
+      <h3><i class="fas fa-lightbulb"></i> Conseils rapides</h3>
+      <div class="tips-container">
+        <div class="tip">
+          <i class="fas fa-check-circle"></i>
+          <p>Vérifiez régulièrement vos demandes en attente pour éviter les retards.</p>
+        </div>
+        <div class="tip">
+          <i class="fas fa-filter"></i>
+          <p>Utilisez les filtres pour trouver rapidement vos demandes.</p>
+        </div>
+        <div class="tip">
+          <i class="fas fa-chart-bar"></i>
+          <p>Consultez les rapports pour analyser vos performances.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Boutons d'action -->
+  <div class="quick-actions">
+    <button class="btn primary" (click)="toggleNewDemandeForm(true)">
+      <i class="fas fa-plus"></i>
+      Nouvelle demande
+    </button>
+    <button class="btn secondary" (click)="toggleTableauDeBord(true)">
+      <i class="fas fa-chart-bar"></i>
+      Voir Tableau de bord complet
+    </button>
+  </div>
+</div>
+    <!-- TABLEAU DE BORD -->
+    <div *ngIf="showTableauDeBord" class="dashboard-stats-section">
 
       <div class="dashboard-stats">
         <div class="stat-card total">
@@ -74,16 +178,6 @@
         </div>
       </div>
 
-      <div class="dashboard-actions">
-        <button class="btn primary" (click)="toggleNewDemandeForm(true)">
-          <i class="fas fa-plus-circle"></i> Nouvelle Demande
-        </button>
-        <button class="btn secondary" (click)="toggleDemandeList(true)">
-          <i class="fas fa-list"></i> Voir toutes mes demandes
-        </button>
-      </div>
-          <h3 class="section-title"><i class="fas fa-history"></i> Vos dernières demandes</h3>
-
       <div class="search-container">
         <i class="fas fa-search search-icon"></i>
         <input type="text" [(ngModel)]="searchTerm" (input)="applyFilter()" placeholder="Rechercher par type, montant, statut ou date...">
@@ -93,9 +187,9 @@
         <table class="data-table">
           <thead>
             <tr>
-              <th>id</th> 
+              <th>ID</th>
               <th>Type</th>
-           <th>demandeur</th>
+              <th>Demandeur</th>
               <th>Montant</th>
               <th>Statut</th>
               <th>Date</th>
@@ -103,13 +197,13 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngIf="lastDemandes.length === 0 && !errorMessage">
-              <td colspan="5">Aucune demande récente à afficher.</td>
+            <tr *ngIf="lastThreeDemandes.length === 0 && !errorMessage">
+              <td colspan="7">Aucune demande récente à afficher.</td>
             </tr>
-            <tr *ngFor="let demande of lastDemandes">
+            <tr *ngFor="let demande of lastThreeDemandes">
               <td>{{ demande.id }}</td>
-          <td>{{ demande.type }}</td>
-          <td>{{ demande.responsible_pj?.nom }} {{ demande.responsible_pj?.prenom }}</td>
+              <td>{{ demande.type }}</td>
+              <td>{{ demande.responsible_pj?.nom }} {{ demande.responsible_pj?.prenom }}</td>
               <td>{{ demande.montant_total }}</td>
               <td>
                 <span [ngClass]="{
@@ -129,13 +223,12 @@
               </td>
             </tr>
             <tr *ngIf="errorMessage">
-              <td colspan="5" class="text-center text-danger">Erreur : {{ errorMessage }}</td>
+              <td colspan="7" class="text-center text-danger">Erreur : {{ errorMessage }}</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
-    
 
     <!-- Nouvelle demande -->
     <div *ngIf="showNewDemandeForm">
@@ -165,34 +258,30 @@
       <h2>Modifier mon profil</h2>
 
       <form (ngSubmit)="updateProfile()" #profileForm="ngForm">
+        <div class="form-group">
+          <label for="currentPassword">Mot de passe actuel</label>
+          <input type="password" id="currentPassword" [(ngModel)]="currentPassword" name="currentPassword">
+        </div>
 
-        <!--div class="form-group">
-          <label for="username">Nom d'utilisateur</label>
-          <input type="text" id="username" [(ngModel)]="currentUser.username" name="username" required>
-        </div-->
+        <div class="form-group">
+          <label for="newPassword">Nouveau mot de passe</label>
+          <input type="password" id="newPassword" [(ngModel)]="newPassword" name="newPassword">
+        </div>
 
-       <div class="form-group">
-  <label for="currentPassword">Mot de passe actuel</label>
-  <input type="password" id="currentPassword" [(ngModel)]="currentPassword" name="currentPassword">
-</div>
-
-<div class="form-group">
-  <label for="newPassword">Nouveau mot de passe</label>
-  <input type="password" id="newPassword" [(ngModel)]="newPassword" name="newPassword">
-</div>
-
-<div class="form-group">
-  <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
-  <input type="password" id="confirmPassword" [(ngModel)]="confirmPassword" name="confirmPassword">
-</div>
+        <div class="form-group">
+          <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+          <input type="password" id="confirmPassword" [(ngModel)]="confirmPassword" name="confirmPassword">
+        </div>
 
         <button type="submit" class="btn primary">Enregistrer</button>
         <button type="button" class="btn secondary" (click)="toggleProfile(false)">Annuler</button>
-
       </form>
 
       <div *ngIf="profileMessage" class="profile-message">{{ profileMessage }}</div>
     </div>
-
   </div>
 </div>
+<!-- Scroll to top -->
+<button (click)="scrollToTop()" class="scroll-to-top" title="Remonter en haut">
+  <i class="fas fa-arrow-up"></i>
+</button>

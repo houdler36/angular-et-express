@@ -6,6 +6,10 @@
       <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
     </div>
     <nav>
+        <a role="button" [class.active]="activePage === 'Accueil'" (click)="setActivePage('Accueil')">
+        <i class="fas fa-home"></i>
+        <span class="hidden-mobile">Accueil</span>
+      </a>
       <a role="button" [class.active]="activePage === 'Dashboard'" (click)="setActivePage('Dashboard')">
         <i class="fas fa-home"></i>
         <span class="hidden-mobile">Tableau de Bord</span>
@@ -32,6 +36,7 @@
   <!-- === MAIN CONTENT === -->
   <main class="main-content">
     <div class="card">
+      
       
       <!-- === DASHBOARD === -->
       <div *ngIf="activePage === 'Dashboard'" class="content-section">

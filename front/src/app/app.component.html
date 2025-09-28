@@ -2,7 +2,7 @@
   <nav *ngIf="isLoggedIn" class="navbar">
     <div class="navbar-left">
       <span class="welcome-message">
-        <i class="fas fa-user-circle"></i> Bienvenue {{currentUser?.username}} ({{currentUser?.role}})
+        <i class="fas fa-user-circle"></i> {{currentUser?.username}}
       </span>
     </div>
     <button (click)="openLogoutDialog()" class="logout-btn">

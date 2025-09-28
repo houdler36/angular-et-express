@@ -1,157 +1,298 @@
-<div *ngIf="demande" class="demande-container">
-    <div class="demande-header">
-      <h1 class="demande-title">
-        {{ demande.type === 'DED' ? "DEMANDE D'ENGAGEMENT DE DEPENSES (DED)" :
-            demande.type === 'Recette' ? "DEMANDE DE RECETTE" : "DEMANDE ERD" }}
-      </h1>
-
-      <div class="demande-info">
-        <div><strong>Date:</strong> {{ demande.date | date:'shortDate' }}</div>
-        <div><strong>Demandeur:</strong> {{ demande.responsible_pj?.prenom }} {{ demande.responsible_pj?.nom }}</div>
-        <div><strong>PJ:</strong> {{ demande.pj_status === 'oui' ? 'Oui' : 'Non' }}</div>
+<div class="interface-container">
+  <div *ngIf="demande" class="demande-container">
+    <!-- En-tête interface -->
+    <div class="interface-header">
+      <div class="header-actions">
+        <button class="btn-back" routerLink="/demandes">
+          <i class="fas fa-arrow-left"></i> Retour
+        </button>
+        
+        <button class="btn-pdf" (click)="generatePDF()">
+          <i class="fas fa-file-pdf"></i> Exporter PDF
+        </button>
       </div>
-
-      <div class="demande-motif">
-        <strong>Motif:</strong> {{ demande.description }}
+      
+      <div class="status-badge" [ngClass]="'status-' + demande.status">
+        {{ demande.status | titlecase }}
       </div>
     </div>
 
-    <div class="demande-details">
-      <table>
-    <thead>
-      <tr>
-        <th>P/J de</th>
-        <th>Libellé</th>
-        <th>Code Budget</th>
-        <th *ngIf="currentUserRole === 'rh' || currentUserRole === 'daf'">NIF / STAT</th>
-        <th *ngIf="currentUserRole === 'rh' || currentUserRole === 'daf'">N° Compte</th>
-        <th>Débit</th>
-        <th>Crédit</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let detail of demande.details; let i = index">
-        <td>{{ detail.beneficiaire }}</td>
-        <td>{{ detail.libelle }}</td>
+    <!-- Messages d'alerte -->
+    <div *ngIf="errorMessage" class="alert alert-error">
+      {{ errorMessage }}
+      <button class="alert-close" (click)="clearMessages()">×</button>
+    </div>
 
-        <td class="code-budget-cell">
-          <div class="tooltip-container"
-            (mouseenter)="showBudgetTooltip(detail)"
-            (mouseleave)="hideBudgetTooltip()">
+    <div *ngIf="successMessage" class="alert alert-success">
+      {{ successMessage }}
+      <button class="alert-close" (click)="clearMessages()">×</button>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="demande-content" id="pdf-content">
+      <!-- En-tête PDF (caché dans l'interface) -->
+      <div class="pdf-header">
+        <div class="pdf-logo">
+          <img src="/assets/logo-entreprise.png" alt="Logo" *ngIf="hasLogo">
+          <div class="entreprise-info" *ngIf="!hasLogo">
+            <h2>NOM ENTREPRISE</h2>
+            <p>Adresse · Téléphone · Email</p>
+          </div>
+        </div>
+        
+        <div class="pdf-title">
+          <h1>
+            {{ demande.type === 'DED' ? "DEMANDE D'ENGAGEMENT DE DEPENSES (DED)" :
+                demande.type === 'Recette' ? "DEMANDE DE RECETTE" : "DEMANDE ERD" }}
+          </h1>
+          <div class="pdf-reference">
+            <strong>Référence:</strong> {{ getDemandeReference() }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Informations demande -->
+      <div class="demande-header">
+        <div class="demande-info-grid">
+          <div class="info-item">
+            <label>Date:</label>
+            <span>{{ demande.date | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Demandeur:</label>
+            <span>{{ demande.responsible_pj?.prenom }} {{ demande.responsible_pj?.nom }}</span>
+          </div>
+          <div class="info-item">
+            <label>Pièces Jointes:</label>
+            <span class="pj-badge" [ngClass]="{'pj-oui': demande.pj_status === 'oui', 'pj-non': demande.pj_status !== 'oui'}">
+              {{ demande.pj_status === 'oui' ? '✓ Disponibles' : '✗ Manquantes' }}
+            </span>
+          </div>
+          <div class="info-item full-width">
+            <label>Motif:</label>
+            <span class="motif-text">{{ demande.description }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tableau des détails -->
+      <div class="demande-details">
+        <div class="table-container">
+          <table class="details-table">
+            <thead>
+              <tr>
+                <th width="15%">Bénéficiaire</th>
+                <th width="25%">Libellé</th>
+                <th width="20%">Code Budget</th>
+                <th width="10%" *ngIf="canViewBudget()">NIF/STAT</th>
+                <th width="10%" *ngIf="canViewBudget()">N° Compte</th>
+                <th width="10%" class="text-right">Débit</th>
+                <th width="10%" class="text-right">Crédit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let detail of demande.details; let i = index">
+                <td class="beneficiaire">{{ detail.beneficiaire }}</td>
+                <td class="libelle">{{ detail.libelle }}</td>
+
+                <td class="code-budget-cell">
+                  <div class="budget-info">
+                    <span class="budget-code">{{ detail.budget?.code_budget || '-' }}</span>
+                    <span class="budget-desc" *ngIf="detail.budget">{{ detail.budget.description }}</span>
+                    
+                    <!-- Tooltip pour informations budget - SEULEMENT pour RH et DAF -->
+                    <div *ngIf="canViewBudget() && detail.budget" 
+                         class="budget-tooltip-trigger"
+                         (mouseenter)="showBudgetTooltip(detail)"
+                         (mouseleave)="hideBudgetTooltip()">
+                      <i class="fas fa-info-circle"></i>
+                      
+                      <div *ngIf="showTooltip && selectedDetail === detail" 
+                           class="budget-tooltip">
+                        <div class="tooltip-item">
+                          <span>Budget Annuel:</span>
+                          <strong>{{ detail.budget?.budget_annuel | number:'1.0-0' }} Ar</strong>
+                        </div>
+                        <div class="tooltip-item">
+                          <span>Budget Trimestre:</span>
+                          <strong>{{ getBudgetTrimestre(detail, demande.date) | number:'1.0-0' }} Ar</strong>
+                        </div>
+                        <div class="tooltip-item">
+                          <span>Montant Ligne:</span>
+                          <strong>{{ detail.amount | number:'1.0-0' }} Ar</strong>
+                        </div>
+                        <div class="tooltip-item">
+                          <span>Solde Disponible:</span>
+                          <strong>{{ getSoldeDisponible(detail) | number:'1.0-0' }} Ar</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+
+                <td *ngIf="canViewBudget()" class="fiscal-info">
+                  <div *ngIf="detail.nif" class="nif-stat">NIF: {{ detail.nif }}</div>
+                  <div *ngIf="detail.stat" class="nif-stat">STAT: {{ detail.stat }}</div>
+                </td>
+
+                <td *ngIf="canViewBudget()" class="compte-number">
+                  {{ detail.numero_compte || '-' }}
+                </td>
+
+                <td class="amount text-right">
+                  <span *ngIf="demande.type === 'DED' || (demande.type === 'ERD' && i > 0)" 
+                        class="debit-amount">
+                    {{ detail.amount | number:'1.0-0' }}
+                  </span>
+                  <span *ngIf="!(demande.type === 'DED' || (demande.type === 'ERD' && i > 0))" class="no-amount">
+                    -
+                  </span>
+                </td>
+
+                <td class="amount text-right">
+                  <span *ngIf="demande.type === 'Recette' || (demande.type === 'ERD' && i === 0)" 
+                        class="credit-amount">
+                    {{ detail.amount | number:'1.0-0' }}
+                  </span>
+                  <span *ngIf="!(demande.type === 'Recette' || (demande.type === 'ERD' && i === 0))" class="no-amount">
+                    -
+                  </span>
+                </td>
+              </tr>
+
+              <!-- Ligne de séparation -->
+              <tr class="separator">
+                <td [attr.colspan]="canViewBudget() ? 7 : 5"></td>
+              </tr>
+
+              <!-- Totaux -->
+              <tr class="totals-row">
+                <td [attr.colspan]="canViewBudget() ? 5 : 3" class="text-right totals-label">
+                  TOTAUX:
+                </td>
+                <td class="text-right total-amount">
+                  <strong>{{ totalDebit | number:'1.0-0' }}</strong>
+                </td>
+                <td class="text-right total-amount">
+                  <strong>{{ totalCredit | number:'1.0-0' }}</strong>
+                </td>
+              </tr>
+
+              <!-- Solde -->
+              <tr class="solde-row">
+                <td [attr.colspan]="canViewBudget() ? 5 : 3" class="text-right solde-label">
+                  SOLDE (Débit - Crédit):
+                </td>
+
+                <td class="text-right solde-amount" [ngClass]="{'negative': solde < 0}">
+                  <strong *ngIf="solde < 0">{{ (solde * -1) | number:'1.0-0' }}</strong>
+                  <span *ngIf="solde >= 0" class="no-amount">-</span>
+                </td>
+
+                <td class="text-right solde-amount" [ngClass]="{'positive': solde > 0}">
+                  <strong *ngIf="solde > 0">{{ solde | number:'1.0-0' }}</strong>
+                  <span *ngIf="solde <= 0" class="no-amount">-</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="montant-lettres">
+          <strong>Arrêtée à la somme totale de:</strong> 
+          <span class="montant-text">{{ montantEnLettres }} Ariary</span>
+        </div>
+      </div>
+
+      <!-- Validateurs -->
+      <div class="validators-section">
+        <h3 class="validators-title">VALIDATIONS</h3>
+        
+        <div class="validators-grid">
+          <div *ngFor="let v of displayValidators" class="validator-card">
+            <div class="validator-header">
+              <h4>{{ v.user?.username || 'Validateur' }}</h4>
+              <span class="validator-badge" [ngClass]="'status-' + v.statut">
+                {{ v.statut | titlecase }}
+              </span>
+            </div>
             
-            <ng-container *ngIf="detail.budget; else noBudget">
-              {{ detail.budget.code_budget }} - {{ detail.budget.description }}
-            </ng-container>
+            <div class="signature-container">
+              <ng-container *ngIf="v.statut === 'validé' && v.signatureBase64; else placeholderSignature">
+                <img [src]="v.signatureBase64"
+                     alt="Signature de {{ v.user?.username }}"
+                     class="signature-image">
+                <p class="signature-date" *ngIf="v.date_validation">
+                  Le {{ v.date_validation | date:'dd/MM/yyyy' }}
+                </p>
+              </ng-container>
 
-            <ng-template #noBudget>
-              <span>-</span>
-            </ng-template>
-
-            <div *ngIf="(currentUserRole === 'rh' || currentUserRole === 'daf') && showTooltip && selectedDetail === detail"
-                class="budget-tooltip">
-              <p><strong>Budget Annuel:</strong> {{ detail.budget?.budget_annuel | currency:'MGA':'symbol':'1.0-0' }}</p>
-              <p><strong>Budget Trimestre:</strong> {{ getBudgetTrimestre(detail, demande.date) | currency:'MGA':'symbol':'1.0-0' }}</p>
+              <ng-template #placeholderSignature>
+                <div class="signature-placeholder">
+                  <i class="fas fa-pen"></i>
+                  <span>Signature</span>
+                </div>
+                <p class="signature-date">En attente</p>
+              </ng-template>
             </div>
           </div>
-        </td>
-
-        <td *ngIf="currentUserRole === 'rh' || currentUserRole === 'daf'">
-          <div *ngIf="detail.nif">NIF: {{ detail.nif }}</div>
-          <div *ngIf="detail.stat">STAT: {{ detail.stat }}</div>
-        </td>
-
-        <td *ngIf="currentUserRole === 'rh' || currentUserRole === 'daf'">{{ detail.numero_compte }}</td>
-
-        <td class="text-right">
-          {{ (demande.type !== 'ERD' || i > 0) ? (detail.amount | currency:'MGA':'symbol':'1.0-0') : '-' }}
-        </td>
-
-        <td class="text-right">
-          {{ (demande.type === 'ERD' && i === 0) ? (detail.amount | currency:'MGA':'symbol':'1.0-0') : '-' }}
-        </td>
-      </tr>
-
-      <tr class="totals">
-        <td [attr.colspan]="currentUserRole === 'rh' || currentUserRole === 'daf' ? 5 : 3" class="text-right">
-          TOTAUX:
-        </td>
-        <td class="text-right">{{ totalDebit | currency:'MGA':'symbol':'1.0-0' }}</td>
-        <td class="text-right">{{ totalCredit | currency:'MGA':'symbol':'1.0-0' }}</td>
-      </tr>
-
-      <tr class="solde">
-        <td [attr.colspan]="currentUserRole === 'rh' || currentUserRole === 'daf' ? 5 : 3" class="text-right">
-          SOLDE (Débit - Crédit):
-        </td>
-        <td colspan="2" class="text-center">{{ solde | currency:'MGA':'symbol':'1.0-0' }}</td>
-      </tr>
-    </tbody>
-</table>
-    <p class="montant-lettres">
-      <strong>Arrêtée à la somme totale de:</strong> {{ montantEnLettres }} Ariary
-    </p>
+        </div>
+      </div>
     </div>
 
-    <div class="validators-section">
-      <table>
-        <thead>
-          <tr>
-            <th *ngFor="let v of displayValidators">{{ v.user?.username || 'Validateur' }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td *ngFor="let v of displayValidators">
-              <div class="signature-container">
-                <ng-container *ngIf="v.statut === 'validé' && (v.signature_validation_url || v.user?.signature_image_url); else placeholderSignature">
-                  <img [src]="serverUrl + (v.signature_validation_url || v.user?.signature_image_url)"
-                       alt="Signature de {{ v.user?.username }}"
-                       class="signature-image"
-                       (error)="handleImageError(v)">
-                  <p class="validator-name">{{ v.user?.username }}</p>
-                  <p class="validator-status valid">(Validé)</p>
-                </ng-container>
-
-                <ng-template #placeholderSignature>
-                  <div class="signature-placeholder">
-                    <i class="fas fa-signature"></i>
-                  </div>
-                  <p class="validator-name">{{ v.user?.username || '–' }}</p>
-                  <p class="validator-status"
-                     [ngClass]="{
-                       'text-yellow': v.statut==='en attente',
-                       'text-red': v.statut==='rejeté'
-                     }">({{ v.statut | titlecase }})</p>
-                </ng-template>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ✅ SECTION ACTION BUTTONS MODIFIÉE -->
-    <div class="action-buttons">
-      <button class="btn-back" routerLink="/demandes">
-        <i class="fas fa-arrow-left"></i> Retour
-      </button>
-
-      <!-- Bouton Modifier : reste accessible si en attente -->
-      <button *ngIf="demande.status==='en attente'" class="btn-edit" (click)="editDemande()">
+    <!-- Boutons d'action -->
+    <div class="action-buttons" *ngIf="demande.status === 'en attente'">
+      <button class="btn-edit" (click)="editDemande()">
         <i class="fas fa-edit"></i> Modifier
       </button>
 
-      <!-- Boutons Approuver/Rejeter visibles uniquement pour RH & DAF -->
-      <button *ngIf="demande.status==='en attente' && (currentUserRole === 'rh' || currentUserRole === 'daf')" 
-              class="btn-approve" 
-              (click)="approveDemande()">
-        <i class="fas fa-check-circle"></i> Approuver
-      </button>
+      <div class="validation-buttons" *ngIf="currentUserRole === 'rh' || currentUserRole === 'daf'">
+        <button class="btn-approve" (click)="approveDemande()">
+          <i class="fas fa-check-circle"></i> Approuver
+        </button>
 
-      <button *ngIf="demande.status==='en attente' && (currentUserRole === 'rh' || currentUserRole === 'daf')" 
-              class="btn-reject" 
-              (click)="openRejectModal()">
-        <i class="fas fa-times-circle"></i> Rejeter
-      </button>
+        <button class="btn-reject" (click)="openRejectModal()">
+          <i class="fas fa-times-circle"></i> Rejeter
+        </button>
+      </div>
     </div>
+  </div>
+
+  <!-- Modal de rejet -->
+  <div *ngIf="showRejectModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Rejeter la demande</h3>
+        <button class="modal-close" (click)="cancelReject()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Veuillez indiquer la raison du rejet :</p>
+        <textarea [(ngModel)]="rejectReason" 
+                  placeholder="Raison du rejet..." 
+                  rows="4"
+                  class="reject-textarea"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="cancelReject()">Annuler</button>
+        <button class="btn-confirm-reject" (click)="confirmReject()">Confirmer le rejet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de suppression -->
+  <div *ngIf="showDeleteConfirmModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Confirmer la suppression</h3>
+        <button class="modal-close" (click)="cancelDelete()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Êtes-vous sûr de vouloir supprimer cette demande ? Cette action est irréversible.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
+        <button class="btn-confirm-delete" (click)="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
 </div>

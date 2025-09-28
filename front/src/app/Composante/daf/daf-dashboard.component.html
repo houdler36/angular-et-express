@@ -16,6 +16,7 @@
       <a role="button" [class.active]="activePage === 'Dashboard'" (click)="setActivePage('Dashboard')">
         <i class="fas fa-home"></i> <span class="hidden-mobile">Tableau de Bord</span>
       </a>
+      <hr class="sidebar-divider">
       <a role="button" [class.active]="activePage === 'demandesATraiter'" (click)="setActivePage('demandesATraiter')">
         <i class="fas fa-tasks"></i> <span class="hidden-mobile">Demandes à traiter</span>
       </a>
@@ -25,10 +26,11 @@
       <a role="button" [class.active]="activePage === 'demandesFinalisees'" (click)="setActivePage('demandesFinalisees')">
         <i class="fas fa-check-circle"></i> <span class="hidden-mobile">Demandes finalisées</span>
       </a>
+      <hr class="sidebar-divider">
       <a role="button" [class.active]="activePage === 'rapports'" (click)="setActivePage('rapports')">
         <i class="fas fa-chart-bar"></i> <span class="hidden-mobile">Rapports</span>
       </a>
-      
+      <hr class="sidebar-divider">
       <a role="button" [class.active]="activePage === 'Profil'" (click)="setActivePage('Profil')">
         <i class="fas fa-user-circle"></i> <span class="hidden-mobile">Mon profil</span>
       </a>
