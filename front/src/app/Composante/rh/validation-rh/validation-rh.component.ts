@@ -183,22 +183,7 @@ loadDemandesFinalisees() {
 
 
 
-  valider(id: number) {
-    this.demandeService.validateDemande(id).subscribe(() => {
-      this.loadDemandesATraiter();
-      this.loadDemandesFinalisees();
-      this.loadDemandesEnAttente();
-    });
-  }
-
-  refuser(id: number) {
-    this.demandeService.refuseDemande(id, '').subscribe(() => {
-      this.loadDemandesATraiter();
-      this.loadDemandesFinalisees();
-      this.loadDemandesEnAttente();
-    });
-  }
-
+  
   /**
    * Gère l'action de "Voir" pour une demande spécifique en naviguant vers une nouvelle route.
    * @param id L'identifiant de la demande à visualiser.

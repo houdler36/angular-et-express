@@ -1,14 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule, CurrencyPipe, NgIf, NgFor } from '@angular/common';
-import { Router, RouterModule } from '@angular/router'; // Add RouterModule for the standalone component
+import { Router, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-
-// Services nécessaires pour les opérations du tableau de bord
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { FormsModule } from '@angular/forms';
+// Services
 import { DemandeService } from '../../services/demande.service';
 import { AuthService } from '../../services/auth.service';
+import { NotificationService } from '../../services/notification.service';
 import { RapportProjetComponent } from './rapport-projet/rapport-projet.component';
 
-// Interface pour garantir la cohérence des données des validateurs.
+// Interfaces
 interface JournalValidator {
   id: number;
   journal_id: number;
@@ -24,204 +27,377 @@ interface JournalValidator {
   };
 }
 
-// Interface pour les statistiques (ajouté pour une vue complète)
 export interface StatistiqueDemande {
   total: number;
   enAttente: number;
   finalisees: number;
+  demandeATraiter: number;
 }
-
 
 @Component({
   selector: 'app-daf-dashboard',
   standalone: true,
-  // Add RouterModule to the imports array for routing to work
-  imports: [CommonModule, NgIf, NgFor, CurrencyPipe, RapportProjetComponent, RouterModule],
+  imports: [CommonModule, NgIf, NgFor, CurrencyPipe, RapportProjetComponent, RouterModule,FormsModule],
   templateUrl: './daf-dashboard.component.html',
   styleUrls: ['./daf-dashboard.component.css']
 })
-export class DafDashboardComponent implements OnInit {
-  // L'ID de l'utilisateur DAF actuel.
-  currentUserId: number | null = null;
-  // Propriété pour stocker les informations de l'utilisateur
-  user: any; 
+export class DafDashboardComponent implements OnInit, OnDestroy {
+  private destroy$ = new Subject<void>();
 
-  // Tableaux pour stocker les demandes à traiter, en attente et finalisées.
+  // Propriétés utilisateur
+  currentUserId: number | null = null;
+  user: any;
+  
+  // Données des demandes
   demandesATraiter: any[] = [];
   demandesEnAttente: any[] = [];
   demandesFinalisees: any[] = [];
   statistiques: StatistiqueDemande | null = null;
 
-  // Indicateurs de chargement pour l'expérience utilisateur.
+  // États de chargement
   loadingATraiter = false;
   loadingEnAttente = false;
   loadingFinalisees = false;
   loadingStats = false;
 
-  // Page active pour la navigation dans le tableau de bord.
+  // Navigation
   activePage: string = 'Dashboard';
+  searchTerm: string = '';
+
+  // Filtres
+  filters = {
+    type: '',
+    statut: '',
+    dateDebut: '',
+    dateFin: ''
+  };
 
   constructor(
     private demandeService: DemandeService,
     private authService: AuthService,
+    private notificationService: NotificationService,
     private router: Router
   ) {
-    // Récupère l'ID de l'utilisateur après l'authentification.
     this.currentUserId = this.authService.getUserId();
   }
 
   ngOnInit(): void {
-    // Récupère les informations de l'utilisateur connecté
     this.user = this.authService.getCurrentUser();
-    // Charge toutes les données à l'initialisation du composant.
     this.loadAllDemandes();
+    this.setupAutoRefresh();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
-   * Charge les statistiques globales depuis le service.
+   * Actualisation automatique toutes les 30 secondes
    */
-  loadStats(): void {
-    this.loadingStats = true;
-    this.demandeService.getDemandeStats().subscribe({
-      next: (data) => {
-        this.statistiques = data;
-        this.loadingStats = false;
-      },
-      error: (err: HttpErrorResponse) => {
-        console.error('Erreur lors du chargement des statistiques :', err);
-        this.loadingStats = false;
+  private setupAutoRefresh(): void {
+    setInterval(() => {
+      if (this.activePage === 'Dashboard' || this.activePage === 'demandesATraiter') {
+        this.loadAllDemandes();
       }
-    });
+    }, 30000);
   }
 
-  // Méthode utilitaire pour recharger toutes les demandes.
-  loadAllDemandes() {
+  /**
+   * Charge toutes les données du dashboard
+   */
+  loadAllDemandes(): void {
     this.loadStats();
     this.loadDemandesATraiter();
     this.loadDemandesEnAttente();
     this.loadDemandesFinalisees();
   }
 
-  // Met à jour la page active.
-  setActivePage(page: string) {
-    this.activePage = page;
-  }
-  
   /**
-   * Navigue vers le composant de changement de mot de passe.
-   * La route est définie dans votre fichier app-routing.module.ts.
+   * Charge les statistiques
    */
-  goToChangePassword() {
+  loadStats(): void {
+    this.loadingStats = true;
+    this.demandeService.getDemandeStats()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.statistiques = data;
+          this.loadingStats = false;
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error('Erreur lors du chargement des statistiques :', err);
+          this.notificationService.showError('Erreur lors du chargement des statistiques');
+          this.loadingStats = false;
+        }
+      });
+  }
+
+  /**
+   * Charge les demandes à traiter
+   */
+  loadDemandesATraiter(): void {
+    this.loadingATraiter = true;
+    this.demandeService.getDemandesDAFAValider()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (demandes: any[]) => {
+          this.demandesATraiter = this.applyFilters(demandes);
+          this.loadingATraiter = false;
+        },
+        error: (err) => {
+          console.error('Erreur lors du chargement des demandes à traiter:', err);
+          this.notificationService.showError('Erreur lors du chargement des demandes à traiter');
+          this.loadingATraiter = false;
+        }
+      });
+  }
+
+  /**
+   * Charge les demandes en attente
+   */
+  loadDemandesEnAttente(): void {
+    this.loadingEnAttente = true;
+    this.demandeService.getDemandesEnAttenteAutres()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.demandesEnAttente = this.applyFilters(data.map((demande: any) => {
+            const validations = demande.validations || [];
+            const currentValidation = validations.find((v: any) => v.statut === 'en attente');
+            const journalValidator = demande.journal?.journal_validers?.find((v: any) => v.user_id === currentValidation?.user_id);
+
+            return {
+              ...demande,
+              currentValidator: journalValidator?.user?.username || null
+            };
+          }));
+          this.loadingEnAttente = false;
+        },
+        error: (err) => {
+          console.error('Erreur lors du chargement des demandes en attente:', err);
+          this.notificationService.showError('Erreur lors du chargement des demandes en attente');
+          this.loadingEnAttente = false;
+        }
+      });
+  }
+
+  /**
+   * Charge les demandes finalisées
+   */
+  loadDemandesFinalisees(): void {
+    this.loadingFinalisees = true;
+    this.demandeService.getDemandesFinalisees()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (data) => {
+          this.demandesFinalisees = this.applyFilters(data.map((demande: any) => {
+            const validations = demande.validations || [];
+            const finalValidation = validations.find(
+              (v: any) => v.statut === 'validé' || v.statut === 'rejeté'
+            );
+            const finalValidatorName = finalValidation?.user?.username || 'Inconnu';
+
+            return {
+              ...demande,
+              finalValidatorName
+            };
+          }));
+          this.loadingFinalisees = false;
+        },
+        error: (err) => {
+          console.error('Erreur lors du chargement des demandes finalisées:', err);
+          this.notificationService.showError('Erreur lors du chargement des demandes finalisées');
+          this.loadingFinalisees = false;
+        }
+      });
+  }
+
+  /**
+   * Applique les filtres de recherche
+   */
+  applyFilters(demandes: any[]): any[] {
+    let filtered = demandes;
+
+    if (this.searchTerm) {
+      const term = this.searchTerm.toLowerCase();
+      filtered = filtered.filter(demande => 
+        demande.id.toString().includes(term) ||
+        demande.type?.toLowerCase().includes(term) ||
+        demande.responsible_pj?.nom?.toLowerCase().includes(term) ||
+        demande.responsible_pj?.prenom?.toLowerCase().includes(term) ||
+        demande.description?.toLowerCase().includes(term)
+      );
+    }
+
+    if (this.filters.type) {
+      filtered = filtered.filter(demande => demande.type === this.filters.type);
+    }
+
+    if (this.filters.statut) {
+      filtered = filtered.filter(demande => demande.status === this.filters.statut);
+    }
+
+    if (this.filters.dateDebut) {
+      filtered = filtered.filter(demande => 
+        new Date(demande.date) >= new Date(this.filters.dateDebut)
+      );
+    }
+
+    if (this.filters.dateFin) {
+      filtered = filtered.filter(demande => 
+        new Date(demande.date) <= new Date(this.filters.dateFin)
+      );
+    }
+
+    return filtered;
+  }
+
+  /**
+   * Gère la recherche
+   */
+  onSearch(): void {
+    switch (this.activePage) {
+      case 'demandesATraiter':
+        this.loadDemandesATraiter();
+        break;
+      case 'demandesEnAttente':
+        this.loadDemandesEnAttente();
+        break;
+      case 'demandesFinalisees':
+        this.loadDemandesFinalisees();
+        break;
+    }
+  }
+
+  /**
+   * Réinitialise les filtres
+   */
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.filters = {
+      type: '',
+      statut: '',
+      dateDebut: '',
+      dateFin: ''
+    };
+    this.loadAllDemandes();
+  }
+
+  /**
+   * Valide une demande
+   */
+  valider(id: number): void {
+    if (confirm('Êtes-vous sûr de vouloir valider cette demande ?')) {
+      this.demandeService.validateDemande(id, 'Validée par le DAF')
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Demande validée avec succès');
+            this.loadAllDemandes();
+          },
+          error: (error: HttpErrorResponse) => {
+            console.error('Erreur lors de la validation de la demande:', error);
+            this.notificationService.showError('Erreur lors de la validation de la demande');
+          }
+        });
+    }
+  }
+
+  /**
+   * Refuse une demande
+   */
+  refuser(id: number): void {
+    const commentaire = prompt('Veuillez saisir le motif du refus :');
+    if (commentaire) {
+      this.demandeService.refuseDemande(id, commentaire)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.notificationService.showSuccess('Demande refusée avec succès');
+            this.loadAllDemandes();
+          },
+          error: (error: HttpErrorResponse) => {
+            console.error('Erreur lors du refus de la demande:', error);
+            this.notificationService.showError('Erreur lors du refus de la demande');
+          }
+        });
+    }
+  }
+
+  /**
+   * Exporte les données en CSV
+   */
+  exportToCSV(): void {
+    let dataToExport: any[] = [];
+    let filename = '';
+
+    switch (this.activePage) {
+      case 'demandesATraiter':
+        dataToExport = this.demandesATraiter;
+        filename = 'demandes_a_traiter.csv';
+        break;
+      case 'demandesEnAttente':
+        dataToExport = this.demandesEnAttente;
+        filename = 'demandes_en_attente.csv';
+        break;
+      case 'demandesFinalisees':
+        dataToExport = this.demandesFinalisees;
+        filename = 'demandes_finalisees.csv';
+        break;
+      default:
+        return;
+    }
+
+    if (dataToExport.length === 0) {
+      this.notificationService.showWarning('Aucune donnée à exporter');
+      return;
+    }
+
+    this.demandeService.exportToCSV(dataToExport, filename);
+  }
+
+  /**
+   * Navigation
+   */
+  setActivePage(page: string): void {
+    this.activePage = page;
+    this.resetFilters();
+  }
+
+  /**
+   * Voir les détails d'une demande
+   */
+  voirDetails(id: number): void {
+    this.router.navigate(['/demandes', id]);
+  }
+
+  /**
+   * Changer le mot de passe
+   */
+  goToChangePassword(): void {
     this.router.navigate(['/change-password']);
   }
 
   /**
-   * Charge les demandes que le DAF doit valider.
-   * Cette méthode appelle l'endpoint backend spécifique au DAF,
-   * qui gère le filtrage par montant, pour une meilleure efficacité.
+   * Déconnexion
    */
-  loadDemandesATraiter() {
-    this.loadingATraiter = true;
-    this.demandeService.getDemandesDAFAValider().subscribe({
-      next: (demandes: any[]) => {
-        // La logique de filtrage par montant est gérée par le backend.
-        // Le frontend n'a plus qu'à afficher les demandes reçues.
-        this.demandesATraiter = demandes;
-        this.loadingATraiter = false;
-      },
-      error: () => this.loadingATraiter = false
-    });
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
   }
 
   /**
-   * Charge les demandes en attente de validation par d'autres.
+   * Calcule le temps écoulé depuis la création
    */
-  loadDemandesEnAttente() {
-    this.loadingEnAttente = true;
-    this.demandeService.getDemandesEnAttenteAutres().subscribe({
-      next: (data) => {
-        this.demandesEnAttente = data.map((demande: any) => {
-          const validations = demande.validations || [];
-          const currentValidation = validations.find((v: any) => v.statut === 'en attente');
-          const journalValidator = demande.journal?.journal_validers?.find((v: any) => v.user_id === currentValidation?.user_id);
-
-          return {
-            ...demande,
-            currentValidator: journalValidator?.user?.username || null
-          };
-        });
-        this.loadingEnAttente = false;
-      },
-      error: () => this.loadingEnAttente = false
-    });
-  }
-
-  /**
-   * Charge les demandes qui ont été finalisées (approuvées ou rejetées).
-   */
-  loadDemandesFinalisees() {
-    this.loadingFinalisees = true;
-    this.demandeService.getDemandesFinalisees().subscribe({
-      next: (data) => {
-        this.demandesFinalisees = data.map((demande: any) => {
-          const validations = demande.validations || [];
-          const finalValidation = validations.find(
-            (v: any) => v.statut === 'validé' || v.statut === 'rejeté'
-          );
-          const finalValidatorName = finalValidation?.user?.username || 'Inconnu';
-
-          return {
-            ...demande,
-            finalValidatorName
-          };
-        });
-        this.loadingFinalisees = false;
-      },
-      error: () => {
-        console.error('Erreur lors du chargement des demandes finalisées.');
-        this.loadingFinalisees = false;
-      }
-    });
-  }
-
-  /**
-   * Valide une demande spécifique.
-   * @param id L'identifiant de la demande à valider.
-   */
-  valider(id: number) {
-    this.demandeService.validateDemande(id, 'Validée par le DAF').subscribe({
-      next: () => {
-        // Si la validation réussit, recharge toutes les listes pour une mise à jour immédiate.
-        this.loadAllDemandes();
-      },
-      error: (error: HttpErrorResponse) => {
-        console.error('Erreur lors de la validation de la demande:', error);
-      }
-    });
-  }
-
-  /**
-   * Refuse une demande spécifique.
-   * @param id L'identifiant de la demande à refuser.
-   */
-  refuser(id: number) {
-    // Assurez-vous d'avoir une méthode dans votre service qui accepte un commentaire si nécessaire.
-    this.demandeService.refuseDemande(id, 'Refusée par le DAF').subscribe({
-      next: () => {
-        // Si le refus réussit, recharge toutes les listes.
-        this.loadAllDemandes();
-      },
-      error: (error: HttpErrorResponse) => {
-        console.error('Erreur lors du refus de la demande:', error);
-      }
-    });
-  }
-
-  /**
-   * Gère la navigation vers la page de détails d'une demande.
-   * @param id L'identifiant de la demande.
-   */
-  voirDetails(id: number) {
-    this.router.navigate(['/demandes', id]);
+  getTimeElapsed(date: string): string {
+    const now = new Date();
+    const created = new Date(date);
+    const diff = now.getTime() - created.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return "Aujourd'hui";
+    if (days === 1) return "Il y a 1 jour";
+    return `Il y a ${days} jours`;
   }
 }

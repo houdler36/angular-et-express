@@ -277,5 +277,31 @@ export class DemandeService {
       catchError(this.handleError)
     );
   }
-  
+    exportToCSV(data: any[], filename: string): void {
+    if (!data || data.length === 0) {
+      console.warn("Les données à exporter sont vides.");
+      return;
+    }
+
+    const replacer = (key: string, value: any) => (value === null ? '' : value); // Gère les valeurs null
+    const header = Object.keys(data[0]); // Utilise les clés du premier objet comme en-têtes
+
+    // Crée le contenu CSV
+    let csv = data.map(row =>
+      header
+        .map(fieldName => JSON.stringify(row[fieldName], replacer))
+        .join(',')
+    );
+    // Ajoute l'en-tête
+    csv.unshift(header.join(','));
+    const csvArray = csv.join('\r\n');
+
+    // Crée un objet Blob et déclenche le téléchargement
+    const blob = new Blob([csvArray], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = window.URL.createObjectURL(blob);
+    a.download = `${filename}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(a.href);
+  }
 }

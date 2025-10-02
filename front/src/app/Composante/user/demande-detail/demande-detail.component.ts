@@ -58,8 +58,8 @@ interface DemandeValidation {
     signature_image_url?: string 
   } | null;
   signature_validation_url?: string;
-  signatureFinale?: string | null;
   signatureBase64?: string | null;
+  signatureFinale?: string | null; 
 }
 
 interface Journal {
@@ -125,7 +125,6 @@ export class DemandeDetailComponent implements OnInit {
   currentUserRole = '';
   currentUserId: number | null = null;
 
-  // Variables pour la gestion des tours de validation
   currentValidationTour = 1;
   totalValidationTours = 1;
   showNextTourInfo = false;
@@ -155,7 +154,6 @@ export class DemandeDetailComponent implements OnInit {
   getCurrentUserInfo(): void {
     console.group('🔍 DEBUG getCurrentUserInfo()');
     
-    // Méthode 1: Token localStorage
     const token = localStorage.getItem('auth_token');
     console.log('🔐 Token présent:', !!token);
     
@@ -163,8 +161,10 @@ export class DemandeDetailComponent implements OnInit {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         console.log('📄 Payload token:', payload);
-        this.currentUserId = payload.id;
-        this.currentUserRole = payload.role;
+        
+        this.currentUserId = Number(payload.id) || null;
+        this.currentUserRole = payload.role || '';
+        
         console.log('✅ Utilisateur depuis token:', { 
           id: this.currentUserId, 
           role: this.currentUserRole 
@@ -174,42 +174,29 @@ export class DemandeDetailComponent implements OnInit {
       }
     }
 
-    // Méthode 2: AuthService avec getUserId()
-    try {
-      const userIdFromService = this.authService.getUserId();
-      console.log('👤 ID utilisateur depuis AuthService.getUserId():', userIdFromService);
-      
-      if (userIdFromService && !this.currentUserId) {
-        this.currentUserId = userIdFromService;
-        console.log('✅ ID utilisateur mis à jour depuis AuthService:', this.currentUserId);
+    if (!this.currentUserId) {
+      try {
+        const userIdFromService = this.authService.getUserId();
+        console.log('👤 ID utilisateur depuis AuthService.getUserId():', userIdFromService);
+        
+        if (userIdFromService) {
+          this.currentUserId = Number(userIdFromService);
+          console.log('✅ ID utilisateur mis à jour depuis AuthService:', this.currentUserId);
+        }
+      } catch (error) {
+        console.error('❌ Erreur AuthService.getUserId():', error);
       }
-    } catch (error) {
-      console.error('❌ Erreur AuthService.getUserId():', error);
     }
 
-    // Méthode 3: Service DemandeService (fallback)
     if (!this.currentUserRole) {
       console.log('🔄 Récupération rôle via DemandeService...');
       this.demandeService.getCurrentUserRole().subscribe({
         next: (role) => {
-          console.log('✅ Rôle depuis DemandeService:', role);
-          this.currentUserRole = role;
+          console.log('🔍 Service - Rôle utilisateur:', role);
+          this.currentUserRole = role || '';
         },
         error: (error) => {
           console.error('❌ Erreur récupération rôle:', error);
-        }
-      });
-    }
-
-    if (!this.currentUserId) {
-      console.log('🔄 Récupération ID via DemandeService...');
-      this.demandeService.getCurrentUserId().subscribe({
-        next: (id) => {
-          console.log('✅ ID depuis DemandeService:', id);
-          this.currentUserId = id;
-        },
-        error: (error) => {
-          console.error('❌ Erreur récupération ID:', error);
         }
       });
     }
@@ -287,7 +274,6 @@ export class DemandeDetailComponent implements OnInit {
         await this.loadValidationsWithSignatures();
         this.calculateValidationTours();
         
-        // Test de débogage après chargement complet
         setTimeout(() => this.testValidationConditions(), 500);
       },
       error: (error) => {
@@ -318,13 +304,18 @@ export class DemandeDetailComponent implements OnInit {
     for (let i = 0; i < maxValidators; i++) {
       if (allValidations[i]) {
         const v = allValidations[i];
-        console.log(`👤 Traitement validateur ${i + 1}:`, v.user);
+        console.log(`👤 Traitement validateur ${i + 1}:`, v);
         
         const finalSignature = v.signature_validation_url || v.user?.signature_image_url;
         const signatureBase64 = finalSignature ? await this.getImageAsBase64(this.serverUrl + finalSignature) : null;
 
+        const validatorUserId = this.safeConvertToNumber(v.user_id || v.user?.id);
+        
+        console.log(`  -> ID Validateur converti: ${validatorUserId} (original: ${v.user_id})`);
+
         this.displayValidators.push({
           ...v,
+          user_id: validatorUserId,
           signatureFinale: finalSignature,
           signatureBase64: signatureBase64
         });
@@ -354,50 +345,81 @@ export class DemandeDetailComponent implements OnInit {
     console.groupEnd();
   }
 
+  private safeConvertToNumber(value: any): number {
+    if (value === null || value === undefined) return 0;
+    
+    const num = Number(value);
+    return isNaN(num) ? 0 : num;
+  }
+
   calculateValidationTours(): void {
     console.group('🔍 DEBUG calculateValidationTours()');
-    
-    if (!this.demande?.validations) {
+
+    if (!this.displayValidators || this.displayValidators.length === 0) {
       console.log('❌ Aucune validation disponible');
+      this.currentValidationTour = 0;
+      this.totalValidationTours = 0;
+      this.showNextTourInfo = false;
       console.groupEnd();
       return;
     }
 
-    const validations = this.demande.validations.sort((a, b) => a.ordre - b.ordre);
-    console.log('📊 Validations pour calcul tours:', validations);
+    const realValidators = this.displayValidators.filter(v => v.user_id > 0);
     
-    // Trouver le tour actuel (première validation en attente)
-    const currentValidation = validations.find(v => v.statut === 'en attente');
-    console.log('🎯 Validation en attente trouvée:', currentValidation);
+    if (realValidators.length === 0) {
+      console.log('❌ Aucun validateur réel trouvé');
+      this.currentValidationTour = 0;
+      this.totalValidationTours = 0;
+      this.showNextTourInfo = false;
+      console.groupEnd();
+      return;
+    }
+
+    console.log('✅ Validateurs réels:', realValidators.map(v => ({ 
+      id: v.user_id, 
+      ordre: v.ordre, 
+      statut: v.statut 
+    })));
+
+    const pendingValidation = realValidators.find(v => v.statut === 'en attente');
     
-    this.currentValidationTour = currentValidation ? currentValidation.ordre : validations.length;
-    console.log('🔄 Tour actuel calculé:', this.currentValidationTour);
-    
-    // Total des tours = nombre maximum d'ordre
-    this.totalValidationTours = Math.max(...validations.map(v => v.ordre));
-    console.log('📈 Total tours calculé:', this.totalValidationTours);
-    
-    // Afficher les infos du prochain tour si ce n'est pas le dernier
-    this.showNextTourInfo = this.currentValidationTour < this.totalValidationTours && 
-                           this.demande.status === 'en attente';
-    console.log('ℹ️ Show next tour info:', this.showNextTourInfo);
-    
+    if (pendingValidation) {
+      this.currentValidationTour = pendingValidation.ordre;
+    } else {
+      const maxOrdre = Math.max(...realValidators.map(v => v.ordre));
+      this.currentValidationTour = maxOrdre + 1;
+    }
+
+    this.totalValidationTours = Math.max(...realValidators.map(v => v.ordre));
+
+    this.showNextTourInfo = this.currentValidationTour <= this.totalValidationTours &&
+                            this.demande!.status === 'en attente';
+
+    console.log('📊 Résultats calcul tours:', {
+      tourActuel: this.currentValidationTour,
+      totalTours: this.totalValidationTours,
+      showNextTourInfo: this.showNextTourInfo
+    });
+
     console.groupEnd();
   }
 
   isCurrentValidator(validator: DemandeValidation): boolean {
-    const isCurrent = validator.statut === 'en attente' && 
-                     validator.ordre === this.currentValidationTour &&
-                     this.demande?.status === 'en attente';
-    
-    console.log(`🔍 isCurrentValidator: ${validator.user?.username || 'N/A'}`, {
+    if (!validator.user_id || validator.user_id <= 0) {
+      return false;
+    }
+
+    const isCurrent = validator.statut === 'en attente' &&
+                    validator.ordre === this.currentValidationTour &&
+                    this.demande?.status === 'en attente';
+
+    console.log(`🔍 isCurrentValidator: ${validator.user?.username}`, {
       statut: validator.statut,
       ordre: validator.ordre,
       tourActuel: this.currentValidationTour,
-      statutDemande: this.demande?.status,
       resultat: isCurrent
     });
-    
+
     return isCurrent;
   }
 
@@ -412,68 +434,53 @@ export class DemandeDetailComponent implements OnInit {
 
   canValidateCurrentTour(): boolean {
     console.group('🔍 DEBUG canValidateCurrentTour()');
-    
-    // Condition 1: Demande existe et est en attente
-    if (!this.demande) {
-      console.log('❌ Échec: Demande est null/undefined');
-      console.groupEnd();
-      return false;
-    }
-    
-    if (this.demande.status !== 'en attente') {
-      console.log('❌ Échec: Statut demande:', this.demande.status, '(attendu: en attente)');
-      console.groupEnd();
-      return false;
-    }
-    console.log('✅ Condition 1: Demande existe et statut = "en attente"');
 
-    // Condition 2: Rôle utilisateur
-    console.log('👤 Rôle utilisateur:', this.currentUserRole);
-    console.log('🆔 ID utilisateur:', this.currentUserId);
-    
-    if (!(this.currentUserRole === 'rh' || this.currentUserRole === 'daf')) {
-      console.log('❌ Échec: Rôle insuffisant. Rôle actuel:', this.currentUserRole);
+    if (!this.demande || this.demande.status !== 'en attente') {
+      console.log('❌ Demande inexistante ou pas en attente');
       console.groupEnd();
       return false;
     }
-    console.log('✅ Condition 2: Rôle RH ou DAF');
 
-    // Condition 3: Tour de validation actuel
-    console.log('🔄 Tour actuel:', this.currentValidationTour);
-    console.log('📊 Validateurs display:', this.displayValidators);
-    
-    const currentValidator = this.displayValidators.find(v => this.isCurrentValidator(v));
-    console.log('🎯 Validateur actuel trouvé:', currentValidator);
-    
+    if (!this.currentUserRole || !(this.currentUserRole === 'rh' || this.currentUserRole === 'daf')) {
+      console.log('❌ Rôle insuffisant:', this.currentUserRole);
+      console.groupEnd();
+      return false;
+    }
+
+    if (!this.currentUserId) {
+      console.log('❌ ID utilisateur non disponible');
+      console.groupEnd();
+      return false;
+    }
+
+    const currentValidator = this.displayValidators.find(v => 
+      v.user_id > 0 && 
+      v.ordre === this.currentValidationTour && 
+      v.statut === 'en attente'
+    );
+
     if (!currentValidator) {
-      console.log('❌ Échec: Aucun validateur trouvé pour le tour actuel');
+      console.log('❌ Aucun validateur trouvé pour le tour actuel');
       console.groupEnd();
       return false;
     }
-    console.log('✅ Condition 3: Validateur actuel trouvé');
 
-    // Condition 4: Correspondance ID utilisateur
-    console.log('🔍 Comparaison IDs:');
-    console.log('   - ID validateur:', currentValidator.user?.id);
-    console.log('   - ID utilisateur:', this.currentUserId);
-    console.log('   - Types:', typeof currentValidator.user?.id, typeof this.currentUserId);
-    
-    const canValidate = currentValidator.user?.id === this.currentUserId;
-    console.log('✅ Condition 4: IDs correspondent:', canValidate);
-    
-    if (!canValidate) {
-      console.log('❌ Échec: ID utilisateur ne correspond pas au validateur actuel');
-      console.log('   - ID validateur:', currentValidator.user?.id, '(type:', typeof currentValidator.user?.id + ')');
-      console.log('   - ID utilisateur:', this.currentUserId, '(type:', typeof this.currentUserId + ')');
-    }
-    
+    const validatorId = this.safeConvertToNumber(currentValidator.user_id);
+    const userId = this.safeConvertToNumber(this.currentUserId);
+
+    console.log('🔍 Comparaison IDs:', {
+      validateurId: validatorId,
+      utilisateurId: userId,
+      tourActuel: this.currentValidationTour
+    });
+
+    const canValidate = validatorId === userId;
     console.log('🎯 Résultat final canValidateCurrentTour:', canValidate);
     console.groupEnd();
-    
+
     return canValidate;
   }
 
-  // Méthode de test pour vérifier toutes les conditions
   testValidationConditions(): void {
     console.group('🧪 TEST Validation Conditions');
     console.log('Demande:', this.demande);
@@ -482,16 +489,29 @@ export class DemandeDetailComponent implements OnInit {
     console.log('Current Validation Tour:', this.currentValidationTour);
     console.log('Display Validators:', this.displayValidators);
     console.log('Can Validate Current Tour:', this.canValidateCurrentTour());
+    
+    this.displayValidators.forEach((v, index) => {
+      console.log(`Validateur ${index + 1}:`, {
+        id: v.user_id,
+        ordre: v.ordre,
+        statut: v.statut,
+        isCurrent: this.isCurrentValidator(v),
+        isCompleted: this.isValidationCompleted(v),
+        isPending: this.isValidationPending(v)
+      });
+    });
+    
     console.groupEnd();
   }
 
   isLastTour(): boolean {
-    return this.currentValidationTour === this.totalValidationTours;
+    return this.currentValidationTour >= this.totalValidationTours; 
   }
 
   getValidationProgress(): number {
     if (this.totalValidationTours === 0) return 0;
-    return ((this.currentValidationTour - 1) / this.totalValidationTours) * 100;
+    const completedTours = Math.min(this.currentValidationTour - 1, this.totalValidationTours);
+    return (completedTours / this.totalValidationTours) * 100;
   }
 
   getStatusText(): string {
@@ -539,7 +559,6 @@ export class DemandeDetailComponent implements OnInit {
     return finalValidation?.date_validation || '';
   }
 
-  // ACTIONS DE VALIDATION
   validateCurrentTour(): void {
     if (!this.demandeId || !this.canValidateCurrentTour()) {
       console.error('❌ Validation impossible: conditions non remplies');
@@ -590,11 +609,9 @@ export class DemandeDetailComponent implements OnInit {
   }
 
   approveDemande(): void {
-    // Ancienne méthode remplacée par validateCurrentTour()
     this.validateCurrentTour();
   }
 
-  // MÉTHODES EXISTANTES
   getBudgetTrimestre(detail: DemandeDetail, demandeDate: string): number {
     if (!detail?.budget || !demandeDate) return 0;
     

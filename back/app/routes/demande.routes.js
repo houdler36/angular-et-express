@@ -8,12 +8,10 @@ const { verifyToken } = require('../middleware/authJwt');
 // ─── Routes générales (Mises à jour) ────────────────────────────
 
 // Récupérer toutes les demandes pour l'utilisateur connecté
-// (Cette route remplace la route en double à la fin du fichier)
 router.get('/', verifyToken, demandeController.findAllUserDemandes);
 
 // Création d'une demande
 router.post('/', verifyToken, demandeController.create);
-
 
 // ─── Routes spécifiques ─────────────────────────────────────
 
@@ -21,8 +19,6 @@ router.post('/', verifyToken, demandeController.create);
 router.get('/rapport/:journalId', verifyToken, demandeController.getRapportDemandesApprouvees);
 
 // Rapport par nom de projet ET code budget
-// ✅ Utilisez le bon nom de variable (demandeController)
-// ✅ Utilisez la bonne variable pour le middleware (verifyToken)
 router.get("/rapports/demandes-filtered", verifyToken, demandeController.getRapportByProjetAndBudget);
 
 // Récupérer les demandes à valider pour l'utilisateur connecté
@@ -51,8 +47,7 @@ router.get('/budgets/info/:codeBudget', verifyToken, demandeController.getBudget
 
 // Récupérer tous les projets avec leurs budgets
 router.get('/projets-budgets', verifyToken, demandeController.getProjetsWithBudgets);
-router.get("/rapports/demandes-filtered", verifyToken, demandeController.getRapportByProjetAndBudget);
-
+// ⚠️ SUPPRIMEZ cette ligne dupliquée : router.get("/rapports/demandes-filtered", verifyToken, demandeController.getRapportByProjetAndBudget);
 
 // ─── Routes par ID ────────────────────────────────────────
 
@@ -65,7 +60,11 @@ router.put('/:id', verifyToken, demandeController.update);
 // Suppression d'une demande
 router.delete('/:id', verifyToken, demandeController.delete);
 
-// Validation et refus d'une demande
+// ✅ NOUVELLES ROUTES POUR LA VALIDATION PAR TOUR
+router.post('/:id/validate-tour', verifyToken, demandeController.validateTour);
+router.post('/:id/reject-tour', verifyToken, demandeController.rejectTour);
+
+// Validation et refus d'une demande (anciennes méthodes)
 router.put('/:id/valider', verifyToken, demandeController.validerDemande);
 router.put('/:id/refuser', verifyToken, demandeController.refuserDemande);
 
@@ -74,5 +73,7 @@ router.put('/:id/pj_status', verifyToken, demandeController.updatePjStatus);
 
 // Mise à jour du statut d'une demande
 router.patch("/:id/status", verifyToken, demandeController.updateStatus);
+router.post('/:id/valider', verifyToken, demandeController.validerDemande);
+router.post('/:id/refuser', verifyToken, demandeController.refuserDemande);
 
 module.exports = router;

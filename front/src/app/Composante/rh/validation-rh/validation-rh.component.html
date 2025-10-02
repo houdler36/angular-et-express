@@ -26,20 +26,7 @@
                     </ul>
                 </td>
                 <td class="px-2 py-1 border">
-                    <button 
-                        *ngIf="demande.estTourUtilisateur" 
-                        (click)="valider(demande.id)" 
-                        class="bg-green-500 text-white px-3 py-1 rounded mr-2 hover:bg-green-600 transition"
-                    >
-                        Valider
-                    </button>
-                    <button 
-                        *ngIf="demande.estTourUtilisateur" 
-                        (click)="refuser(demande.id)" 
-                        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition"
-                    >
-                        Refuser
-                    </button>
+                    
                     <span *ngIf="!demande.estTourUtilisateur" class="text-gray-500 italic">
                         Pas votre tour
                     </span>
