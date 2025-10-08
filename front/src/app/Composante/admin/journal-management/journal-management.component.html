@@ -4,30 +4,31 @@
   <div class="card form-card">
     <h3>{{ isEditMode ? 'Modifier le Journal' : 'Créer un nouveau Journal' }}</h3>
     <form (ngSubmit)="isEditMode ? updateJournal() : addJournal()">
-      
-      <!-- Nom du journal -->
-      <div>
-        <label for="nom_journal">Nom du Journal</label>
-        <input type="text" id="nom_journal" [(ngModel)]="newJournal.nom_journal" name="nom_journal" required>
-      </div>
+      <div class="form-grid">
+        <!-- Nom du journal -->
+        <div>
+          <label for="nom_journal">Nom du Journal</label>
+          <input type="text" id="nom_journal" [(ngModel)]="newJournal.nom_journal" name="nom_journal" required>
+        </div>
 
-      <!-- Nom du projet -->
-      <div>
-        <label for="nom_projet">Nom du Projet</label>
-        <input type="text" id="nom_projet" [(ngModel)]="newJournal.nom_projet" name="nom_projet" required>
-      </div>
+        <!-- Nom du projet -->
+        <div>
+          <label for="nom_projet">Nom du Projet</label>
+          <input type="text" id="nom_projet" [(ngModel)]="newJournal.nom_projet" name="nom_projet" required>
+        </div>
 
-      <!-- Solde -->
-      <div>
-        <label for="solde">Solde</label>
-        <input type="number" id="solde" [(ngModel)]="newJournal.solde" name="solde" min="0" step="0.01" required>
+        <!-- Solde -->
+        <div>
+          <label for="solde">Solde</label>
+          <input type="number" id="solde" [(ngModel)]="newJournal.solde" name="solde" min="0" step="0.01" required>
+        </div>
       </div>
 
       <!-- Budgets -->
       <div>
         <label for="budgets">Budgets</label>
         <select id="budgets" multiple [(ngModel)]="selectedBudgetIds" name="budgets">
-          <option *ngFor="let budget of budgetsDisponibles" [value]="budget.id_budget">{{ budget.description }}</option>
+          <option *ngFor="let budget of budgetsDisponibles" [value]="budget.id_budget">{{ budget.code_budget }} - {{ budget.description }}</option>
         </select>
       </div>
 
@@ -50,9 +51,9 @@
         </ul>
       </div>
 
-      <div>
-        <button type="submit">{{ isEditMode ? 'Mettre à jour' : 'Créer' }}</button>
-        <button type="button" *ngIf="isEditMode" (click)="cancelEdit()">Annuler</button>
+      <div class="button-group">
+        <button type="submit" [disabled]="isLoading" [class.loading]="isLoading">➕ {{ isEditMode ? 'Mettre à jour' : 'Créer' }}</button>
+        <button type="button" *ngIf="isEditMode" (click)="cancelEdit()">❌ Annuler</button>
       </div>
     </form>
   </div>
@@ -60,6 +61,7 @@
   <!-- Liste des journaux -->
   <div class="card table-card">
     <h3>Liste des Journaux</h3>
+    <div class="table-container">
     <table>
       <thead>
         <tr>
@@ -81,7 +83,7 @@
           <td class="px-6 py-4 whitespace-nowrap">
             <ul class="budget-list">
               <li *ngFor="let budget of journal.budgets">
-                {{ budget.description }}
+                {{ budget.code_budget }} - {{ budget.description }}
               </li>
             </ul>
           </td>
@@ -93,12 +95,13 @@
             </ul>
           </td>
           <td>
-            <button (click)="editJournal(journal)" class="edit-btn action-btn" title="Modifier">✎</button>
-            <button (click)="deleteJournal(journal.id_journal)" class="delete-btn action-btn" title="Supprimer">✖</button>
+            <button (click)="editJournal(journal)" class="edit-btn action-btn" title="Modifier">📝</button>
+            <button (click)="deleteJournal(journal.id_journal)" class="delete-btn action-btn" title="Supprimer">🗑️</button>
           </td>
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
 
   <!-- Modal -->

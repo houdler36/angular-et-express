@@ -42,6 +42,11 @@ export class UserManagementComponent implements OnInit {
   selectedFile: File | null = null;
   signatureImageUrl: string | ArrayBuffer | null = null;
 
+  searchTerm: string = '';
+  isLoading: boolean = false;
+  isLoadingJournals: boolean = false;
+  isSaving: boolean = false;
+
   constructor(private userService: UserService, private http: HttpClient) {}
 
   ngOnInit(): void {
@@ -49,17 +54,40 @@ export class UserManagementComponent implements OnInit {
     this.loadJournals();
   }
 
+  get filteredUsers(): User[] {
+    if (!this.searchTerm) return this.users;
+    return this.users.filter(user =>
+      user.username.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+      user.role.toLowerCase().includes(this.searchTerm.toLowerCase())
+    );
+  }
+
   loadUsers() {
+    this.isLoading = true;
     this.userService.getUsersList().subscribe({
-      next: data => this.users = data,
-      error: () => this.setMessage('Erreur lors du chargement des utilisateurs.', true)
+      next: data => {
+        this.users = data;
+        this.isLoading = false;
+      },
+      error: () => {
+        this.setMessage('Erreur lors du chargement des utilisateurs.', true);
+        this.isLoading = false;
+      }
     });
   }
 
   loadJournals() {
+    this.isLoadingJournals = true;
     this.userService.getJournalsList().subscribe({
-      next: data => this.journals = data,
-      error: () => this.setMessage('Erreur lors du chargement des journaux.', true)
+      next: data => {
+        this.journals = data;
+        this.isLoadingJournals = false;
+      },
+      error: () => {
+        this.setMessage('Erreur lors du chargement des journaux.', true);
+        this.isLoadingJournals = false;
+      }
     });
   }
 
@@ -142,6 +170,8 @@ async createOrUpdateUser() {
       return;
     }
 
+    this.isSaving = true;
+
     let signatureUrl: string | null = null;
     // La condition ici est mise à jour pour inclure le rôle 'daf'
     if ((this.newUser.role === 'rh' || this.newUser.role === 'daf') && this.selectedFile) {
@@ -150,6 +180,7 @@ async createOrUpdateUser() {
       } catch (error) {
         this.setMessage('Erreur lors de l\'upload de la signature.', true);
         console.error(error);
+        this.isSaving = false;
         return;
       }
     } else if (this.isEditMode && this.selectedUser?.signature_image_url && !this.selectedFile) {
@@ -167,8 +198,12 @@ async createOrUpdateUser() {
           this.setMessage('Utilisateur mis à jour avec succès !', false);
           this.loadUsers();
           this.closeModal();
+          this.isSaving = false;
         },
-        error: err => this.setMessage('Erreur lors de la mise à jour : ' + (err.error?.message || 'Inconnue'), true)
+        error: err => {
+          this.setMessage('Erreur lors de la mise à jour : ' + (err.error?.message || 'Inconnue'), true);
+          this.isSaving = false;
+        }
       });
     } else {
       this.userService.createAdminUser(userPayload).subscribe({
@@ -176,8 +211,12 @@ async createOrUpdateUser() {
           this.setMessage('Utilisateur créé avec succès !', false);
           this.loadUsers();
           this.closeModal();
+          this.isSaving = false;
         },
-        error: err => this.setMessage('Erreur lors de la création : ' + (err.error?.message || 'Inconnue'), true)
+        error: err => {
+          this.setMessage('Erreur lors de la création : ' + (err.error?.message || 'Inconnue'), true);
+          this.isSaving = false;
+        }
       });
     }
   }
@@ -186,13 +225,19 @@ async createOrUpdateUser() {
   deleteUser() {
     if (!this.selectedUser) return;
 
+    this.isSaving = true;
+
     this.userService.deleteAdminUser(this.selectedUser.id).subscribe({
       next: () => {
         this.setMessage('Utilisateur supprimé avec succès !', false);
         this.loadUsers();
         this.closeConfirmModal();
+        this.isSaving = false;
       },
-      error: err => this.setMessage('Erreur lors de la suppression : ' + (err.error?.message || 'Inconnue'), true)
+      error: err => {
+        this.setMessage('Erreur lors de la suppression : ' + (err.error?.message || 'Inconnue'), true);
+        this.isSaving = false;
+      }
     });
   }
 

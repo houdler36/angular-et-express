@@ -54,6 +54,20 @@ const isUser = (req, res, next) => {
     });
 };
 
+const isRhOrAdmin = (req, res, next) => {
+  User.findByPk(req.userId)
+    .then(user => {
+      if (user && ["admin", "rh"].includes(user.role)) {
+        next();
+        return;
+      }
+      res.status(403).send({ message: "Requiert le rôle d'Admin ou RH !" });
+    })
+    .catch(err => {
+      res.status(500).send({ message: err.message || "Erreur lors de la récupération de l'utilisateur." });
+    });
+};
+
 const isApproverOrAdminOrRhOrDafOrCaissier = (req, res, next) => {
   User.findByPk(req.userId)
     .then(user => {
@@ -72,5 +86,6 @@ module.exports = {
   verifyToken,
   isAdmin,
   isUser,
+  isRhOrAdmin,
   isApproverOrAdminOrRhOrDafOrCaissier
 };

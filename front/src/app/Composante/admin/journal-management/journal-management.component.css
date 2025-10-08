@@ -4,9 +4,17 @@
   flex-direction: column;
   gap: 24px;
   padding: 24px;
-  background: #f3f4f6; /* gris clair */
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
+}
+
+/* Responsive padding */
+@media (max-width: 768px) {
+  .container-vertical {
+    padding: 16px;
+    gap: 16px;
+  }
 }
 
 /* ---------------- Cartes ---------------- */
@@ -29,6 +37,16 @@
 }
 
 /* ---------------- Formulaire ---------------- */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
 form div { margin-bottom: 18px; }
 label {
   font-weight: 600;
@@ -51,6 +69,12 @@ input:focus, select:focus {
 }
 
 /* ---------------- Boutons ---------------- */
+.button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
 button {
   cursor: pointer;
   border-radius: 8px;
@@ -69,8 +93,17 @@ button[type="button"] {
 button[type="button"]:hover {
   background: #6b7280;
 }
+.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 /* ---------------- Tableau ---------------- */
+.table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -91,6 +124,14 @@ tbody tr {
 }
 tbody tr:hover {
   background: #f9fafb;
+}
+@media (max-width: 768px) {
+  .table-container {
+    font-size: 0.85rem;
+  }
+  th, td {
+    padding: 8px 6px;
+  }
 }
 
 /* ---------------- Listes ---------------- */

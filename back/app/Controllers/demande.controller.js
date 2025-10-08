@@ -46,12 +46,12 @@ exports.create = async (req, res) => {
     }
 
     const finalMontantTotal = parseFloat(montant_total);
-
     let transaction;
+
     try {
         transaction = await db.sequelize.transaction();
 
-        // Créer la demande sans toucher au solde
+        // 1️⃣ Créer la demande
         const nouvelleDemande = await db.demande.create({
             userId,
             type,
@@ -65,21 +65,21 @@ exports.create = async (req, res) => {
             montant_total: finalMontantTotal
         }, { transaction });
 
-        // Créer les détails
+        // 2️⃣ Créer les détails
         const detailsAvecDemandeId = details.map(d => ({ ...d, demande_id: nouvelleDemande.id }));
         await db.demande_detail.bulkCreate(detailsAvecDemandeId, { transaction });
 
-        // Récupérer validateurs et créer validations
+        // 3️⃣ Récupérer validateurs
         const validateursDuJournal = await db.journalValider.findAll({
             where: { journal_id },
-            include: [{ model: db.user, as: 'user', attributes: ['id', 'role'] }],
+            include: [{ model: db.user, as: 'user', attributes: ['id', 'role', 'signature_image_url'] }],
             order: [['ordre', 'ASC']],
             transaction
         });
 
         let validateursACreer = validateursDuJournal.filter(v => v.user.id !== userId);
 
-        // Ajouter le DAF si le montant dépasse le seuil
+        // Ajouter DAF si nécessaire
         if (finalMontantTotal > SEUIL_VALIDATION_DAF && !validateursACreer.some(v => v.user.role === USER_ROLES.DAF)) {
             const daf = await db.user.findOne({ where: { role: USER_ROLES.DAF }, transaction });
             if (daf) {
@@ -96,28 +96,49 @@ exports.create = async (req, res) => {
         validateursACreer.sort((a, b) => a.ordre - b.ordre);
         const firstOrder = validateursACreer[0].ordre;
 
-        const validationsACreer = validateursACreer.map(v => ({
-            demande_id: nouvelleDemande.id,
-            user_id: v.user.id,
-            ordre: v.ordre,
-            statut: (v.ordre === firstOrder) ? VALIDATION_STATUS.EN_ATTENTE : VALIDATION_STATUS.INITIAL
-        }));
+        // 4️⃣ Créer validations avec **copie unique de la signature**
+        const validationsACreer = [];
+        const uploadDir = path.join(__dirname, '..', 'public', 'signatures');
+        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+        for (const v of validateursACreer) {
+            let signatureUrl = null;
+            if (v.user.signature_image_url) {
+                const sourcePath = path.join(__dirname, '..', 'public', v.user.signature_image_url);
+                if (fs.existsSync(sourcePath)) {
+                    const filename = `signature-${nouvelleDemande.id}-${v.user.id}-${uuidv4()}.png`;
+                    const destPath = path.join(uploadDir, filename);
+                    fs.copyFileSync(sourcePath, destPath);
+                    signatureUrl = `/signatures/${filename}`;
+                }
+            }
+
+            validationsACreer.push({
+                demande_id: nouvelleDemande.id,
+                user_id: v.user.id,
+                ordre: v.ordre,
+                statut: (v.ordre === firstOrder) ? VALIDATION_STATUS.EN_ATTENTE : VALIDATION_STATUS.INITIAL,
+                signature_validation_url: signatureUrl
+            });
+        }
 
         await db.demande_validation.bulkCreate(validationsACreer, { transaction });
 
+        // 5️⃣ Commit
         await transaction.commit();
 
+        // 6️⃣ Retourner demande complète
         const demandeComplete = await db.demande.findByPk(nouvelleDemande.id, {
             include: [
                 { model: db.demande_detail, as: 'details' },
-                { 
-                    model: db.demande_validation, 
-                    as: 'validations', 
-                    include: [{ 
-                        model: db.user, 
-                        as: 'user', 
-                        attributes: ['id', 'username', 'role'] 
-                    }] 
+                {
+                    model: db.demande_validation,
+                    as: 'validations',
+                    include: [{
+                        model: db.user,
+                        as: 'user',
+                        attributes: ['id', 'username', 'role', 'signature_image_url']
+                    }]
                 }
             ]
         });
@@ -130,6 +151,7 @@ exports.create = async (req, res) => {
         res.status(500).send({ message: err.message || "Erreur lors de la création de la demande." });
     }
 };
+
 
 // --- Récupérer une demande par ID ──────────────────────────────────────
 exports.findOne = async (req, res) => {
@@ -323,6 +345,7 @@ exports.getDemandesDAFAValider = async (req, res) => {
 };
 
 // --- Validation d'une demande (RH et DAF) ──────────────────────────────
+// --- Validation d'une demande (RH et DAF) ──────────────────────────────
 exports.validerDemande = async (req, res) => {
     const demandeId = Number(req.params.id);
     const userId = Number(req.userId);
@@ -332,17 +355,19 @@ exports.validerDemande = async (req, res) => {
     try {
         transaction = await db.sequelize.transaction();
 
+        // Vérifier rôle
         const currentUser = await db.user.findByPk(userId, { transaction });
         if (!currentUser || (currentUser.role !== 'rh' && currentUser.role !== 'daf')) {
             await transaction.rollback();
             return res.status(403).send({ message: "Seuls les utilisateurs RH et DAF peuvent valider cette demande." });
         }
 
+        // Récupérer validation en attente pour cet utilisateur
         const validationActuelle = await db.demande_validation.findOne({
             where: {
                 demande_id: demandeId,
                 user_id: userId,
-                statut: 'en attente'
+                statut: VALIDATION_STATUS.EN_ATTENTE
             },
             transaction,
             order: [['ordre', 'ASC']]
@@ -353,81 +378,60 @@ exports.validerDemande = async (req, res) => {
             return res.status(403).send({ message: "Ce n'est pas votre tour ou la demande est déjà validée/rejetée." });
         }
 
+        // Vérifier que c'est bien son tour
         const minOrdreEnAttente = await db.demande_validation.min('ordre', {
-            where: {
-                demande_id: demandeId,
-                statut: 'en attente'
-            },
+            where: { demande_id: demandeId, statut: VALIDATION_STATUS.EN_ATTENTE },
             transaction
         });
-
         if (validationActuelle.ordre !== minOrdreEnAttente) {
             await transaction.rollback();
             return res.status(403).send({ message: "Ce n'est pas votre tour pour valider cette demande." });
         }
 
-        let signatureUrl = null;
+        let signatureUrl = validationActuelle.signature_validation_url; // <-- conserver la copie unique
+
+        // Si l'utilisateur fournit une nouvelle signature lors de la validation
         if (signatureBase64) {
             const uploadDir = path.join(__dirname, '..', 'public', 'signatures');
-            if (!fs.existsSync(uploadDir)) {
-                fs.mkdirSync(uploadDir, { recursive: true });
-            }
+            if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
             const filename = `signature-${demandeId}-${userId}-${uuidv4()}.png`;
             const filePath = path.join(uploadDir, filename);
-
             const base64Data = signatureBase64.replace(/^data:image\/png;base64,/, "");
             fs.writeFileSync(filePath, base64Data, 'base64');
+
             signatureUrl = `/signatures/${filename}`;
         }
-        
-        await validationActuelle.update(
-            { 
-                statut: 'validé', 
-                commentaire, 
-                signature_validation_url: signatureUrl,
-                date_validation: new Date() 
-            },
-            { transaction }
-        );
 
-        const validationsDuMemeOrdre = await db.demande_validation.count({
-            where: {
-                demande_id: demandeId,
-                ordre: validationActuelle.ordre,
-                statut: 'en attente'
-            },
-            transaction
-        });
+        // Mettre à jour la validation
+        await validationActuelle.update({
+            statut: VALIDATION_STATUS.VALIDE,
+            commentaire,
+            signature_validation_url: signatureUrl,
+            date_validation: new Date()
+        }, { transaction });
 
-        if (validationsDuMemeOrdre > 0) {
-            await transaction.commit();
-            return res.status(200).send({ message: "Validation enregistrée. En attente des autres validateurs du même ordre." });
-        }
-
+        // Passer à l'ordre suivant si nécessaire
         const nextOrder = validationActuelle.ordre + 1;
-        const nextValidations = await db.demande_validation.count({
-            where: {
-                demande_id: demandeId,
-                ordre: nextOrder
-            },
+        const nextValidationsCount = await db.demande_validation.count({
+            where: { demande_id: demandeId, ordre: nextOrder },
             transaction
         });
 
-        if (nextValidations > 0) {
+        if (nextValidationsCount > 0) {
             await db.demande_validation.update(
-                { statut: 'en attente' },
+                { statut: VALIDATION_STATUS.EN_ATTENTE },
                 { where: { demande_id: demandeId, ordre: nextOrder }, transaction }
             );
         } else {
+            // Si plus de validations, finaliser la demandeS
             const demande = await db.demande.findByPk(demandeId, { transaction });
             if (!demande) {
                 await transaction.rollback();
                 return res.status(404).send({ message: "Demande introuvable lors de la finalisation." });
             }
-            
-            // LE TRIGGER S'OCCUPE MAINTENANT DE METTRE À JOUR LE SOLDE
-            await demande.update({ 
+
+            await demande.update({
                 status: 'approuvée',
                 date_approuvee: new Date()
             }, { transaction });
@@ -442,6 +446,7 @@ exports.validerDemande = async (req, res) => {
         res.status(500).send({ message: "Erreur interne lors de la validation." });
     }
 };
+
 // --- Refus d'une demande ───────────────────────────────────────────────
 exports.refuserDemande = async (req, res) => {
     const demandeId = Number(req.params.id);

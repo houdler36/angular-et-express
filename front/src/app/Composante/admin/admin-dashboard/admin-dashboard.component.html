@@ -19,15 +19,6 @@
         <i class="fas fa-user-tie"></i>
         <span class="hidden-mobile">Responsable</span>
       </a>
-      <!-- Sidebar 
-      <a role="button" [class.active]="activePage === 'Caissier'" (click)="setActivePage('Caissier')">
-        <i class="fas fa-cash-register"></i>
-        <span class="hidden-mobile">Caissier</span>
-      </a>
-      <a role="button" [class.active]="activePage === 'DAF'" (click)="setActivePage('DAF')">
-        <i class="fas fa-file-invoice-dollar"></i>
-        <span class="hidden-mobile">DAF</span>
-      </a>-->
       <a role="button" [class.active]="activePage === 'Journal'" (click)="setActivePage('Journal')">
         <i class="fas fa-book"></i>
         <span class="hidden-mobile">Journal</span>
@@ -43,41 +34,112 @@
   <main class="main-content">
     <div class="card">
       <div *ngIf="activePage === 'Dashboard'">
-        <h1>📊 Tableau de Bord</h1>
+        <div class="dashboard-header">
+          <h1>📊 Tableau de Bord Administrateur</h1>
+          <div class="last-update">Dernière mise à jour: {{ lastUpdate | date:'dd/MM/yyyy HH:mm' }}</div>
+        </div>
 
+        <!-- Statistiques principales -->
         <div class="stats-grid">
           <div class="stat-card users">
             <div class="stat-icon"><i class="fas fa-users"></i></div>
-            <h3>Utilisateurs</h3>
-            <p class="stat-number">{{ userCount }}</p>
+            <div class="stat-content">
+              <h3>Utilisateurs</h3>
+              <p class="stat-number">{{ userCount }}</p>
+              <div class="stat-actions">
+                <button class="action-btn" (click)="setActivePage('Users')">
+                  <i class="fas fa-cog"></i> Gérer
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="stat-card responsables">
             <div class="stat-icon"><i class="fas fa-user-tie"></i></div>
-            <h3>Responsables</h3>
-            <p class="stat-number">{{ personneCount }}</p>
+            <div class="stat-content">
+              <h3>Responsables</h3>
+              <p class="stat-number">{{ personneCount }}</p>
+              <div class="stat-actions">
+                <button class="action-btn" (click)="setActivePage('personne')">
+                  <i class="fas fa-cog"></i> Gérer
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="stat-card journaux">
             <div class="stat-icon"><i class="fas fa-book"></i></div>
-            <h3>Journaux</h3>
-            <p class="stat-number">{{ journalCount }}</p>
+            <div class="stat-content">
+              <h3>Journaux</h3>
+              <p class="stat-number">{{ journalCount }}</p>
+              <div class="stat-actions">
+                <button class="action-btn" (click)="setActivePage('Journal')">
+                  <i class="fas fa-cog"></i> Gérer
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="stat-card budgets">
             <div class="stat-icon"><i class="fas fa-wallet"></i></div>
-            <h3>Budgets</h3>
-            <p class="stat-number">{{ budgetCount }}</p>
+            <div class="stat-content">
+              <h3>Budgets Totaux</h3>
+              <p class="stat-number">{{ totalBudget | currency:'MGA':'symbol':'1.0-0' }}</p>
+              <div class="stat-actions">
+                <button class="action-btn" (click)="setActivePage('budget')">
+                  <i class="fas fa-cog"></i> Gérer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Résumé des activités récentes -->
+        <div class="summary-section">
+          <div class="summary-card">
+            <h3>Activités Récentes</h3>
+            <div class="activities-list">
+              <div class="activity-item" *ngFor="let activity of recentActivities">
+                <div class="activity-icon" [ngClass]="activity.type">
+                  <i [class]="activity.icon"></i>
+                </div>
+                <div class="activity-content">
+                  <p class="activity-text">{{ activity.text }}</p>
+                  <span class="activity-time">{{ activity.time }}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="stat-card demandes">
-            <div class="stat-icon"><i class="fas fa-file-alt"></i></div>
-            <h3>Demandes</h3>
-            <p class="stat-number">{{ demandeCount }}</p>
+          <div class="summary-card">
+            <h3>Statut du Système</h3>
+            <div class="system-status">
+              <div class="status-item">
+                <span class="status-label">Base de données</span>
+                <span class="status-indicator connected"></span>
+                <span class="status-text">Connectée</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Services API</span>
+                <span class="status-indicator connected"></span>
+                <span class="status-text">Opérationnels</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Sécurité</span>
+                <span class="status-indicator connected"></span>
+                <span class="status-text">Active</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Sauvegarde</span>
+                <span class="status-indicator warning"></span>
+                <span class="status-text">Planifiée</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- Composants de gestion CRUD -->
       <app-user-management *ngIf="activePage === 'Users'"></app-user-management>
       <app-personne *ngIf="activePage === 'personne'"></app-personne>
       <app-budget-management *ngIf="activePage === 'budget'"></app-budget-management>

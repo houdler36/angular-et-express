@@ -1,4 +1,9 @@
 <div class="flex-container">
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="isDarkMode ? 'Passer en mode clair' : 'Passer en mode sombre'">
+    <i class="fas" [class.fa-moon]="!isDarkMode" [class.fa-sun]="isDarkMode"></i>
+  </button>
+
   <!-- === SIDEBAR === -->
   <aside class="sidebar">
     <div class="header-container">
@@ -6,17 +11,18 @@
       <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
     </div>
     <nav>
-        <a role="button" [class.active]="activePage === 'Accueil'" (click)="setActivePage('Accueil')">
+      <a role="button" [class.active]="activePage === 'Accueil'" (click)="setActivePage('Accueil')">
         <i class="fas fa-home"></i>
         <span class="hidden-mobile">Accueil</span>
       </a>
-      <a role="button" [class.active]="activePage === 'Dashboard'" (click)="setActivePage('Dashboard')">
-        <i class="fas fa-home"></i>
+      <!--a role="button" [class.active]="activePage === 'Dashboard'" (click)="setActivePage('Dashboard')">
+        <i class="fas fa-chart-bar"></i>
         <span class="hidden-mobile">Tableau de Bord</span>
-      </a>
+      </a-->
       <a role="button" [class.active]="activePage === 'demandesATraiter'" (click)="setActivePage('demandesATraiter')">
         <i class="fas fa-tasks"></i>
         <span class="hidden-mobile">Demandes à traiter</span>
+        <span *ngIf="demandesATraiter.length > 0" class="notification-badge">{{ demandesATraiter.length }}</span>
       </a>
       <a role="button" [class.active]="activePage === 'demandesEnAttente'" (click)="setActivePage('demandesEnAttente')">
         <i class="fas fa-hourglass-half"></i>
@@ -26,17 +32,180 @@
         <i class="fas fa-check-circle"></i>
         <span class="hidden-mobile">Demandes approuvées</span>
       </a>
+      <a role="button" [class.active]="activePage === 'rapports'" (click)="setActivePage('rapports')">
+        <i class="fas fa-chart-bar"></i>
+        <span class="hidden-mobile">Rapports</span>
+      </a>
       <a role="button" [class.active]="activePage === 'profil'" (click)="setActivePage('profil')">
         <i class="fas fa-user"></i>
         <span class="hidden-mobile">Mon Profil</span>
       </a>
     </nav>
+    
+    <!-- Indicateur de connexion -->
+    <div class="connection-status">
+      <div class="status-indicator connected"></div>
+      <span>Connecté</span>
+    </div>
   </aside>
 
   <!-- === MAIN CONTENT === -->
   <main class="main-content">
     <div class="card">
       
+      <!-- === ACCUEIL === -->
+      <div *ngIf="activePage === 'Accueil'" class="content-section">
+        <div class="welcome-header">
+          <h1 class="page-title">Bienvenue, {{ currentUser?.username || 'Collaborateur' }} !</h1>
+          <p class="welcome-subtitle">Tableau de bord RH - Gestion des demandes</p>
+          <div class="date-display">{{ currentDate | date:'fullDate' }}</div>
+        </div>
+        
+        <div class="quick-stats-grid">
+          <div class="quick-stat-card" (click)="setActivePage('demandesATraiter')">
+            <div class="stat-icon pending">
+              <i class="fas fa-inbox"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ demandesATraiter.length }}</h3>
+              <p>Demandes à traiter</p>
+              <small *ngIf="demandesATraiter.length > 0" class="stat-alert">Action requise</small>
+            </div>
+          </div>
+          
+          <div class="quick-stat-card" (click)="setActivePage('demandesEnAttente')">
+            <div class="stat-icon waiting">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ demandesEnAttente.length }}</h3>
+              <p>En attente</p>
+            </div>
+          </div>
+          
+          <div class="quick-stat-card" (click)="setActivePage('demandesApprouvees')">
+            <div class="stat-icon approved">
+              <i class="fas fa-check"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ demandesFinalisees.length }}</h3>
+              <p>Finalisées</p>
+            </div>
+          </div>
+
+          <div class="quick-stat-card" (click)="setActivePage('profil')">
+            <div class="stat-icon profile">
+              <i class="fas fa-user-cog"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ currentUser?.role | uppercase }}</h3>
+              <p>Votre rôle</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="quick-actions-section">
+          <h3 class="section-title">Actions Rapides</h3>
+          <div class="quick-actions-grid">
+            <button class="quick-action-btn primary" (click)="setActivePage('demandesATraiter')">
+              <i class="fas fa-play-circle"></i>
+              <span>Commencer la validation</span>
+              <small>Traiter les nouvelles demandes</small>
+            </button>
+            <button class="quick-action-btn secondary" (click)="setActivePage('demandesEnAttente')">
+              <i class="fas fa-eye"></i>
+              <span>Voir les demandes en attente</span>
+              <small>Suivre l'évolution</small>
+            </button>
+            <button class="quick-action-btn tertiary" (click)="setActivePage('profil')">
+              <i class="fas fa-cog"></i>
+              <span>Paramètres du profil</span>
+              <small>Gérer vos préférences</small>
+            </button>
+          </div>
+        </div>
+
+        <!-- Statistiques avancées -->
+        <div class="advanced-stats">
+          <h3 class="section-title">Statistiques du Mois</h3>
+          <div class="stats-cards-grid">
+            <div class="stat-card-advanced">
+              <div class="stat-header">
+                <i class="fas fa-chart-line"></i>
+                <h4>Efficacité</h4>
+              </div>
+              <div class="stat-value">{{ getEfficiencyRate() }}%</div>
+              <div class="stat-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="getEfficiencyRate()"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="stat-card-advanced">
+              <div class="stat-header">
+                <i class="fas fa-bolt"></i>
+                <h4>Temps moyen</h4>
+              </div>
+              <div class="stat-value">{{ averageProcessingTime }}j</div>
+              <small>De traitement</small>
+            </div>
+
+            <div class="stat-card-advanced">
+              <div class="stat-header">
+                <i class="fas fa-trending-up"></i>
+                <h4>Évolution</h4>
+              </div>
+              <div class="stat-value" [class.positive]="evolutionRate >= 0" [class.negative]="evolutionRate < 0">
+                {{ evolutionRate >= 0 ? '+' : '' }}{{ evolutionRate }}%
+              </div>
+              <small>vs mois dernier</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Graphique des demandes -->
+        <div class="chart-section">
+          <h3 class="section-title">Répartition des demandes</h3>
+          <div class="chart-container">
+            <canvas baseChart
+                    [data]="barChartData"
+                    [options]="barChartOptions"
+                    [type]="barChartType"
+                    [legend]="barChartLegend">
+            </canvas>
+          </div>
+        </div>
+
+        <!-- Activité récente -->
+        <div class="recent-activity">
+          <div class="activity-header">
+            <h3 class="section-title">Activité Récente</h3>
+            <button class="btn-refresh" (click)="loadRecentActivities()">
+              <i class="fas fa-sync-alt"></i>
+            </button>
+          </div>
+          <div class="activity-list">
+            <div *ngFor="let activity of recentActivities" class="activity-item">
+              <div class="activity-icon" [ngClass]="activity.type">
+                <i [class]="activity.icon"></i>
+              </div>
+              <div class="activity-content">
+                <p class="activity-message">{{ activity.message }}</p>
+                <small class="activity-time">{{ activity.time }}</small>
+              </div>
+              <div class="activity-badge" [ngClass]="activity.type">
+                {{ activity.type }}
+              </div>
+            </div>
+            <div *ngIf="recentActivities.length === 0" class="no-activity">
+              <i class="fas fa-inbox"></i>
+              <p>Aucune activité récente</p>
+            </div>
+          </div>
+        </div>
+      </div>
       
       <!-- === DASHBOARD === -->
       <div *ngIf="activePage === 'Dashboard'" class="content-section">
@@ -51,6 +220,26 @@
       <!-- === DEMANDES À TRAITER === -->
       <section *ngIf="activePage === 'demandesATraiter'" class="content-section">
         <h2 class="page-title">Demandes à traiter</h2>
+
+        <div class="filters-container" *ngIf="!loadingATraiter">
+          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
+          <select [(ngModel)]="filters.type" (change)="onSearch()">
+            <option value="">Tous types</option>
+            <option value="Achat">Achat</option>
+            <option value="Service">Service</option>
+          </select>
+          <select [(ngModel)]="filters.statut" (change)="onSearch()">
+            <option value="">Tous statuts</option>
+            <option value="en attente">En attente</option>
+            <option value="approuvée">Approuvée</option>
+            <option value="rejetée">Rejetée</option>
+          </select>
+          <input type="date" [(ngModel)]="filters.dateDebut" (change)="onSearch()" placeholder="Date début">
+          <input type="date" [(ngModel)]="filters.dateFin" (change)="onSearch()" placeholder="Date fin">
+          <button (click)="resetFilters()" class="btn btn-sm secondary">Réinitialiser</button>
+          <button (click)="exportToCSV()" class="btn btn-sm primary">Exporter CSV</button>
+        </div>
+
         <p *ngIf="loadingATraiter" class="loading-text">Chargement...</p>
 
         <div class="table-container" *ngIf="!loadingATraiter">
@@ -63,15 +252,16 @@
                 <th>Motif</th>
                 <th>Montant Total</th>
                 <th>Statut</th>
+                <th>Validateur actuel</th>
                 <th>Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngIf="demandesATraiter.length === 0">
-                <td colspan="8" class="empty-message">Aucune demande à traiter.</td>
+              <tr *ngIf="filteredDemandesATraiter.length === 0">
+                <td colspan="9" class="empty-message">Aucune demande à traiter.</td>
               </tr>
-              <tr *ngFor="let demande of demandesATraiter">
+              <tr *ngFor="let demande of filteredDemandesATraiter">
                 <td>{{ demande.id }}</td>
                 <td>{{ demande.type }}</td>
                 <td>{{ demande.responsible_pj?.nom }} {{ demande.responsible_pj?.prenom }}</td>
@@ -85,6 +275,7 @@
                     'status-rejected': demande.status === 'rejetée'
                   }">{{ demande.status }}</span>
                 </td>
+                <td>{{ demande.currentValidator || '—' }}</td>
                 <td>{{ demande.date | date:'short' }}</td>
                 <td class="action-buttons">
                   <button class="btn btn-sm secondary" (click)="voirDetails(demande.id)">
@@ -109,6 +300,26 @@
       <!-- === DEMANDES EN ATTENTE === -->
       <section *ngIf="activePage === 'demandesEnAttente'" class="content-section">
         <h2 class="page-title">Demandes en attente</h2>
+
+        <div class="filters-container" *ngIf="!loadingEnAttente">
+          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
+          <select [(ngModel)]="filters.type" (change)="onSearch()">
+            <option value="">Tous types</option>
+            <option value="Achat">Achat</option>
+            <option value="Service">Service</option>
+          </select>
+          <select [(ngModel)]="filters.statut" (change)="onSearch()">
+            <option value="">Tous statuts</option>
+            <option value="en attente">En attente</option>
+            <option value="approuvée">Approuvée</option>
+            <option value="rejetée">Rejetée</option>
+          </select>
+          <input type="date" [(ngModel)]="filters.dateDebut" (change)="onSearch()" placeholder="Date début">
+          <input type="date" [(ngModel)]="filters.dateFin" (change)="onSearch()" placeholder="Date fin">
+          <button (click)="resetFilters()" class="btn btn-sm secondary">Réinitialiser</button>
+          <button (click)="exportToCSV()" class="btn btn-sm primary">Exporter CSV</button>
+        </div>
+
         <p *ngIf="loadingEnAttente" class="loading-text">Chargement...</p>
 
         <div class="table-container" *ngIf="!loadingEnAttente">
@@ -126,10 +337,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngIf="demandesEnAttente.length === 0">
+              <tr *ngIf="filteredDemandesEnAttente.length === 0">
                 <td colspan="8" class="empty-message">Aucune demande en attente.</td>
               </tr>
-              <tr *ngFor="let demande of demandesEnAttente">
+              <tr *ngFor="let demande of filteredDemandesEnAttente">
                 <td>{{ demande.id }}</td>
                 <td>{{ demande.type }}</td>
                 <td>{{ demande.responsible_pj?.nom }} {{ demande.responsible_pj?.prenom }}</td>
@@ -158,6 +369,26 @@
       <!-- === DEMANDES APPROUVÉES === -->
       <section *ngIf="activePage === 'demandesApprouvees'" class="content-section">
         <h2 class="page-title">Demandes approuvées</h2>
+
+        <div class="filters-container" *ngIf="!loadingFinalisees">
+          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
+          <select [(ngModel)]="filters.type" (change)="onSearch()">
+            <option value="">Tous types</option>
+            <option value="Achat">Achat</option>
+            <option value="Service">Service</option>
+          </select>
+          <select [(ngModel)]="filters.statut" (change)="onSearch()">
+            <option value="">Tous statuts</option>
+            <option value="en attente">En attente</option>
+            <option value="approuvée">Approuvée</option>
+            <option value="rejetée">Rejetée</option>
+          </select>
+          <input type="date" [(ngModel)]="filters.dateDebut" (change)="onSearch()" placeholder="Date début">
+          <input type="date" [(ngModel)]="filters.dateFin" (change)="onSearch()" placeholder="Date fin">
+          <button (click)="resetFilters()" class="btn btn-sm secondary">Réinitialiser</button>
+          <button (click)="exportToCSV()" class="btn btn-sm primary">Exporter CSV</button>
+        </div>
+
         <p *ngIf="loadingFinalisees" class="loading-text">Chargement...</p>
 
         <div class="table-container" *ngIf="!loadingFinalisees">
@@ -175,10 +406,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngIf="demandesFinalisees.length === 0">
+              <tr *ngIf="filteredDemandesFinalisees.length === 0">
                 <td colspan="8" class="empty-message">Aucune demande approuvée.</td>
               </tr>
-              <tr *ngFor="let demande of demandesFinalisees">
+              <tr *ngFor="let demande of filteredDemandesFinalisees">
                 <td>{{ demande.id }}</td>
                 <td>{{ demande.type }}</td>
                 <td>{{ demande.responsible_pj?.nom }} {{ demande.responsible_pj?.prenom }}</td>
@@ -201,6 +432,60 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <!-- === RAPPORTS === -->
+      <section *ngIf="activePage === 'rapports'" class="content-section">
+        <h2 class="page-title">Rapports et Analyses</h2>
+
+        <div class="reports-grid">
+          <div class="report-card">
+            <div class="report-header">
+              <i class="fas fa-chart-bar"></i>
+              <h3>Répartition des demandes</h3>
+            </div>
+            <div class="chart-container">
+              <canvas baseChart
+                      [data]="barChartData"
+                      [options]="barChartOptions"
+                      [type]="barChartType"
+                      [legend]="barChartLegend">
+              </canvas>
+            </div>
+          </div>
+
+          <div class="report-card">
+            <div class="report-header">
+              <i class="fas fa-file-export"></i>
+              <h3>Export des données</h3>
+            </div>
+            <div class="report-content">
+              <p>Exporter toutes les demandes en format CSV pour analyse externe.</p>
+              <button (click)="exportToCSV()" class="btn btn-primary">Exporter CSV</button>
+            </div>
+          </div>
+
+          <div class="report-card">
+            <div class="report-header">
+              <i class="fas fa-chart-line"></i>
+              <h3>Statistiques générales</h3>
+            </div>
+            <div class="report-content">
+              <div class="stat-item">
+                <span class="stat-label">Total demandes :</span>
+                <span class="stat-value">{{ demandesATraiter.length + demandesEnAttente.length + demandesFinalisees.length }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Taux d'efficacité :</span>
+                <span class="stat-value">{{ getEfficiencyRate() }}%</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Temps moyen :</span>
+                <span class="stat-value">{{ averageProcessingTime }} jours</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

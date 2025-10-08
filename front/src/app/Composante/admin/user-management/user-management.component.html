@@ -1,36 +1,66 @@
 <div class="user-management">
 
-  <!-- Message -->
+  <!-- ✅ Message de notification -->
   <div *ngIf="message" class="alert" [class.error]="isError" [class.success]="!isError">
     {{ message }}
   </div>
 
-  <!-- Header avec bouton -->
+  <!-- ✅ En-tête -->
   <div class="header">
     <h2>Gestion des utilisateurs</h2>
-    <button class="btn-primary" (click)="openModal()">+ Ajouter un utilisateur</button>
+    <button class="btn-primary" (click)="openModal()" [disabled]="isSaving">
+      <i class="icon-plus"></i> Ajouter un utilisateur
+    </button>
   </div>
 
-  <!-- Tableau des utilisateurs -->
-  <table class="user-table" *ngIf="users.length > 0; else noUsers">
+  <!-- ✅ Barre de recherche -->
+  <div class="search-bar">
+    <input type="text" [(ngModel)]="searchTerm" placeholder="Rechercher par nom, email ou rôle..." class="search-input">
+    <i class="icon-search"></i>
+  </div>
+
+  <!-- ✅ Loading spinner -->
+  <div *ngIf="isLoading" class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Chargement des utilisateurs...</p>
+  </div>
+
+  <!-- ✅ Tableau des utilisateurs -->
+  <table class="user-table" *ngIf="!isLoading && filteredUsers.length > 0; else noUsers">
     <thead>
       <tr>
         <th>Nom</th>
         <th>Email</th>
         <th>Rôle</th>
-        <th>Journaux</th>
+        <th>Journaux associés</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let user of users">
+      <tr *ngFor="let user of filteredUsers">
         <td>{{ user.username }}</td>
         <td>{{ user.email }}</td>
-        <td>{{ user.role }}</td>
-        <td>{{ getJournalNamesForUser(user) }}</td>
+
+        <!-- Badge coloré selon le rôle -->
+        <td [ngClass]="'role-' + user.role">
+          <span class="role-badge">{{ user.role }}</span>
+        </td>
+
+        <!-- Journaux affichés sous forme de mini badges -->
         <td>
-          <button class="action-btn edit-btn" (click)="openModal(user)">✎</button>
-          <button class="action-btn delete-btn" (click)="confirmDeleteUser(user)">✖</button>
+          <ul class="user-journals">
+            <li *ngFor="let j of user.journals">{{ j.nom_journal }}</li>
+          </ul>
+        </td>
+
+        <!-- Actions -->
+        <td>
+          <button class="action-btn edit-btn" (click)="openModal(user)" title="Modifier">
+            ✎
+          </button>
+          <button class="action-btn delete-btn" (click)="confirmDeleteUser(user)" title="Supprimer">
+            ✖
+          </button>
         </td>
       </tr>
     </tbody>
@@ -40,23 +70,28 @@
     <p class="empty">Aucun utilisateur trouvé.</p>
   </ng-template>
 
-  <!-- Modale AJOUT / MODIFICATION -->
+  <!-- ✅ Modale AJOUT / MODIFICATION -->
   <div class="modal-backdrop" *ngIf="showAddUserModal">
     <div class="modal">
       <div class="modal-header">
         <h3>{{ isEditMode ? 'Modifier un utilisateur' : 'Ajouter un utilisateur' }}</h3>
         <button class="close-btn" (click)="closeModal()">×</button>
       </div>
+
       <div class="modal-body">
+        <!-- Nom -->
         <label>Nom :</label>
         <input type="text" [(ngModel)]="newUser.username" placeholder="Nom complet" required>
 
+        <!-- Email -->
         <label>Email :</label>
         <input type="email" [(ngModel)]="newUser.email" placeholder="Adresse email" required>
 
+        <!-- Mot de passe -->
         <label>Mot de passe :</label>
         <input type="password" [(ngModel)]="newUser.password" placeholder="Mot de passe" [required]="!isEditMode">
 
+        <!-- Rôle -->
         <label>Rôle :</label>
         <select [(ngModel)]="newUser.role" required>
           <option value="">-- Sélectionner --</option>
@@ -68,16 +103,17 @@
           <option value="caissier">Caissier</option>
         </select>
 
-        <!-- ✅ Affichage conditionnel de l'upload d'image -->
+        <!-- Signature visible seulement pour RH / DAF -->
         <div *ngIf="newUser.role === 'rh' || newUser.role === 'daf'">
-            <label>Signature (scannée) :</label>
-            <input type="file" (change)="onFileSelected($event)" accept="image/png, image/jpeg">
-            <div *ngIf="signatureImageUrl" class="image-preview">
-                <img [src]="signatureImageUrl" alt="Aperçu de la signature" style="max-width: 150px; border: 1px solid #ccc; margin-top: 10px;">
-            </div>
+          <label>Signature (image scannée) :</label>
+          <input type="file" (change)="onFileSelected($event)" accept="image/png, image/jpeg">
+          <div *ngIf="signatureImageUrl" class="image-preview">
+            <img [src]="signatureImageUrl" alt="Aperçu de la signature" style="max-width: 160px;">
+          </div>
         </div>
 
-        <label>Journaux :</label>
+        <!-- Journaux -->
+        <label>Journaux associés :</label>
         <div class="checkbox-group">
           <div *ngFor="let journal of journals">
             <input type="checkbox"
@@ -87,16 +123,18 @@
           </div>
         </div>
       </div>
+
       <div class="modal-footer">
-        <button class="btn-secondary" (click)="closeModal()">Annuler</button>
-        <button class="btn-primary" (click)="createOrUpdateUser()">
+        <button class="btn-secondary" (click)="closeModal()" [disabled]="isSaving">Annuler</button>
+        <button class="btn-primary" (click)="createOrUpdateUser()" [disabled]="isSaving">
+          <span *ngIf="isSaving" class="spinner-small"></span>
           {{ isEditMode ? 'Mettre à jour' : 'Enregistrer' }}
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Modale CONFIRMATION SUPPRESSION -->
+  <!-- ✅ Modale de confirmation de suppression -->
   <div class="modal-backdrop" *ngIf="showConfirmDeleteModal">
     <div class="modal">
       <div class="modal-header">
@@ -104,11 +142,14 @@
         <button class="close-btn" (click)="closeConfirmModal()">×</button>
       </div>
       <div class="modal-body">
-        Êtes-vous sûr de vouloir supprimer l'utilisateur "{{ selectedUser?.username }}" ?
+        Êtes-vous sûr de vouloir supprimer <strong>{{ selectedUser?.username }}</strong> ?
       </div>
       <div class="modal-footer">
-        <button class="btn-secondary" (click)="closeConfirmModal()">Annuler</button>
-        <button class="btn-primary" (click)="deleteUser()">Supprimer</button>
+        <button class="btn-secondary" (click)="closeConfirmModal()" [disabled]="isSaving">Annuler</button>
+        <button class="btn-primary" (click)="deleteUser()" [disabled]="isSaving">
+          <span *ngIf="isSaving" class="spinner-small"></span>
+          Supprimer
+        </button>
       </div>
     </div>
   </div>

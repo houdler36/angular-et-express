@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-const baseUrl = 'http://localhost:8081/api/budgets'; // mettre la base vers budgets
+const baseUrl = 'http://localhost:8081/api/budgets';
 
 @Injectable({
   providedIn: 'root'
@@ -20,5 +20,20 @@ export class BudgetApiService {
   // Crée un nouveau budget (POST /api/budgets)
   createBudget(data: any): Observable<any> {
     return this.http.post(`${baseUrl}`, data);
+  }
+
+  // Supprime un budget (DELETE /api/budgets/{id})
+  deleteBudget(id: number): Observable<any> {
+    return this.http.delete(`${baseUrl}/${id}`);
+  }
+
+  // Optionnel: Met à jour un budget (PUT /api/budgets/{id})
+  updateBudget(id: number, data: any): Observable<any> {
+    return this.http.put(`${baseUrl}/${id}`, data);
+  }
+
+  // Optionnel: Récupère un budget par ID (GET /api/budgets/{id})
+  getBudgetById(id: number): Observable<any> {
+    return this.http.get<any>(`${baseUrl}/${id}`);
   }
 }

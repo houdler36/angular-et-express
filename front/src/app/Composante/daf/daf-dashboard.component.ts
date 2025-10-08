@@ -5,6 +5,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
+import { BaseChartDirective } from 'ng2-charts';
+import { Chart, registerables } from 'chart.js';
+
+// Register Chart.js components
+Chart.register(...registerables);
 // Services
 import { DemandeService } from '../../services/demande.service';
 import { AuthService } from '../../services/auth.service';
@@ -37,7 +42,7 @@ export interface StatistiqueDemande {
 @Component({
   selector: 'app-daf-dashboard',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, CurrencyPipe, RapportProjetComponent, RouterModule,FormsModule],
+  imports: [CommonModule, NgIf, NgFor, CurrencyPipe, RapportProjetComponent, RouterModule, FormsModule, BaseChartDirective],
   templateUrl: './daf-dashboard.component.html',
   styleUrls: ['./daf-dashboard.component.css']
 })
@@ -72,6 +77,44 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
     dateFin: ''
   };
 
+  // Données du graphique
+  public barChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: 'Statistiques des demandes'
+      }
+    }
+  };
+
+  public barChartLabels = ['À traiter', 'En attente', 'Finalisées'];
+  public barChartType = 'bar' as const;
+  public barChartLegend = true;
+  public barChartData = {
+    labels: this.barChartLabels,
+    datasets: [
+      {
+        data: [0, 0, 0],
+        label: 'Demandes',
+        backgroundColor: [
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(59, 130, 246, 0.8)'
+        ],
+        borderColor: [
+          'rgb(16, 185, 129)',
+          'rgb(245, 158, 11)',
+          'rgb(59, 130, 246)'
+        ],
+        borderWidth: 1
+      }
+    ]
+  };
+
   constructor(
     private demandeService: DemandeService,
     private authService: AuthService,
@@ -83,6 +126,17 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.user = this.authService.getCurrentUser();
+    if (!this.user || this.user.role !== 'daf') {
+      // Redirect to appropriate dashboard based on role
+      if (this.user?.role === 'rh') {
+        this.router.navigate(['/rh/dashboard']);
+      } else if (this.user?.role === 'admin') {
+        this.router.navigate(['/admin']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
+      return;
+    }
     this.loadAllDemandes();
     this.setupAutoRefresh();
   }
@@ -123,6 +177,7 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (data) => {
           this.statistiques = data;
+          this.updateChartData();
           this.loadingStats = false;
         },
         error: (err: HttpErrorResponse) => {
@@ -134,6 +189,25 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Met à jour les données du graphique
+   */
+  private updateChartData(): void {
+    if (this.statistiques) {
+      this.barChartData = {
+        ...this.barChartData,
+        datasets: [{
+          ...this.barChartData.datasets[0],
+          data: [
+            this.statistiques.demandeATraiter,
+            this.statistiques.enAttente,
+            this.statistiques.finalisees
+          ]
+        }]
+      };
+    }
+  }
+
+  /**
    * Charge les demandes à traiter
    */
   loadDemandesATraiter(): void {
@@ -142,7 +216,14 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (demandes: any[]) => {
-          this.demandesATraiter = this.applyFilters(demandes);
+          this.demandesATraiter = this.applyFilters(demandes.map(demande => {
+            const fullName = this.user?.nom && this.user?.prenom ? `${this.user.nom} ${this.user.prenom}` : null;
+            const currentValidator = fullName || this.user?.username || null;
+            return {
+              ...demande,
+              currentValidator
+            };
+          }));
           this.loadingATraiter = false;
         },
         error: (err) => {
@@ -166,10 +247,12 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
             const validations = demande.validations || [];
             const currentValidation = validations.find((v: any) => v.statut === 'en attente');
             const journalValidator = demande.journal?.journal_validers?.find((v: any) => v.user_id === currentValidation?.user_id);
+            const fullName = journalValidator?.user?.nom && journalValidator?.user?.prenom ? `${journalValidator.user.nom} ${journalValidator.user.prenom}` : null;
+            const currentValidator = fullName || journalValidator?.user?.username || 'DAF';
 
             return {
               ...demande,
-              currentValidator: journalValidator?.user?.username || null
+              currentValidator
             };
           }));
           this.loadingEnAttente = false;
@@ -191,18 +274,22 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
+          const currentUserFullName = this.user?.nom && this.user?.prenom ? `${this.user.nom} ${this.user.prenom}` : null;
+          const currentUserName = currentUserFullName || this.user?.username;
           this.demandesFinalisees = this.applyFilters(data.map((demande: any) => {
             const validations = demande.validations || [];
-            const finalValidation = validations.find(
+            const finalValidations = validations.filter(
               (v: any) => v.statut === 'validé' || v.statut === 'rejeté'
             );
-            const finalValidatorName = finalValidation?.user?.username || 'Inconnu';
+            const finalValidation = finalValidations.length > 0 ? finalValidations.reduce((prev: any, current: any) => (prev.ordre > current.ordre) ? prev : current) : null;
+            const fullName = finalValidation?.user?.nom && finalValidation?.user?.prenom ? `${finalValidation.user.nom} ${finalValidation.user.prenom}` : null;
+            const finalValidatorName = fullName || finalValidation?.user?.username || 'Inconnu';
 
             return {
               ...demande,
               finalValidatorName
             };
-          }));
+          }).filter((demande: any) => demande.finalValidatorName === currentUserName));
           this.loadingFinalisees = false;
         },
         error: (err) => {

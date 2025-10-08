@@ -36,6 +36,9 @@ export class JournalManagementComponent implements OnInit {
   modalMessage = '';
   isSuccess = false;
 
+  // Loading
+  isLoading = false;
+
   constructor(private journalApiService: JournalApiService) {}
 
   ngOnInit() {
@@ -116,6 +119,7 @@ export class JournalManagementComponent implements OnInit {
       return;
     }
 
+    this.isLoading = true;
     const data = {
       nom_journal: this.newJournal.nom_journal,
       nom_projet: this.newJournal.nom_projet,
@@ -126,11 +130,13 @@ export class JournalManagementComponent implements OnInit {
 
     this.journalApiService.createJournal(data).subscribe({
       next: () => {
+        this.isLoading = false;
         this.showModal('Journal créé avec succès !', true);
         this.loadJournals();
         this.resetForm();
       },
       error: (e: HttpErrorResponse) => {
+        this.isLoading = false;
         const errorMessage = e.error?.message || 'Une erreur est survenue lors de la création.';
         this.showModal(errorMessage, false);
       }
@@ -155,6 +161,7 @@ export class JournalManagementComponent implements OnInit {
       return;
     }
 
+    this.isLoading = true;
     const data = {
       nom_journal: this.newJournal.nom_journal,
       nom_projet: this.newJournal.nom_projet,
@@ -165,6 +172,7 @@ export class JournalManagementComponent implements OnInit {
 
     this.journalApiService.updateJournal(this.editingJournalId, data).subscribe({
       next: () => {
+        this.isLoading = false;
         this.showModal('Journal mis à jour avec succès !', true);
         this.loadJournals();
         this.resetForm();
@@ -172,6 +180,7 @@ export class JournalManagementComponent implements OnInit {
         this.editingJournalId = null;
       },
       error: (e: HttpErrorResponse) => {
+        this.isLoading = false;
         const errorMessage = e.error?.message || 'Une erreur est survenue lors de la mise à jour.';
         this.showModal(errorMessage, false);
       }
@@ -185,12 +194,15 @@ export class JournalManagementComponent implements OnInit {
   }
 
   deleteJournal(id: number) {
+    this.isLoading = true;
     this.journalApiService.deleteJournal(id).subscribe({
       next: () => {
+        this.isLoading = false;
         this.showModal('Journal supprimé avec succès !', true);
         this.loadJournals();
       },
       error: (e: HttpErrorResponse) => {
+        this.isLoading = false;
         const errorMessage = e.error?.message || 'Une erreur est survenue lors de la suppression.';
         this.showModal(errorMessage, false);
       }

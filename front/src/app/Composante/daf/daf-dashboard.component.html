@@ -34,6 +34,10 @@
       <a role="button" [class.active]="activePage === 'Profil'" (click)="setActivePage('Profil')">
         <i class="fas fa-user-circle"></i> <span class="hidden-mobile">Mon profil</span>
       </a>
+      <hr class="sidebar-divider">
+      <a role="button" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i> <span class="hidden-mobile">Déconnexion</span>
+      </a>
     </nav>
   </aside>
 
@@ -43,25 +47,57 @@
       <!-- Tableau de Bord -->
       <section *ngIf="activePage === 'Dashboard'" class="content-section">
         <h1 class="page-title">Tableau de Bord DAF</h1>
+        <p class="welcome-message">Bienvenue sur votre tableau de bord DAF. Voici un aperçu de vos demandes.</p>
         <div class="stats-grid">
           <div class="stat-card success">
+            <i class="fas fa-tasks stat-icon"></i>
             <h3>Demandes à traiter</h3>
             <p class="stat-number">{{ demandesATraiter.length }}</p>
           </div>
           <div class="stat-card warning">
+            <i class="fas fa-hourglass-half stat-icon"></i>
             <h3>Demandes en attente</h3>
             <p class="stat-number">{{ demandesEnAttente.length }}</p>
           </div>
           <div class="stat-card info">
+            <i class="fas fa-check-circle stat-icon"></i>
             <h3>Demandes finalisées</h3>
             <p class="stat-number">{{ demandesFinalisees.length }}</p>
           </div>
+        </div>
+
+        <!-- Graphique des statistiques -->
+        <div class="chart-container" *ngIf="!loadingStats">
+          <canvas baseChart
+                  [data]="barChartData"
+                  [options]="barChartOptions"
+                  [type]="barChartType"
+                  [legend]="barChartLegend">
+          </canvas>
         </div>
       </section>
 
       <!-- Demandes à Traiter -->
       <section *ngIf="activePage === 'demandesATraiter'" class="content-section">
         <h2 class="page-title">Demandes à traiter (DAF)</h2>
+        <div class="filters-container" *ngIf="!loadingATraiter">
+          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
+          <select [(ngModel)]="filters.type" (change)="onSearch()">
+            <option value="">Tous types</option>
+            <option value="Achat">Achat</option>
+            <option value="Service">Service</option>
+          </select>
+          <select [(ngModel)]="filters.statut" (change)="onSearch()">
+            <option value="">Tous statuts</option>
+            <option value="en attente">En attente</option>
+            <option value="approuvée">Approuvée</option>
+            <option value="rejetée">Rejetée</option>
+          </select>
+          <input type="date" [(ngModel)]="filters.dateDebut" (change)="onSearch()" placeholder="Date début">
+          <input type="date" [(ngModel)]="filters.dateFin" (change)="onSearch()" placeholder="Date fin">
+          <button (click)="resetFilters()" class="btn btn-sm secondary">Réinitialiser</button>
+          <button (click)="exportToCSV()" class="btn btn-sm primary">Exporter CSV</button>
+        </div>
         <p *ngIf="loadingATraiter" class="loading-text">Chargement...</p>
 
         <div class="table-container" *ngIf="!loadingATraiter">
@@ -75,13 +111,14 @@
                 <th>Montant Total</th>
                 <th>Statut</th>
                 <th>Date de soumission</th>
+                <th>Validateur actuel</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngIf="demandesATraiter.length === 0">
-                <td colspan="8" class="empty-message">
-                  Aucune demande à traiter. 
+                <td colspan="9" class="empty-message">
+                  Aucune demande à traiter.
                   <a routerLink="/demandes/new">Créez-en une nouvelle !</a>
                 </td>
               </tr>
@@ -103,6 +140,7 @@
                   </span>
                 </td>
                 <td>{{ demande.date | date:'short' }}</td>
+                <td>{{ demande.currentValidator || '—' }}</td>
 
                 <td class="action-buttons">
                   <button class="btn btn-sm secondary" (click)="voirDetails(demande.id)">
@@ -129,6 +167,24 @@
       <!-- Demandes en Attente -->
       <section *ngIf="activePage === 'demandesEnAttente'" class="content-section">
         <h2 class="page-title">Demandes en attente (DAF)</h2>
+        <div class="filters-container" *ngIf="!loadingEnAttente">
+          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
+          <select [(ngModel)]="filters.type" (change)="onSearch()">
+            <option value="">Tous types</option>
+            <option value="Achat">Achat</option>
+            <option value="Service">Service</option>
+          </select>
+          <select [(ngModel)]="filters.statut" (change)="onSearch()">
+            <option value="">Tous statuts</option>
+            <option value="en attente">En attente</option>
+            <option value="approuvée">Approuvée</option>
+            <option value="rejetée">Rejetée</option>
+          </select>
+          <input type="date" [(ngModel)]="filters.dateDebut" (change)="onSearch()" placeholder="Date début">
+          <input type="date" [(ngModel)]="filters.dateFin" (change)="onSearch()" placeholder="Date fin">
+          <button (click)="resetFilters()" class="btn btn-sm secondary">Réinitialiser</button>
+          <button (click)="exportToCSV()" class="btn btn-sm primary">Exporter CSV</button>
+        </div>
         <p *ngIf="loadingEnAttente" class="loading-text">Chargement...</p>
 
         <div class="table-container" *ngIf="!loadingEnAttente">
@@ -186,6 +242,24 @@
       <!-- Demandes Finalisées -->
       <section *ngIf="activePage === 'demandesFinalisees'" class="content-section">
         <h2 class="page-title">Demandes finalisées (DAF)</h2>
+        <div class="filters-container" *ngIf="!loadingFinalisees">
+          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
+          <select [(ngModel)]="filters.type" (change)="onSearch()">
+            <option value="">Tous types</option>
+            <option value="Achat">Achat</option>
+            <option value="Service">Service</option>
+          </select>
+          <select [(ngModel)]="filters.statut" (change)="onSearch()">
+            <option value="">Tous statuts</option>
+            <option value="en attente">En attente</option>
+            <option value="approuvée">Approuvée</option>
+            <option value="rejetée">Rejetée</option>
+          </select>
+          <input type="date" [(ngModel)]="filters.dateDebut" (change)="onSearch()" placeholder="Date début">
+          <input type="date" [(ngModel)]="filters.dateFin" (change)="onSearch()" placeholder="Date fin">
+          <button (click)="resetFilters()" class="btn btn-sm secondary">Réinitialiser</button>
+          <button (click)="exportToCSV()" class="btn btn-sm primary">Exporter CSV</button>
+        </div>
         <p *ngIf="loadingFinalisees" class="loading-text">Chargement...</p>
 
         <div class="table-container" *ngIf="!loadingFinalisees">

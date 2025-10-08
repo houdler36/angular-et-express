@@ -1,71 +1,123 @@
 // src/app/Composante/admin/admin-dashboard/admin-dashboard.component.ts
-import { Component, OnInit } from '@angular/core'; // Ajoutez OnInit
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http'; // Importez HttpClientModule
+import { HttpClientModule } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { UserManagementComponent } from '../user-management/user-management.component';
 import { JournalManagementComponent } from '../journal-management/journal-management.component';
 import { BudgetManagementComponent } from '../budget-management/budget-management.component';
-import { PersonneCrudComponent } from '../personne/personne.component'
-import { StatsService } from '../../../services/stats.service'; // Importez le service
+import { PersonneCrudComponent } from '../personne/personne.component';
+import { StatsService } from '../../../services/stats.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
-  selector: 'app-admin-dashboard',
-  standalone: true,
-  imports: [
+  selector: 'app-admin-dashboard',
+  standalone: true,
+  imports: [
     CommonModule, 
-    HttpClientModule, // Ajoutez HttpClientModule
+    HttpClientModule,
     UserManagementComponent, 
     JournalManagementComponent, 
     BudgetManagementComponent, 
     PersonneCrudComponent
-],
-  templateUrl: './admin-dashboard.component.html',
-  styleUrls: ['./admin-dashboard.component.css'],
-  providers: [StatsService] // Fournissez le service
+  ],
+  templateUrl: './admin-dashboard.component.html',
+  styleUrls: ['./admin-dashboard.component.css'],
+  providers: [StatsService]
 })
-export class AdminDashboardComponent implements OnInit { // Implémentez OnInit
-  activePage: string = 'Dashboard';
+export class AdminDashboardComponent implements OnInit {
+  activePage: string = 'Dashboard';
+  lastUpdate: Date = new Date();
   
-  // Ajoutez les propriétés pour stocker les statistiques
+  // Propriétés pour les statistiques CRUD
   userCount: number = 0;
   personneCount: number = 0;
   journalCount: number = 0;
-  budgetCount: number = 0;
-  demandeCount: number = 0;
+  totalBudget: number = 0;
+  
+  // Activités récentes
+  recentActivities = [
+    { 
+      type: 'success', 
+      icon: 'fas fa-user-plus', 
+      text: 'Nouvel utilisateur créé: Jean Dupont', 
+      time: 'Il y a 5 min' 
+    },
+    { 
+      type: 'info', 
+      icon: 'fas fa-user-tie', 
+      text: 'Responsable Marie Lambert modifié', 
+      time: 'Il y a 15 min' 
+    },
+    { 
+      type: 'warning', 
+      icon: 'fas fa-book', 
+      text: 'Nouvelle entrée dans le journal des transactions', 
+      time: 'Il y a 1 heure' 
+    },
+    { 
+      type: 'info', 
+      icon: 'fas fa-wallet', 
+      text: 'Budget du projet santé mis à jour', 
+      time: 'Il y a 2 heures' 
+    },
+    { 
+      type: 'success', 
+      icon: 'fas fa-users', 
+      text: '3 nouveaux utilisateurs ajoutés', 
+      time: 'Il y a 3 heures' 
+    }
+  ];
 
-  // Injectez le StatsService dans le constructeur
-  constructor(private statsService: StatsService) {}
+  constructor(private statsService: StatsService, private authService: AuthService, private router: Router) {}
 
-  ngOnInit(): void {
-    // Chargez les statistiques au démarrage du composant
+  ngOnInit(): void {
+    const user = this.authService.getCurrentUser();
+    if (!user || user.role !== 'admin') {
+      // Redirect to appropriate dashboard based on role
+      if (user?.role === 'daf') {
+        this.router.navigate(['/daf/dashboard']);
+      } else if (user?.role === 'rh') {
+        this.router.navigate(['/rh/dashboard']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
+      return;
+    }
     this.loadDashboardStats();
-  }
+    this.startAutoRefresh();
+  }
 
-  setActivePage(page: string) {
-    this.activePage = page;
-  }
+  setActivePage(page: string) {
+    this.activePage = page;
+  }
 
-  // Nouvelle méthode pour charger les statistiques
-  loadDashboardStats(): void {
+  loadDashboardStats(): void {
     this.statsService.getDashboardStats().subscribe({
-        next: (data: any) => {
-            // Assurez-vous que les noms des propriétés correspondent à votre réponse JSON
-            this.userCount = data.userCount;
-            this.personneCount = data.personneCount;
-            this.journalCount = data.journalCount;
-            this.budgetCount = data.budgetCount;
-            this.demandeCount = data.demandeCount;
-        },
-        error: (err) => {
-            console.error('Échec du chargement des statistiques du tableau de bord', err);
-        }
+      next: (data: any) => {
+        this.userCount = data.userCount || 0;
+        this.personneCount = data.personneCount || 0;
+        this.journalCount = data.journalCount || 0;
+        this.totalBudget = data.totalBudget || 0;
+        this.lastUpdate = new Date();
+      },
+      error: (err) => {
+        console.error('Échec du chargement des statistiques du tableau de bord', err);
+      }
     });
-}
-  
-  scrollToTop(): void {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  }
+  }
+
+  startAutoRefresh(): void {
+    // Actualiser les données toutes les 5 minutes
+    setInterval(() => {
+      this.loadDashboardStats();
+    }, 300000);
+  }
+
+  scrollToTop(): void {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
 }

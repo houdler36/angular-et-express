@@ -2,7 +2,7 @@
 <p>Ajoutez un nouveau budget et suivez ses montants annuels et trimestriels.</p>
 <hr class="divider">
 
-<form (ngSubmit)="addBudget()" class="form-container">
+<form (ngSubmit)="addBudget()" class="form-container" #budgetForm="ngForm">
   <h2>Ajouter un nouveau budget</h2>
   <div class="form-group">
     <label for="codeBudget">Code du budget</label>
@@ -18,67 +18,102 @@
   </div>
   <div class="form-group">
     <label for="budgetAnnuel">Budget annuel</label>
-    <input id="budgetAnnuel" type="number" [(ngModel)]="newBudget.budget_annuel" name="budget_annuel" required>
+    <input id="budgetAnnuel" type="number" [(ngModel)]="newBudget.budget_annuel" name="budget_annuel" required (ngModelChange)="checkBudgetValidity()">
   </div>
-  <div class="form-group">
-    <label for="budget1trimestre">Budget 1er Trimestre</label>
-    <input id="budget1trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_1" name="budget_trimestre_1">
+
+  <div class="trimestres-container">
+    <div class="form-group">
+      <label for="budget1trimestre">Budget 1er Trimestre</label>
+      <input id="budget1trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_1" name="budget_trimestre_1" (ngModelChange)="checkBudgetValidity()">
+    </div>
+    <div class="form-group">
+      <label for="budget2trimestre">Budget 2e Trimestre</label>
+      <input id="budget2trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_2" name="budget_trimestre_2" (ngModelChange)="checkBudgetValidity()">
+    </div>
+    <div class="form-group">
+      <label for="budget3trimestre">Budget 3e Trimestre</label>
+      <input id="budget3trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_3" name="budget_trimestre_3" (ngModelChange)="checkBudgetValidity()">
+    </div>
+    <div class="form-group">
+      <label for="budget4trimestre">Budget 4e Trimestre</label>
+      <input id="budget4trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_4" name="budget_trimestre_4" (ngModelChange)="checkBudgetValidity()">
+    </div>
   </div>
-  <div class="form-group">
-    <label for="budget2trimestre">Budget 2e Trimestre</label>
-    <input id="budget2trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_2" name="budget_trimestre_2">
+
+  <div *ngIf="isBudgetInvalid" class="error-message">
+    La somme des budgets trimestriels ({{ sumTrimestres | currency:'Ar':'symbol':'1.0-0' }}) ne doit pas dépasser le budget annuel ({{ newBudget.budget_annuel | currency:'Ar':'symbol':'1.0-0' }}).
   </div>
-  <div class="form-group">
-    <label for="budget3trimestre">Budget 3e Trimestre</label>
-    <input id="budget3trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_3" name="budget_trimestre_3">
-  </div>
-  <div class="form-group">
-    <label for="budget4trimestre">Budget 4e Trimestre</label>
-    <input id="budget4trimestre" type="number" [(ngModel)]="newBudget.budget_trimestre_4" name="budget_trimestre_4">
-  </div>
-  <button type="submit">Ajouter le budget</button>
+
+  <button type="submit" [disabled]="!budgetForm.valid || isBudgetInvalid">Ajouter le budget</button>
 </form>
 
 <hr class="divider">
 
-<h2>Liste des budgets de l'année {{ currentYear }}</h2>
+<div class="filter-container">
+  <label for="yearFilter">Année : </label>
+  <input id="yearFilter" type="number" [ngModel]="selectedYear" (ngModelChange)="applyFilters($event)" [placeholder]="currentYear" class="small-input">
+  
+  <label for="searchFilter">Recherche : </label>
+  <input id="searchFilter" type="text" [(ngModel)]="searchTerm" (ngModelChange)="applyFilters()" placeholder="Code ou Description">
+  
+  <button (click)="toggleReste()" class="toggle-button">
+    {{ showReste ? 'Voir Budget Initial' : 'Voir le Reste' }}
+  </button>
+</div>
+
+<h2>Liste des budgets de l'année {{ selectedYear }}</h2>
 <div class="table-container">
   <table>
     <thead>
-     <tr>
-        <th>ID</th>
-        <th>Code du budget</th>
-        <th>Description</th>
-        <th>Année fiscale</th>
-        <th>Budget annuel</th>
-        <th>Reste annuel</th>
-        <th>Budget T1</th>
-        <th>Reste T1</th>
-        <th>Budget T2</th>
-        <th>Reste T2</th>
-        <th>Budget T3</th>
-        <th>Reste T3</th>
-        <th>Budget T4</th>
-        <th>Reste T4</th>
-      </tr>
+      <tr>
+        <th>ID</th>
+        <th>Code du budget</th>
+        <th>Description</th>
+        <th>Année fiscale</th>
+        
+        <th *ngIf="!showReste">Budget annuel</th>
+        <th *ngIf="showReste">Reste annuel</th>
+
+        <th *ngIf="!showReste">Budget T1</th>
+        <th *ngIf="showReste">Reste T1</th>
+        
+        <th *ngIf="!showReste">Budget T2</th>
+        <th *ngIf="showReste">Reste T2</th>
+        
+        <th *ngIf="!showReste">Budget T3</th>
+        <th *ngIf="showReste">Reste T3</th>
+        
+        <th *ngIf="!showReste">Budget T4</th>
+        <th *ngIf="showReste">Reste T4</th>
+      </tr>
     </thead>
     <tbody>
-   <tr *ngFor="let budget of budgetsAffiches">
-        <td>{{ budget.id_budget }}</td>
-        <td>{{ budget.code_budget }}</td>
-        <td>{{ budget.description }}</td>
-        <td>{{ budget.annee_fiscale }}</td>
-        <td>{{ budget.budget_annuel | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td>{{ budget.reste_budget | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td>{{ budget.budget_trimestre_1 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td>{{ budget.reste_trimestre_1 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td>{{ budget.budget_trimestre_2 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td>{{ budget.reste_trimestre_2 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td>{{ budget.budget_trimestre_3 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td>{{ budget.reste_trimestre_3 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td>{{ budget.budget_trimestre_4 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td>{{ budget.reste_trimestre_4 | currency:'Ar':'symbol':'1.0-0' }}</td>
-      </tr>
-</tbody>
+      <tr *ngFor="let budget of budgetsAffiches" [ngClass]="{'alert-row-annual': budget.reste_budget <= 0 && showReste, 'warn-row-annual': budget.reste_budget > 0 && budget.reste_budget / budget.budget_annuel < 0.1 && showReste}">
+        <td>{{ budget.id_budget }}</td>
+        <td>{{ budget.code_budget }}</td>
+        <td>{{ budget.description }}</td>
+        <td>{{ budget.annee_fiscale }}</td>
+        
+        <td *ngIf="!showReste">{{ budget.budget_annuel | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_budget <= 0}">{{ budget.reste_budget | currency:'Ar':'symbol':'1.0-0' }}</td>
+        
+        <td *ngIf="!showReste">{{ budget.budget_trimestre_1 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_1 <= 0}">{{ budget.reste_trimestre_1 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        
+        <td *ngIf="!showReste">{{ budget.budget_trimestre_2 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_2 <= 0}">{{ budget.reste_trimestre_2 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        
+        <td *ngIf="!showReste">{{ budget.budget_trimestre_3 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_3 <= 0}">{{ budget.reste_trimestre_3 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        
+        <td *ngIf="!showReste">{{ budget.budget_trimestre_4 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_4 <= 0}">{{ budget.reste_trimestre_4 | currency:'Ar':'symbol':'1.0-0' }}</td>
+      </tr>
+      <tr *ngIf="budgetsAffiches.length === 0">
+        <td colspan="8" style="text-align: center;">
+          Aucun budget trouvé pour l'année {{ selectedYear }} correspondant à la recherche *{{ searchTerm }}*.
+        </td>
+      </tr>
+    </tbody>
   </table>
 </div>

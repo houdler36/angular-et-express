@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { DemandeService } from '../../../services/demande.service';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -9,7 +9,7 @@ import { HttpClientModule } from '@angular/common/http';
   templateUrl: './rapport-projet.component.html',
   styleUrls: ['./rapport-projet.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule, CurrencyPipe, DatePipe]
+  imports: [CommonModule, FormsModule, HttpClientModule, DatePipe]
 })
 export class RapportProjetComponent implements OnInit {
   projets: any[] = [];

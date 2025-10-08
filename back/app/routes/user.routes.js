@@ -24,7 +24,7 @@ router.get(
 
 // Routes utilisateurs
 router.get("/admin/users", [authJwt.verifyToken, authJwt.isAdmin], controller.getAllUsers);
-router.get("/admin/rh-users", [authJwt.verifyToken, authJwt.isAdmin], controller.getAllRhUsers);
+router.get("/admin/rh-users", [authJwt.verifyToken, authJwt.isRhOrAdmin], controller.getAllRhUsers);
 router.get("/admin/users/:id", [authJwt.verifyToken, authJwt.isAdmin], controller.getUserById);
 router.post("/admin/create-user", [authJwt.verifyToken, authJwt.isAdmin], controller.createAdminUser);
 
