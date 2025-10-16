@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe, NgIf, NgFor } from '@angular/common';
+import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { Router } from '@angular/router'; // Importer le service Router
 import { DemandeService } from '../../../services/demande.service';
 import { AuthService } from '../../../services/auth.service';
@@ -34,7 +34,7 @@ interface JournalValidator {
 @Component({
   selector: 'app-validation-rh',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, CurrencyPipe],
+  imports: [CommonModule, NgIf, NgFor],
   templateUrl: './validation-rh.component.html',
   styleUrls: ['./validation-rh.component.css']
 })

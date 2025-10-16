@@ -41,7 +41,7 @@
   </div>
 
   <div *ngIf="isBudgetInvalid" class="error-message">
-    La somme des budgets trimestriels ({{ sumTrimestres | currency:'Ar':'symbol':'1.0-0' }}) ne doit pas dépasser le budget annuel ({{ newBudget.budget_annuel | currency:'Ar':'symbol':'1.0-0' }}).
+    La somme des budgets trimestriels ({{ sumTrimestres | number:'1.2-2' }}) ne doit pas dépasser le budget annuel ({{ newBudget.budget_annuel | number:'1.2-2' }}).
   </div>
 
   <button type="submit" [disabled]="!budgetForm.valid || isBudgetInvalid">Ajouter le budget</button>
@@ -94,20 +94,20 @@
         <td>{{ budget.description }}</td>
         <td>{{ budget.annee_fiscale }}</td>
         
-        <td *ngIf="!showReste">{{ budget.budget_annuel | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_budget <= 0}">{{ budget.reste_budget | currency:'Ar':'symbol':'1.0-0' }}</td>
-        
-        <td *ngIf="!showReste">{{ budget.budget_trimestre_1 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_1 <= 0}">{{ budget.reste_trimestre_1 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        
-        <td *ngIf="!showReste">{{ budget.budget_trimestre_2 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_2 <= 0}">{{ budget.reste_trimestre_2 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        
-        <td *ngIf="!showReste">{{ budget.budget_trimestre_3 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_3 <= 0}">{{ budget.reste_trimestre_3 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        
-        <td *ngIf="!showReste">{{ budget.budget_trimestre_4 | currency:'Ar':'symbol':'1.0-0' }}</td>
-        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_4 <= 0}">{{ budget.reste_trimestre_4 | currency:'Ar':'symbol':'1.0-0' }}</td>
+        <td *ngIf="!showReste">{{ budget.budget_annuel | number:'1.2-2' }}</td>
+        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_budget <= 0}">{{ budget.reste_budget | number:'1.2-2' }}</td>
+
+        <td *ngIf="!showReste">{{ budget.budget_trimestre_1 | number:'1.2-2' }}</td>
+        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_1 <= 0}">{{ budget.reste_trimestre_1 | number:'1.2-2' }}</td>
+
+        <td *ngIf="!showReste">{{ budget.budget_trimestre_2 | number:'1.2-2' }}</td>
+        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_2 <= 0}">{{ budget.reste_trimestre_2 | number:'1.2-2' }}</td>
+
+        <td *ngIf="!showReste">{{ budget.budget_trimestre_3 | number:'1.2-2' }}</td>
+        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_3 <= 0}">{{ budget.reste_trimestre_3 | number:'1.2-2' }}</td>
+
+        <td *ngIf="!showReste">{{ budget.budget_trimestre_4 | number:'1.2-2' }}</td>
+        <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_4 <= 0}">{{ budget.reste_trimestre_4 | number:'1.2-2' }}</td>
       </tr>
       <tr *ngIf="budgetsAffiches.length === 0">
         <td colspan="8" style="text-align: center;">

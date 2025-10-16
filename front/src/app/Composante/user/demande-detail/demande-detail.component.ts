@@ -1,12 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, DatePipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DemandeService } from '../../../services/demande.service';
 import { NumbersToWordsService } from '../../../services/numbers-to-words.service';
 import { AuthService } from '../../../services/auth.service';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { DemandePdfComponent } from './demande-pdf.component';
 
 interface Personne {
   id: number;
@@ -59,7 +58,8 @@ interface DemandeValidation {
   } | null;
   signature_validation_url?: string;
   signatureBase64?: string | null;
-  signatureFinale?: string | null; 
+  signatureFinale?: string | null;
+  signatureUrl?: string | null;
 }
 
 interface Journal {
@@ -81,12 +81,27 @@ interface Demande {
   status: 'en attente' | 'approuvée' | 'rejetée';
   montant_total: number;
   description: string;
+  numero_approuve_journal?: number;
+  date_approuvee?: string;
   details?: DemandeDetail[];
   user?: { username: string };
   comments?: any[];
   journal?: Journal;
   validations?: DemandeValidation[];
   responsible_pj?: Personne;
+}
+
+interface ValidationTimelineEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  validator?: string;
+  comment?: string;
+  icon: string;
+  iconClass: string;
+  completed: boolean;
+  current: boolean;
 }
 
 @Component({
@@ -98,7 +113,8 @@ interface Demande {
     CommonModule,
     FormsModule,
     DatePipe,
-    TitleCasePipe
+    TitleCasePipe,
+    DemandePdfComponent
   ]
 })
 export class DemandeDetailComponent implements OnInit {
@@ -107,8 +123,10 @@ export class DemandeDetailComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   finalValidatorName: string | null = null;
-  serverUrl = 'http://localhost:8081';
+  serverUrl = 'http://192.168.88.42:8081';
   hasLogo = false;
+  isGeneratingPDF = false;
+  companyInfo = 'SALAFA - Adresse · Téléphone · Email';
 
   totalDebit = 0;
   totalCredit = 0;
@@ -129,6 +147,8 @@ export class DemandeDetailComponent implements OnInit {
   totalValidationTours = 1;
   showNextTourInfo = false;
 
+  validationTimeline: ValidationTimelineEvent[] = [];
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -147,7 +167,7 @@ export class DemandeDetailComponent implements OnInit {
       this.checkLogoExists();
     } else {
       console.error('ID de demande manquant.');
-      this.router.navigate(['/demandes']);
+      this.router.navigate(['/dashboard/demandes']);
     }
   }
 
@@ -273,7 +293,8 @@ export class DemandeDetailComponent implements OnInit {
 
         await this.loadValidationsWithSignatures();
         this.calculateValidationTours();
-        
+        this.buildValidationTimeline();
+
         setTimeout(() => this.testValidationConditions(), 500);
       },
       error: (error) => {
@@ -304,21 +325,23 @@ export class DemandeDetailComponent implements OnInit {
     for (let i = 0; i < maxValidators; i++) {
       if (allValidations[i]) {
         const v = allValidations[i];
-        console.log(`👤 Traitement validateur ${i + 1}:`, v);
-        
-        const finalSignature = v.signature_validation_url || v.user?.signature_image_url;
-        const signatureBase64 = finalSignature ? await this.getImageAsBase64(this.serverUrl + finalSignature) : null;
+    console.log(`👤 Traitement validateur ${i + 1}:`, v);
+    
+    const finalSignature = v.signature_validation_url || v.user?.signature_image_url;
+    const signatureUrl = finalSignature ? this.serverUrl + finalSignature : null;
+    const signatureBase64 = signatureUrl ? await this.getImageAsBase64(signatureUrl) : null;
 
-        const validatorUserId = this.safeConvertToNumber(v.user_id || v.user?.id);
-        
-        console.log(`  -> ID Validateur converti: ${validatorUserId} (original: ${v.user_id})`);
+    const validatorUserId = this.safeConvertToNumber(v.user_id || v.user?.id);
+    
+    console.log(`  -> ID Validateur converti: ${validatorUserId} (original: ${v.user_id})`);
 
-        this.displayValidators.push({
-          ...v,
-          user_id: validatorUserId,
-          signatureFinale: finalSignature,
-          signatureBase64: signatureBase64
-        });
+    this.displayValidators.push({
+      ...v,
+      user_id: validatorUserId,
+      signatureFinale: finalSignature,
+      signatureUrl: signatureUrl,
+      signatureBase64: signatureBase64
+    });
       } else {
         console.log(`➖ Validateur ${i + 1}: placeholder`);
         this.displayValidators.push({
@@ -694,7 +717,7 @@ export class DemandeDetailComponent implements OnInit {
     img.onerror = () => {
       this.hasLogo = false;
     };
-    img.src = '/assets/logo-entreprise.png';
+    img.src = '/images/salafan.jpg';
   }
 
   getImageAsBase64(url: string): Promise<string | null> {
@@ -718,90 +741,29 @@ export class DemandeDetailComponent implements OnInit {
     });
   }
 
-  async generatePDF() {
+
+
+  @ViewChild('pdfComp', { static: false }) pdfComp!: DemandePdfComponent;
+
+  generatePDF(): void {
     if (!this.demande) return;
 
     this.successMessage = 'Génération du PDF en cours...';
+    this.isGeneratingPDF = true;
 
-    try {
-      const DATA = document.getElementById('pdf-content');
-      if (!DATA) {
-        this.errorMessage = 'Élément PDF non trouvé';
-        return;
-      }
-
-      await this.prepareSignaturesForPDF(DATA);
-
-      const canvas = await html2canvas(DATA, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
+    setTimeout(() => {
+      this.pdfComp.generatePDF().then(() => {
+        this.isGeneratingPDF = false;
+        this.successMessage = 'PDF généré avec succès !';
+        setTimeout(() => {
+          this.successMessage = '';
+        }, 3000);
+      }).catch((error) => {
+        this.isGeneratingPDF = false;
+        this.errorMessage = 'Erreur lors de la génération du PDF';
+        console.error(error);
       });
-
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = canvas.height * imgWidth / canvas.width;
-      
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(canvas, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(canvas, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      const fileName = this.getPDFFileName();
-      pdf.save(fileName);
-
-      this.successMessage = 'PDF généré avec succès !';
-      
-      setTimeout(() => {
-        this.successMessage = '';
-      }, 3000);
-
-    } catch (error) {
-      console.error('Erreur lors de la génération du PDF:', error);
-      this.errorMessage = 'Erreur lors de la génération du PDF';
-    }
-  }
-
-  async prepareSignaturesForPDF(pdfElement: HTMLElement): Promise<void> {
-    const signatureContainers = pdfElement.querySelectorAll('.signature-container');
-    
-    for (let i = 0; i < signatureContainers.length; i++) {
-      const container = signatureContainers[i] as HTMLElement;
-      const validatorIndex = i;
-      const validator = this.displayValidators[validatorIndex];
-      
-      if (validator?.signatureBase64) {
-        const imgElements = container.querySelectorAll('img');
-        imgElements.forEach((img: HTMLImageElement) => {
-          img.src = validator.signatureBase64!;
-        });
-      }
-    }
-  }
-
-  getPDFFileName(): string {
-    if (!this.demande) return 'Demande.pdf';
-    
-    const typeMap: { [key: string]: string } = {
-      'DED': 'DED',
-      'Recette': 'Recette',
-      'ERD': 'ERD'
-    };
-    
-    const type = typeMap[this.demande.type] || 'Demande';
-    const date = new Date(this.demande.date).toISOString().split('T')[0];
-    
-    return `${type}_${this.demande.id}_${date}.pdf`;
+    }, 100);
   }
 
   clearMessages(): void {
@@ -810,12 +772,93 @@ export class DemandeDetailComponent implements OnInit {
   }
 
   navigateToList(): void {
-    this.router.navigate(['/demandes']);
+    this.router.navigate(['/dashboard/demandes']);
   }
 
   reloadDetails(): void {
     if (this.demandeId) {
       this.loadDemandeDetails(this.demandeId);
     }
+  }
+
+  trackByEventId(index: number, event: ValidationTimelineEvent): string {
+    return event.id;
+  }
+
+  private buildValidationTimeline(): void {
+    if (!this.demande?.validations) {
+      this.validationTimeline = [];
+      return;
+    }
+
+    const events: ValidationTimelineEvent[] = [];
+
+    // Événement de création de la demande
+    events.push({
+      id: 'creation',
+      title: 'Demande créée',
+      description: `Demande ${this.demande.type} créée par ${this.demande.responsible_pj?.prenom} ${this.demande.responsible_pj?.nom}`,
+      date: this.demande.date,
+      validator: `${this.demande.responsible_pj?.prenom} ${this.demande.responsible_pj?.nom}`,
+      icon: 'fas fa-plus-circle',
+      iconClass: 'timeline-icon--creation',
+      completed: true,
+      current: false
+    });
+
+    // Événements de validation
+    const sortedValidations = this.demande.validations.sort((a, b) => a.ordre - b.ordre);
+
+    sortedValidations.forEach((validation, index) => {
+      if (validation.user && validation.date_validation) {
+        let title = '';
+        let description = '';
+        let icon = '';
+        let iconClass = '';
+
+        switch (validation.statut) {
+          case 'validé':
+          case 'approuvé':
+            title = `Validation Tour ${validation.ordre}`;
+            description = `Demande validée par ${validation.user.username}`;
+            icon = 'fas fa-check-circle';
+            iconClass = 'timeline-icon--approved';
+            break;
+          case 'rejeté':
+            title = `Rejet Tour ${validation.ordre}`;
+            description = `Demande rejetée par ${validation.user.username}`;
+            if (validation.commentaire) {
+              description += ` - Raison: ${validation.commentaire}`;
+            }
+            icon = 'fas fa-times-circle';
+            iconClass = 'timeline-icon--rejected';
+            break;
+          default:
+            title = `Validation Tour ${validation.ordre}`;
+            description = `En attente de validation par ${validation.user.username}`;
+            icon = 'fas fa-clock';
+            iconClass = 'timeline-icon--pending';
+            break;
+        }
+
+        events.push({
+          id: `validation-${validation.id}`,
+          title,
+          description,
+          date: validation.date_validation,
+          validator: validation.user.username,
+          comment: validation.commentaire,
+          icon,
+          iconClass,
+          completed: validation.statut === 'validé' || validation.statut === 'approuvé' || validation.statut === 'rejeté',
+          current: validation.statut === 'en attente' && validation.ordre === this.currentValidationTour
+        });
+      }
+    });
+
+    // Trier par date
+    events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    this.validationTimeline = events;
   }
 }

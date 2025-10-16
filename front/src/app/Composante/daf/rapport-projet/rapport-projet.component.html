@@ -51,7 +51,7 @@
       <!-- STATISTIQUES - CORRIGÉ -->
       <div *ngIf="selectedBudget && stats.nombreDemandes > 0" class="stats-grid fade-in">
         <div class="stat-card">
-          <div class="stat-value positive">{{ stats.totalMontant | number:'1.2-2' }}</div>
+          <div class="stat-value positive">{{ stats.totalMontant | number:'1.2-2':'fr-FR' }}</div>
           <div class="stat-label">Total Dépensé</div>
           <div class="stat-progress">
             <div class="progress-bar" [style.width.%]="getTauxUtilisation()"></div>
@@ -67,14 +67,14 @@
         </div>
 
         <div class="stat-card">
-          <div class="stat-value">{{ getSelectedBudget() | number:'1.2-2' }}</div>
+          <div class="stat-value">{{ getSelectedBudget() | number:'1.2-2':'fr-FR' }}</div>
           <div class="stat-label">Budget Alloué</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-value" [class.positive]="getSelectedResteBudget() >= 0" 
                                 [class.negative]="getSelectedResteBudget() < 0">
-            {{ getSelectedResteBudget() | number:'1.2-2' }}
+            {{ getSelectedResteBudget() | number:'1.2-2':'fr-FR' }}
           </div>
           <div class="stat-label">Reste Budget</div>
         </div>
@@ -106,13 +106,13 @@
                   <td>{{ b.description }}</td>
                   
                   <td class="font-semibold">
-                    {{ getBudgetForPeriod(b) | number:'1.2-2' }}
+                    {{ getBudgetForPeriod(b) | number:'1.2-2':'fr-FR' }}
                   </td>
                   
                   <td [class.text-green-600]="getResteBudgetForPeriod(b) >= 0"
                       [class.text-red-600]="getResteBudgetForPeriod(b) < 0"
                       class="font-bold">
-                    {{ getResteBudgetForPeriod(b) | number:'1.2-2' }}
+            {{ getResteBudgetForPeriod(b) | number:'1.2-2':'fr-FR' }}
                   </td>
                   
                   <td>
@@ -185,7 +185,7 @@
             <td class="border p-2">{{ d.type }}</td>
             <td class="border p-2 max-w-xs truncate">{{ detail.beneficiaire || '—' }}</td>
             <td class="border p-2 max-w-md truncate" [title]="detail.libelle">{{ detail.libelle }}</td>
-            <td class="border p-2 font-semibold text-right">{{ detail.amount | number:'1.2-2' }}</td>
+            <td class="border p-2 font-semibold text-right">{{ detail.amount | number:'1.2-2':'fr-FR' }}</td>
             <td class="border p-2 font-mono text-sm">{{ detail.numero_compte || '—' }}</td>
             <td class="border p-2">
               <span class="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">

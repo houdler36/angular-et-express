@@ -17,6 +17,11 @@ module.exports = (sequelize, DataTypes) => {
         poste: {
             type: DataTypes.STRING,
             allowNull: true
+        },
+        matricule: {
+            type: DataTypes.STRING(10),
+            allowNull: false,
+            unique: true
         }
     }, {
         freezeTableName: true, // empêche Sequelize de mettre le nom de la table au pluriel

@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, CurrencyPipe, NgIf, NgFor } from '@angular/common';
+import { CommonModule, NgIf, NgFor } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FormsModule } from '@angular/forms';
-import { BaseChartDirective } from 'ng2-charts';
 import { Chart, registerables } from 'chart.js';
 
 // Register Chart.js components
@@ -39,10 +38,19 @@ export interface StatistiqueDemande {
   demandeATraiter: number;
 }
 
+export interface RecentActivity {
+  id: number;
+  type: 'validation' | 'rejet' | 'nouvelle_demande' | 'modification';
+  description: string;
+  date: Date;
+  demandeId?: number;
+  user?: string;
+}
+
 @Component({
   selector: 'app-daf-dashboard',
   standalone: true,
-  imports: [CommonModule, NgIf, NgFor, CurrencyPipe, RapportProjetComponent, RouterModule, FormsModule, BaseChartDirective],
+  imports: [CommonModule, NgIf, NgFor, RapportProjetComponent, RouterModule, FormsModule],
   templateUrl: './daf-dashboard.component.html',
   styleUrls: ['./daf-dashboard.component.css']
 })
@@ -53,7 +61,12 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
   currentUserId: number | null = null;
   user: any;
   
-  // Données des demandes
+  // Données brutes des demandes
+  rawDemandesATraiter: any[] = [];
+  rawDemandesEnAttente: any[] = [];
+  rawDemandesFinalisees: any[] = [];
+
+  // Données affichées (après filtre/tri/pagination)
   demandesATraiter: any[] = [];
   demandesEnAttente: any[] = [];
   demandesFinalisees: any[] = [];
@@ -76,6 +89,22 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
     dateDebut: '',
     dateFin: ''
   };
+
+  // Tri
+  sortKey: string = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
+  // Pagination
+  pageSize: number = 10;
+  currentPage: number = 1;
+  totalPages: number = 1;
+
+  // Activités récentes
+  recentActivities: RecentActivity[] = [];
+  loadingActivities = false;
+
+  // Sidebar collapsible
+  sidebarCollapsed = false;
 
   // Données du graphique
   public barChartOptions = {
@@ -138,6 +167,7 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
       return;
     }
     this.loadAllDemandes();
+    this.loadRecentActivities();
     this.setupAutoRefresh();
   }
 
@@ -216,14 +246,16 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (demandes: any[]) => {
-          this.demandesATraiter = this.applyFilters(demandes.map(demande => {
+          this.rawDemandesATraiter = demandes.map(demande => {
             const fullName = this.user?.nom && this.user?.prenom ? `${this.user.nom} ${this.user.prenom}` : null;
             const currentValidator = fullName || this.user?.username || null;
             return {
               ...demande,
-              currentValidator
+              currentValidator,
+              demandeur: `${demande.responsible_pj?.nom || ''} ${demande.responsible_pj?.prenom || ''}`.trim() || 'Inconnu'
             };
-          }));
+          });
+          this.updateDisplayedATraiter();
           this.loadingATraiter = false;
         },
         error: (err) => {
@@ -243,7 +275,7 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (data) => {
-          this.demandesEnAttente = this.applyFilters(data.map((demande: any) => {
+          this.rawDemandesEnAttente = data.map((demande: any) => {
             const validations = demande.validations || [];
             const currentValidation = validations.find((v: any) => v.statut === 'en attente');
             const journalValidator = demande.journal?.journal_validers?.find((v: any) => v.user_id === currentValidation?.user_id);
@@ -252,9 +284,11 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
 
             return {
               ...demande,
-              currentValidator
+              currentValidator,
+              demandeur: `${demande.responsible_pj?.nom || ''} ${demande.responsible_pj?.prenom || ''}`.trim() || 'Inconnu'
             };
-          }));
+          });
+          this.updateDisplayedEnAttente();
           this.loadingEnAttente = false;
         },
         error: (err) => {
@@ -276,7 +310,7 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
         next: (data) => {
           const currentUserFullName = this.user?.nom && this.user?.prenom ? `${this.user.nom} ${this.user.prenom}` : null;
           const currentUserName = currentUserFullName || this.user?.username;
-          this.demandesFinalisees = this.applyFilters(data.map((demande: any) => {
+          this.rawDemandesFinalisees = data.map((demande: any) => {
             const validations = demande.validations || [];
             const finalValidations = validations.filter(
               (v: any) => v.statut === 'validé' || v.statut === 'rejeté'
@@ -287,9 +321,11 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
 
             return {
               ...demande,
-              finalValidatorName
+              finalValidatorName,
+              demandeur: `${demande.responsible_pj?.nom || ''} ${demande.responsible_pj?.prenom || ''}`.trim() || 'Inconnu'
             };
-          }).filter((demande: any) => demande.finalValidatorName === currentUserName));
+          }).filter((demande: any) => demande.finalValidatorName === currentUserName);
+          this.updateDisplayedFinalisees();
           this.loadingFinalisees = false;
         },
         error: (err) => {
@@ -301,18 +337,50 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Applique les filtres de recherche
+   * Met à jour les données affichées pour les demandes à traiter
    */
-  applyFilters(demandes: any[]): any[] {
-    let filtered = demandes;
+  updateDisplayedATraiter(): void {
+    let filtered = this.filterData(this.rawDemandesATraiter);
+    let sorted = this.sortData(filtered);
+    this.demandesATraiter = this.paginateData(sorted);
+    this.totalPages = Math.ceil(sorted.length / this.pageSize);
+    if (this.currentPage > this.totalPages) this.currentPage = 1;
+  }
+
+  /**
+   * Met à jour les données affichées pour les demandes en attente
+   */
+  updateDisplayedEnAttente(): void {
+    let filtered = this.filterData(this.rawDemandesEnAttente);
+    let sorted = this.sortData(filtered);
+    this.demandesEnAttente = this.paginateData(sorted);
+    this.totalPages = Math.ceil(sorted.length / this.pageSize);
+    if (this.currentPage > this.totalPages) this.currentPage = 1;
+  }
+
+  /**
+   * Met à jour les données affichées pour les demandes finalisées
+   */
+  updateDisplayedFinalisees(): void {
+    let filtered = this.filterData(this.rawDemandesFinalisees);
+    let sorted = this.sortData(filtered);
+    this.demandesFinalisees = this.paginateData(sorted);
+    this.totalPages = Math.ceil(sorted.length / this.pageSize);
+    if (this.currentPage > this.totalPages) this.currentPage = 1;
+  }
+
+  /**
+   * Filtre les données
+   */
+  private filterData(data: any[]): any[] {
+    let filtered = data;
 
     if (this.searchTerm) {
       const term = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(demande => 
+      filtered = filtered.filter(demande =>
         demande.id.toString().includes(term) ||
         demande.type?.toLowerCase().includes(term) ||
-        demande.responsible_pj?.nom?.toLowerCase().includes(term) ||
-        demande.responsible_pj?.prenom?.toLowerCase().includes(term) ||
+        demande.demandeur?.toLowerCase().includes(term) ||
         demande.description?.toLowerCase().includes(term)
       );
     }
@@ -326,13 +394,13 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
     }
 
     if (this.filters.dateDebut) {
-      filtered = filtered.filter(demande => 
+      filtered = filtered.filter(demande =>
         new Date(demande.date) >= new Date(this.filters.dateDebut)
       );
     }
 
     if (this.filters.dateFin) {
-      filtered = filtered.filter(demande => 
+      filtered = filtered.filter(demande =>
         new Date(demande.date) <= new Date(this.filters.dateFin)
       );
     }
@@ -341,20 +409,112 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Gère la recherche
+   * Tri les données
    */
-  onSearch(): void {
+  private sortData(data: any[]): any[] {
+    if (!this.sortKey) return data;
+
+    return data.sort((a, b) => {
+      let aVal = a[this.sortKey];
+      let bVal = b[this.sortKey];
+
+      // Handle computed fields
+      if (this.sortKey === 'demandeur') {
+        aVal = a.demandeur || '';
+        bVal = b.demandeur || '';
+      } else if (this.sortKey === 'currentValidator' && !a.currentValidator) {
+        aVal = a.finalValidatorName || '';
+        bVal = b.finalValidatorName || '';
+      }
+
+      if (aVal == null) aVal = '';
+      if (bVal == null) bVal = '';
+
+      // For dates
+      if (this.sortKey === 'date') {
+        aVal = new Date(aVal).getTime();
+        bVal = new Date(bVal).getTime();
+      }
+
+      // For numbers
+      if (this.sortKey === 'montant_total' || this.sortKey === 'id') {
+        aVal = Number(aVal) || 0;
+        bVal = Number(bVal) || 0;
+      }
+
+      if (aVal < bVal) {
+        return this.sortDirection === 'asc' ? -1 : 1;
+      }
+      if (aVal > bVal) {
+        return this.sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  }
+
+  /**
+   * Pagination des données
+   */
+  private paginateData(data: any[]): any[] {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    return data.slice(startIndex, startIndex + this.pageSize);
+  }
+
+  /**
+   * Gère le tri
+   */
+  onSort(key: string): void {
+    if (this.sortKey === key) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortKey = key;
+      this.sortDirection = 'asc';
+    }
+    this.updateDisplayedForCurrentPage();
+  }
+
+  /**
+   * Met à jour l'affichage pour la page courante
+   */
+  private updateDisplayedForCurrentPage(): void {
     switch (this.activePage) {
       case 'demandesATraiter':
-        this.loadDemandesATraiter();
+        this.updateDisplayedATraiter();
         break;
       case 'demandesEnAttente':
-        this.loadDemandesEnAttente();
+        this.updateDisplayedEnAttente();
         break;
       case 'demandesFinalisees':
-        this.loadDemandesFinalisees();
+        this.updateDisplayedFinalisees();
         break;
     }
+  }
+
+  /**
+   * Change de page
+   */
+  goToPage(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+      this.updateDisplayedForCurrentPage();
+    }
+  }
+
+  /**
+   * Change la taille de page
+   */
+  changePageSize(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.updateDisplayedForCurrentPage();
+  }
+
+  /**
+   * Gère la recherche et les filtres
+   */
+  onSearch(): void {
+    this.currentPage = 1;
+    this.updateDisplayedForCurrentPage();
   }
 
   /**
@@ -482,9 +642,113 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
     const created = new Date(date);
     const diff = now.getTime() - created.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
+
     if (days === 0) return "Aujourd'hui";
     if (days === 1) return "Il y a 1 jour";
     return `Il y a ${days} jours`;
+  }
+
+  /**
+   * Charge les activités récentes
+   */
+  loadRecentActivities(): void {
+    this.loadingActivities = true;
+    // Simuler des données d'activités récentes (à remplacer par un appel API réel)
+    this.recentActivities = [
+      {
+        id: 1,
+        type: 'nouvelle_demande',
+        description: 'Nouvelle demande d\'achat soumise',
+        date: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+        demandeId: 123,
+        user: 'Jean Dupont'
+      },
+      {
+        id: 2,
+        type: 'validation',
+        description: 'Demande validée par le DAF',
+        date: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+        demandeId: 124,
+        user: 'Marie Martin'
+      },
+      {
+        id: 3,
+        type: 'rejet',
+        description: 'Demande rejetée',
+        date: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
+        demandeId: 125,
+        user: 'Pierre Durand'
+      },
+      {
+        id: 4,
+        type: 'modification',
+        description: 'Demande modifiée',
+        date: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6 hours ago
+        demandeId: 126,
+        user: 'Sophie Leroy'
+      }
+    ];
+    this.loadingActivities = false;
+  }
+
+
+
+  /**
+   * Obtient l'icône pour le type d'activité
+   */
+  getActivityIcon(type: string): string {
+    switch (type) {
+      case 'validation': return 'fas fa-check-circle';
+      case 'rejet': return 'fas fa-times-circle';
+      case 'nouvelle_demande': return 'fas fa-plus-circle';
+      case 'modification': return 'fas fa-edit';
+      default: return 'fas fa-info-circle';
+    }
+  }
+
+  /**
+   * Obtient la classe CSS pour le type d'activité
+   */
+  getActivityClass(type: string): string {
+    switch (type) {
+      case 'validation': return 'activity-approved';
+      case 'rejet': return 'activity-rejected';
+      case 'nouvelle_demande': return 'activity-created';
+      case 'modification': return 'activity-updated';
+      default: return 'activity-pending';
+    }
+  }
+
+  /**
+   * Formate la date relative
+   */
+  formatRelativeTime(date: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (minutes < 1) return 'À l\'instant';
+    if (minutes < 60) return `Il y a ${minutes} min`;
+    if (hours < 24) return `Il y a ${hours} h`;
+    return `Il y a ${days} j`;
+  }
+
+  /**
+   * Bascule l'état de la sidebar
+   */
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
+
+  getRoleDisplay(role: string): string {
+    const roleMap: { [key: string]: string } = {
+      'daf': 'DG',
+      'user': 'utilisateur',
+      'rh': 'valideur',
+      'admin': 'admin'
+    };
+    return roleMap[role] || role;
   }
 }

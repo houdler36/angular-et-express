@@ -13,7 +13,7 @@
     <table class="table">
       <thead>
         <tr>
-          <th>ID</th>
+          <th>Matricule</th>
           <th>Nom</th>
           <th>Prénom</th>
           <th>Poste</th>
@@ -22,7 +22,7 @@
       </thead>
       <tbody>
         <tr *ngFor="let p of personnes; trackBy: trackById" @rowAnimation>
-          <td>{{ p.id }}</td>
+          <td>{{ p.matricule }}</td>
           <td>{{ p.nom }}</td>
           <td>{{ p.prenom }}</td>
           <td>{{ p.poste }}</td>
@@ -47,6 +47,13 @@
       <h3>{{ editingPersonne ? 'Modifier Personne' : 'Ajouter Personne' }}</h3>
 
       <form [formGroup]="personneForm" (ngSubmit)="submitForm()">
+        <div class="form-group">
+          <label>Matricule</label>
+          <input formControlName="matricule" [class.invalid]="personneForm.get('matricule')?.invalid && personneForm.get('matricule')?.touched" [readonly]="editingPersonne" />
+          <div *ngIf="personneForm.get('matricule')?.invalid && personneForm.get('matricule')?.touched" class="error-message">
+            Le matricule est requis
+          </div>
+        </div>
         <div class="form-group">
           <label>Nom</label>
           <input formControlName="nom" [class.invalid]="personneForm.get('nom')?.invalid && personneForm.get('nom')?.touched" />

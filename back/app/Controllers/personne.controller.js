@@ -4,9 +4,11 @@ const Op = db.Sequelize.Op;
 
 // Créer et sauvegarder une nouvelle personne
 exports.create = async (req, res) => {
-  if (!req.body.nom || !req.body.prenom) {
+  console.log('Received body:', req.body); // Debug log
+
+  if (!req.body.nom || !req.body.prenom || !req.body.matricule || req.body.matricule.trim() === '') {
     res.status(400).send({
-      message: "Le nom et le prénom ne peuvent pas être vides !"
+      message: "Le nom, le prénom et le matricule ne peuvent pas être vides !"
     });
     return;
   }
@@ -14,13 +16,18 @@ exports.create = async (req, res) => {
   const personne = {
     nom: req.body.nom,
     prenom: req.body.prenom,
-    poste: req.body.poste || ''
+    poste: req.body.poste || '',
+    matricule: req.body.matricule.trim()
   };
+
+  console.log('Creating personne:', personne); // Debug log
 
   try {
     const data = await Personne.create(personne);
+    console.log('Created personne:', data); // Debug log
     res.status(201).send(data);
   } catch (err) {
+    console.error('Create error:', err); // Debug log
     res.status(500).send({
       message: err.message || "Une erreur est survenue lors de la création de la personne."
     });
@@ -69,6 +76,7 @@ exports.update = async (req, res) => {
       nom: req.body.nom,
       prenom: req.body.prenom,
       poste: req.body.poste
+      // matricule n'est pas mis à jour lors de la modification
     });
 
     res.send(personne);

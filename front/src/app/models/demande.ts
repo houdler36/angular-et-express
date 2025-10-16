@@ -38,6 +38,8 @@ export interface Demande {
   montant_total?: number;
   description?: string;
   responsible_pj: { prenom: string; nom: string; };
+  numero_approuve_journal?: number;
+  date_approuvee?: string;
 
   // ✅ Ajout des nouvelles propriétés
   details?: DemandeDetail[];

@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ValidationRhService {
-  private baseUrl = 'http://localhost:8081/api/orders'; // adapte selon backend
+  private baseUrl = `${environment.apiUrl}/orders`; // adapte selon backend
 
   constructor(private http: HttpClient) {}
 

@@ -43,7 +43,7 @@
 
         <!-- Badge coloré selon le rôle -->
         <td [ngClass]="'role-' + user.role">
-          <span class="role-badge">{{ user.role }}</span>
+          <span class="role-badge">{{ getRoleDisplay(user.role) }}</span>
         </td>
 
         <!-- Journaux affichés sous forme de mini badges -->

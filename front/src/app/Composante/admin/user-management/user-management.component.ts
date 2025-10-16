@@ -267,4 +267,14 @@ async createOrUpdateUser() {
   getJournalNamesForUser(user: User): string {
     return user.journals.map(j => j.nom_journal).join(', ');
   }
+
+  getRoleDisplay(role: string): string {
+    const roleMap: { [key: string]: string } = {
+      'daf': 'DG',
+      'user': 'utilisateur',
+      'rh': 'valideur',
+      'admin': 'admin'
+    };
+    return roleMap[role] || role;
+  }
 }

@@ -26,12 +26,12 @@ const demandeModel = (sequelize, Sequelize) => {
         },
         // 'date' est le champ de date de la demande, obligatoire
         date: {
-            type: Sequelize.DATEONLY,
+            type: Sequelize.DATE,
             allowNull: false,
         },
         // 'expected_justification_date' peut être nulle
         expected_justification_date: {
-            type: Sequelize.DATEONLY,
+            type: Sequelize.DATE,
             allowNull: true,
         },
         // 'pj_status' est une énumération, peut être nulle

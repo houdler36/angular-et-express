@@ -5,15 +5,18 @@ const cors = require('cors');
 const db = require('./app/Models');
 
 const app = express();
+const HOST = '0.0.0.0'; // écoute sur toutes les interfaces réseau
 
 /* ======================
    CONFIG CORS
 ====================== */
 const corsOptions = {
   origin: [
-    'http://localhost:4200', // Angular
-    'http://localhost:8081'  // Autre front local si nécessaire
-  ],
+  'http://localhost:4200',
+  'http://localhost:8081',
+  'http://192.168.88.42:4200'  // <-- remplace par ton IP locale
+],
+
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
   allowedHeaders: ["Content-Type", "Authorization", "x-access-token"], // <--- ajouter x-access-token
   credentials: true
@@ -100,8 +103,8 @@ function initializeDatabase() {
 /* ======================
    DEMARRAGE SERVEUR
 ====================== */
-app.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`✅ Serveur démarré sur http://${HOST}:${PORT}`);
 });
 
 process.on('unhandledRejection', (reason, promise) => {

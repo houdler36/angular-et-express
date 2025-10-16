@@ -594,39 +594,53 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid #1B1F3B;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #1B1F3B;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 
     .pdf-logo img {
-      max-height: 80px;
+      max-height: 100px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
     .entreprise-info {
       text-align: center;
-      
+
       h2 {
         margin: 0;
         color: #1B1F3B;
+        font-size: 1.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
       }
-      
+
       p {
         margin: 5px 0 0 0;
         color: #666;
+        font-size: 0.9rem;
       }
     }
 
     .pdf-title {
       text-align: right;
-      
+      max-width: 50%;
+
       h1 {
         margin: 0;
         color: #1B1F3B;
-        font-size: 1.4rem;
+        font-size: 1.6rem;
+        font-weight: bold;
+        line-height: 1.2;
       }
-      
+
       .pdf-reference {
-        margin-top: 5px;
+        margin-top: 10px;
         color: #666;
+        font-size: 1rem;
+        font-weight: 600;
       }
     }
   }
@@ -704,6 +718,7 @@
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
+
 /* Styles pour la gestion des tours de validation */
 .header-status {
   display: flex;
@@ -921,5 +936,265 @@
     flex-direction: column;
     text-align: center;
     gap: 10px;
+  }
+}
+
+/* Timeline de Validation */
+.timeline-section {
+  margin-top: 40px;
+  padding-top: 30px;
+  border-top: 2px solid #EAF2FF;
+
+  .timeline-title {
+    color: #1B1F3B;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #EAF2FF;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .timeline-container {
+    position: relative;
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #e9ecef;
+    }
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+    padding-left: 40px;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: -25px;
+      top: 20px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #6C757D;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 2px #e9ecef;
+    }
+
+    &.timeline-item--completed &::before {
+      background: #28A745;
+      box-shadow: 0 0 0 2px #d4edda;
+    }
+
+    &.timeline-item--current &::before {
+      background: #007BFF;
+      box-shadow: 0 0 0 2px #cce7ff;
+      animation: pulse 2s infinite;
+    }
+
+    &.timeline-item--pending &::before {
+      background: #FFC107;
+      box-shadow: 0 0 0 2px #fff3cd;
+    }
+  }
+
+  .timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .timeline-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+
+    &.timeline-icon--creation {
+      background: linear-gradient(135deg, #6C757D, #495057);
+      color: white;
+    }
+
+    &.timeline-icon--approved {
+      background: linear-gradient(135deg, #28A745, #20c997);
+      color: white;
+    }
+
+    &.timeline-icon--rejected {
+      background: linear-gradient(135deg, #DC3545, #fd7e14);
+      color: white;
+    }
+
+    &.timeline-icon--pending {
+      background: linear-gradient(135deg, #FFC107, #fd7e14);
+      color: white;
+    }
+
+    i {
+      font-size: 0.8rem;
+    }
+  }
+
+  .timeline-content {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+  }
+
+  .timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    .timeline-event-title {
+      margin: 0;
+      color: #1B1F3B;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .timeline-date {
+      color: #6C757D;
+      font-size: 0.85rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+  }
+
+  .timeline-details {
+    .timeline-description {
+      margin: 0 0 15px 0;
+      color: #495057;
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    .timeline-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+
+      .timeline-validator {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #6C757D;
+        font-size: 0.85rem;
+        font-weight: 500;
+
+        i {
+          color: #007BFF;
+        }
+      }
+    }
+
+    .timeline-comment {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 3px solid #007BFF;
+
+      i {
+        color: #007BFF;
+        margin-top: 2px;
+        font-size: 0.8rem;
+      }
+
+      span {
+        color: #495057;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        font-style: italic;
+      }
+    }
+  }
+}
+
+/* Animation pour les éléments timeline */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+  }
+}
+
+/* Responsive pour la timeline */
+@media (max-width: 768px) {
+  .timeline-section {
+    .timeline {
+      padding-left: 20px;
+
+      &::before {
+        left: 10px;
+      }
+    }
+
+    .timeline-item {
+      padding-left: 30px;
+
+      &::before {
+        left: -20px;
+      }
+    }
+
+    .timeline-marker {
+      left: -25px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .timeline-content {
+      padding: 15px;
+    }
+
+    .timeline-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 5px;
+
+      .timeline-date {
+        font-size: 0.8rem;
+      }
+    }
   }
 }

@@ -47,7 +47,7 @@ export class DemandeFormComponent implements OnInit {
     // Initialisation du formulaire avec des valeurs par défaut et des validateurs
     this.demandeForm = this.fb.group({
       type: ['DED'], // Type de demande par défaut
-      date: [new Date().toISOString().substring(0, 10), Validators.required],
+      date: [new Date().toISOString(), Validators.required],
       journal_id: [null, Validators.required],
       description: ['', Validators.required],
       resp_pj_id: [null, Validators.required],
@@ -375,7 +375,7 @@ export class DemandeFormComponent implements OnInit {
   resetForm(): void {
     this.demandeForm.reset({
       type: 'DED',
-      date: new Date().toISOString().substring(0, 10),
+      date: new Date().toISOString(),
       pj_status: 'oui',
       dedId: null
     });

@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { TokenStorageService } from './token-storage.service';
+import { environment } from '../../environments/environment';
 
 // Interface pour les données de la requête de changement de mot de passe
 export interface PasswordChangeData {
@@ -15,8 +16,8 @@ export interface PasswordChangeData {
 })
 export class AuthService {
   // URLs des APIs, basées sur votre structure back-end
-  private authApiUrl = 'http://localhost:8081/api/auth';
-  private userApiUrl = 'http://localhost:8081/api/users';
+  private authApiUrl = `${environment.apiUrl}/auth`;
+  private userApiUrl = `${environment.apiUrl}/users`;
 
   constructor(private http: HttpClient, private tokenStorage: TokenStorageService) { }
 

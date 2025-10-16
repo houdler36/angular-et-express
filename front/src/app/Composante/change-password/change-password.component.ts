@@ -103,7 +103,7 @@ export class ChangePasswordComponent implements OnInit {
       mainObservable = mainObservable.pipe(
         switchMap(() => this.userService.uploadSignature(this.selectedFile!).pipe(
           switchMap(uploadRes =>
-            this.userService.updateUserProfile({ signature_image_url: uploadRes.signature_image_url })
+            this.userService.updateUserProfile({ signature_image_url: uploadRes.url })
           )
         ))
       );

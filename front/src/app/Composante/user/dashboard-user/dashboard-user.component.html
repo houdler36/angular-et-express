@@ -204,7 +204,7 @@
               <td>{{ demande.id }}</td>
               <td>{{ demande.type }}</td>
               <td>{{ demande.responsible_pj?.nom }} {{ demande.responsible_pj?.prenom }}</td>
-              <td>{{ demande.montant_total }}</td>
+              <td>{{ demande.montant_total | number:'1.2-2' }}</td>
               <td>
                 <span [ngClass]="{
                   'status-badge': true,

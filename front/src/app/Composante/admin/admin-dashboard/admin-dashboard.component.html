@@ -84,7 +84,7 @@
             <div class="stat-icon"><i class="fas fa-wallet"></i></div>
             <div class="stat-content">
               <h3>Budgets Totaux</h3>
-              <p class="stat-number">{{ totalBudget | currency:'MGA':'symbol':'1.0-0' }}</p>
+              <p class="stat-number">{{ totalBudget | number:'1.2-2' }}</p>
               <div class="stat-actions">
                 <button class="action-btn" (click)="setActivePage('budget')">
                   <i class="fas fa-cog"></i> Gérer

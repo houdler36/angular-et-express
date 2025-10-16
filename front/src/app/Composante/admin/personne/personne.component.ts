@@ -62,6 +62,7 @@ export class PersonneCrudComponent implements OnInit {
 
   constructor(private fb: FormBuilder, private personneService: PersonneApiService) {
     this.personneForm = this.fb.group({
+      matricule: ['', Validators.required],
       nom: ['', Validators.required],
       prenom: ['', Validators.required],
       poste: ['']
@@ -78,7 +79,10 @@ export class PersonneCrudComponent implements OnInit {
 
   loadPersonnes(): void {
     this.personneService.getAll().subscribe({
-      next: data => this.personnes = data,
+      next: data => {
+        console.log('Loaded personnes:', data); // Debug log
+        this.personnes = data;
+      },
       error: err => {
         console.error('Erreur récupération personnes', err);
         this.showToast('Erreur lors du chargement des personnes.', 'error');
@@ -91,9 +95,15 @@ export class PersonneCrudComponent implements OnInit {
     if (personne) {
       this.editingPersonne = personne;
       this.personneForm.patchValue(personne);
+      // Pour la modification, le matricule n'est pas obligatoire
+      this.personneForm.get('matricule')?.clearValidators();
+      this.personneForm.get('matricule')?.updateValueAndValidity();
     } else {
       this.editingPersonne = null;
       this.personneForm.reset();
+      // Pour la création, le matricule est obligatoire
+      this.personneForm.get('matricule')?.setValidators(Validators.required);
+      this.personneForm.get('matricule')?.updateValueAndValidity();
     }
   }
 

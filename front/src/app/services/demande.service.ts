@@ -3,14 +3,15 @@ import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular
 import { of, Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { TokenStorageService } from './token-storage.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DemandeService {
-  private apiUrl = 'http://localhost:8081/api/demandes';
-  private apiUtilsUrl = 'http://localhost:8081/api/utils';
-  private apiPersonnesUrl = 'http://localhost:8081/api/personnes';
+  private apiUrl = `${environment.apiUrl}/demandes`;
+  private apiUtilsUrl = `${environment.apiUrl}/utils`;
+  private apiPersonnesUrl = `${environment.apiUrl}/personnes`;
 
   constructor(
     private http: HttpClient,

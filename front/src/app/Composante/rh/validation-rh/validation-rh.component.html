@@ -16,7 +16,7 @@
         <tbody>
             <tr *ngFor="let demande of demandesATraiter">
                 <td class="px-2 py-1 border">{{ demande.description || '—' }}</td>
-                <td class="px-2 py-1 border">{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
+                <td class="px-2 py-1 border">{{ demande.montant_total | number:'1.2-2' }}</td>
                 <td class="px-2 py-1 border">{{ demande.status }}</td>
                 <td class="px-2 py-1 border">
                     <ul class="list-disc list-inside">
@@ -62,7 +62,7 @@
         <tbody>
             <tr *ngFor="let demande of demandesEnAttente">
                 <td class="px-2 py-1 border">{{ demande.description || '—' }}</td>
-                <td class="px-2 py-1 border">{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
+                <td class="px-2 py-1 border">{{ demande.montant_total | number:'1.2-2' }}</td>
                 <td class="px-2 py-1 border">{{ demande.status }}</td>
                 <td class="px-2 py-1 border">
                     <ul class="list-disc list-inside">
@@ -103,7 +103,7 @@
         <tbody>
             <tr *ngFor="let demande of demandesFinalisees">
                 <td class="px-2 py-1 border">{{ demande.description || '—' }}</td>
-                <td class="px-2 py-1 border">{{ demande.montant_total | currency:'MGA':'symbol':'1.0-0' }}</td>
+                <td class="px-2 py-1 border">{{ demande.montant_total | number:'1.2-2' }}</td>
                 <td class="px-2 py-1 border">{{ demande.status }}</td>
                 <td class="px-2 py-1 border">
                     <ul class="list-disc list-inside">

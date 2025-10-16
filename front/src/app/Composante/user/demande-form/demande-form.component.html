@@ -15,7 +15,7 @@
 
         <div class="form-group">
           <label for="date" class="form-label" [class.text-red-500]="isInvalid('date')">Date de la demande</label>
-          <input type="date" id="date" formControlName="date" [class.invalid]="isInvalid('date')" class="form-input" />
+          <input type="datetime-local" id="date" formControlName="date" [class.invalid]="isInvalid('date')" class="form-input" />
           <div *ngIf="isInvalid('date')" class="form-error">La date est requise.</div>
         </div>
 

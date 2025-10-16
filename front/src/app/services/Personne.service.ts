@@ -3,8 +3,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Personne } from '../models/personne';
+import { environment } from '../../environments/environment';
 
-const baseUrl = 'http://localhost:8081/api/personnes'; // URL vers le backend personnes
+const baseUrl = `${environment.apiUrl}/personnes`; // URL vers le backend personnes
 
 @Injectable({
   providedIn: 'root'

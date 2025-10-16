@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { DemandeService } from '../../../services/demande.service';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -9,7 +9,7 @@ import { HttpClientModule } from '@angular/common/http';
   templateUrl: './rapport-projet.component.html',
   styleUrls: ['./rapport-projet.component.scss'],
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule, DatePipe]
+  imports: [CommonModule, FormsModule, HttpClientModule, DatePipe, DecimalPipe]
 })
 export class RapportProjetComponent implements OnInit {
   projets: any[] = [];
@@ -121,8 +121,13 @@ export class RapportProjetComponent implements OnInit {
 
   calculateStats(): void {
     const totalMontant = this.demandesFiltrees.reduce((sum, demande) => {
-      return sum + demande.details.reduce((detailSum: number, detail: any) => 
-        detailSum + (detail.amount || 0), 0);
+      return sum + demande.details.reduce((detailSum: number, detail: any) => {
+        // Parse amount as number, handling strings with multiple decimals
+        const amount = typeof detail.amount === 'string'
+          ? parseFloat(detail.amount.replace(/[^\d.-]/g, ''))
+          : (detail.amount || 0);
+        return detailSum + (isNaN(amount) ? 0 : amount);
+      }, 0);
     }, 0);
 
     const nombreDemandes = this.demandesFiltrees.length;

@@ -43,7 +43,7 @@
           <td>{{ demande.type }}</td>
           <td>{{ demande.responsible_pj?.nom }} {{ demande.responsible_pj?.prenom }}</td>
           <td>{{ demande.description }}</td>
-          <td>{{ demande.montant_total }}</td>
+          <td>{{ demande.montant_total | number:'1.2-2' }}</td>
           <td>
             <span [ngClass]="{
               'status-badge': true,
@@ -54,7 +54,7 @@
               {{ demande.status }}
             </span>
           </td>
-          <td>{{ demande.date | date:'short' }}</td>
+          <td>{{ demande.date | date:'short':'':'fr' }}</td>
 
           <td class="action-buttons">
             <button class="btn btn-sm secondary" [routerLink]="['/demandes', demande.id]">

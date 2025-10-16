@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe, NgIf, NgFor, NgClass } from '@angular/common';
+import { CommonModule, NgIf, NgFor, NgClass, registerLocaleData } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import localeFr from '@angular/common/locales/fr';
 
 import { ChangePasswordComponent } from '../../change-password/change-password.component';
 
@@ -19,7 +20,6 @@ import { UserService } from '../../../services/user.service';
     NgIf,
     NgFor,
     NgClass,
-    CurrencyPipe,
     ReactiveFormsModule,
     FormsModule,
     ChangePasswordComponent,
@@ -45,7 +45,7 @@ export class RhDashboardComponent implements OnInit {
   loadingATraiter = false;
   loadingEnAttente = false;
   loadingFinalisees = false;
-  activePage: string = 'Accueil';
+  activePage: string = 'demandesEnAttente';
 
   // ------------------ Remplaçant RH ------------------
   autresRH: any[] = [];
@@ -65,6 +65,24 @@ export class RhDashboardComponent implements OnInit {
     dateDebut: '',
     dateFin: ''
   };
+
+  // ------------------ Tri et pagination ------------------
+  // Propriétés de tri
+  sortColumn: { [key: string]: string } = {};
+  sortDirection: { [key: string]: 'asc' | 'desc' } = {};
+
+  // Propriétés de pagination
+  currentPage: { [key: string]: number } = {
+    demandesATraiter: 1,
+    demandesEnAttente: 1,
+    demandesApprouvees: 1
+  };
+  itemsPerPage: number = 10;
+
+  // Données triées et paginées
+  sortedDemandesATraiter: any[] = [];
+  sortedDemandesEnAttente: any[] = [];
+  sortedDemandesFinalisees: any[] = [];
 
   // ------------------ Graphiques ------------------
   public barChartOptions: ChartConfiguration['options'] = {
@@ -107,6 +125,9 @@ export class RhDashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Register French locale for date formatting
+    registerLocaleData(localeFr);
+
     this.currentUser = this.authService.getCurrentUser();
     if (!this.currentUser || this.currentUser.role !== 'rh') {
       // Redirect to appropriate dashboard based on role
@@ -155,6 +176,7 @@ export class RhDashboardComponent implements OnInit {
         }).filter(d => d !== null);
 
         this.filteredDemandesATraiter = [...this.demandesATraiter];
+        this.applySortingAndPagination();
         this.loadingATraiter = false;
       },
       error: () => this.loadingATraiter = false
@@ -162,9 +184,11 @@ export class RhDashboardComponent implements OnInit {
   }
 
   loadDemandesEnAttente() {
+    console.log('Loading demandes en attente');
     this.loadingEnAttente = true;
     this.demandeService.getDemandesEnAttenteAutres().subscribe({
       next: (data) => {
+        console.log('Demandes en attente data:', data);
         this.demandesEnAttente = data.map((demande: any) => {
           const validations = demande.validations || [];
           const currentValidation = validations.find((v: any) => v.statut === 'en attente');
@@ -177,17 +201,24 @@ export class RhDashboardComponent implements OnInit {
             currentValidator
           };
         });
+        console.log('Demandes en attente after mapping:', this.demandesEnAttente);
         this.filteredDemandesEnAttente = [...this.demandesEnAttente];
+        this.applySortingAndPagination();
         this.loadingEnAttente = false;
       },
-      error: () => (this.loadingEnAttente = false)
+      error: (err) => {
+        console.log('Error loading demandes en attente:', err);
+        this.loadingEnAttente = false;
+      }
     });
   }
 
   loadDemandesFinalisees() {
+    console.log('Loading demandes finalisees');
     this.loadingFinalisees = true;
     this.demandeService.getDemandesFinalisees().subscribe({
       next: (data) => {
+        console.log('Demandes finalisees data:', data);
         this.demandesFinalisees = data.map((demande: any) => {
           const validations = demande.validations || [];
           // Find the validation with the highest ordre that is 'validé' or 'rejeté'
@@ -202,10 +233,15 @@ export class RhDashboardComponent implements OnInit {
             finalValidatorName
           };
         });
+        console.log('Demandes finalisees after mapping:', this.demandesFinalisees);
         this.filteredDemandesFinalisees = [...this.demandesFinalisees];
+        this.applySortingAndPagination();
         this.loadingFinalisees = false;
       },
-      error: () => this.loadingFinalisees = false
+      error: (err) => {
+        console.log('Error loading demandes finalisees:', err);
+        this.loadingFinalisees = false;
+      }
     });
   }
 
@@ -401,6 +437,9 @@ export class RhDashboardComponent implements OnInit {
     this.filteredDemandesATraiter = filterArray(this.demandesATraiter);
     this.filteredDemandesEnAttente = filterArray(this.demandesEnAttente);
     this.filteredDemandesFinalisees = filterArray(this.demandesFinalisees);
+
+    // Appliquer le tri et la pagination après les filtres
+    this.applySortingAndPagination();
   }
 
   resetFilters() {
@@ -412,6 +451,152 @@ export class RhDashboardComponent implements OnInit {
       dateFin: ''
     };
     this.onSearch();
+  }
+
+  // ------------------ Tri et pagination ------------------
+  sortData(column: string, dataType: string) {
+    if (this.sortColumn[dataType] === column) {
+      this.sortDirection[dataType] = this.sortDirection[dataType] === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortColumn[dataType] = column;
+      this.sortDirection[dataType] = 'asc';
+    }
+
+    const dataMap: { [key: string]: any[] } = {
+      demandesATraiter: this.filteredDemandesATraiter,
+      demandesEnAttente: this.filteredDemandesEnAttente,
+      demandesApprouvees: this.filteredDemandesFinalisees
+    };
+
+    const data = dataMap[dataType];
+    if (!data) return;
+
+    data.sort((a, b) => {
+      let aValue = this.getValueForSorting(a, column);
+      let bValue = this.getValueForSorting(b, column);
+
+      if (aValue < bValue) return this.sortDirection[dataType] === 'asc' ? -1 : 1;
+      if (aValue > bValue) return this.sortDirection[dataType] === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    // Reset to page 1 when sorting
+    this.currentPage[dataType] = 1;
+
+    // Update sorted array
+    switch(dataType) {
+      case 'demandesATraiter':
+        this.sortedDemandesATraiter = [...data];
+        break;
+      case 'demandesEnAttente':
+        this.sortedDemandesEnAttente = [...data];
+        break;
+      case 'demandesApprouvees':
+        this.sortedDemandesFinalisees = [...data];
+        break;
+    }
+  }
+
+  private getValueForSorting(item: any, column: string): any {
+    switch (column) {
+      case 'id':
+        return item.id;
+      case 'type':
+        return item.type || '';
+      case 'demandeur':
+        return `${item.responsible_pj?.nom || ''} ${item.responsible_pj?.prenom || ''}`.toLowerCase();
+      case 'motif':
+        return item.description || '';
+      case 'montant':
+        return item.montant_total || 0;
+      case 'statut':
+        return item.status || '';
+      case 'validateur':
+        return item.currentValidator || item.finalValidatorName || '';
+      case 'date':
+        return new Date(item.date).getTime();
+      default:
+        return '';
+    }
+  }
+
+  getPaginatedData(data: any[], dataType: string): any[] {
+    const startIndex = (this.currentPage[dataType] - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  }
+
+  getTotalPages(data: any[]): number {
+    return Math.ceil(data.length / this.itemsPerPage);
+  }
+
+  changePage(dataType: string, page: number) {
+    if (page >= 1 && page <= this.getTotalPages(this.getSortedData(dataType))) {
+      this.currentPage[dataType] = page;
+      this.applySortingAndPagination();
+    }
+  }
+
+  getSortedData(dataType: string): any[] {
+    switch (dataType) {
+      case 'demandesATraiter':
+        return this.sortedDemandesATraiter;
+      case 'demandesEnAttente':
+        return this.sortedDemandesEnAttente;
+      case 'demandesApprouvees':
+        return this.sortedDemandesFinalisees;
+      default:
+        return [];
+    }
+  }
+
+  private applySortingAndPagination() {
+    // Appliquer le tri et la pagination aux données filtrées
+    this.sortedDemandesATraiter = [...this.filteredDemandesATraiter];
+    this.sortedDemandesEnAttente = [...this.filteredDemandesEnAttente];
+    this.sortedDemandesFinalisees = [...this.filteredDemandesFinalisees];
+
+    // Appliquer le tri actuel si défini
+    for (const table of ['demandesATraiter', 'demandesEnAttente', 'demandesApprouvees']) {
+      if (this.sortColumn[table]) {
+        const data = this.getSortedData(table);
+        data.sort((a, b) => {
+          let aValue = this.getValueForSorting(a, this.sortColumn[table]);
+          let bValue = this.getValueForSorting(b, this.sortColumn[table]);
+          if (aValue < bValue) return this.sortDirection[table] === 'asc' ? -1 : 1;
+          if (aValue > bValue) return this.sortDirection[table] === 'asc' ? 1 : -1;
+          return 0;
+        });
+        // Update the sorted array
+        switch(table) {
+          case 'demandesATraiter':
+            this.sortedDemandesATraiter = [...data];
+            break;
+          case 'demandesEnAttente':
+            this.sortedDemandesEnAttente = [...data];
+            break;
+          case 'demandesApprouvees':
+            this.sortedDemandesFinalisees = [...data];
+            break;
+        }
+      }
+    }
+  }
+
+  // Méthode pour obtenir les données affichées (triées et paginées)
+  getDisplayedData(dataType: string): any[] {
+    const sortedData = this.getSortedData(dataType);
+    return this.getPaginatedData(sortedData, dataType);
+  }
+
+  // Méthode pour vérifier si une colonne est triée
+  isColumnSorted(column: string, dataType: string): boolean {
+    return this.sortColumn[dataType] === column;
+  }
+
+  // Méthode pour obtenir la direction du tri pour une colonne
+  getSortDirection(column: string, dataType: string): 'asc' | 'desc' | null {
+    return this.isColumnSorted(column, dataType) ? this.sortDirection[dataType] : null;
   }
 
   // ------------------ Export CSV ------------------
@@ -479,5 +664,15 @@ export class RhDashboardComponent implements OnInit {
     } else {
       body.classList.remove('dark-mode');
     }
+  }
+
+  getRoleDisplay(role: string): string {
+    const roleMap: { [key: string]: string } = {
+      'daf': 'DG',
+      'user': 'utilisateur',
+      'rh': 'valideur',
+      'admin': 'admin'
+    };
+    return roleMap[role] || role;
   }
 }

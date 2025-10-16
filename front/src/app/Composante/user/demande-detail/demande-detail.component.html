@@ -3,7 +3,7 @@
     <!-- En-tête interface -->
     <div class="interface-header">
       <div class="header-actions">
-        <button class="btn-back" routerLink="/demandes">
+        <button class="btn-back" routerLink="/dashboard/demandes">
           <i class="fas fa-arrow-left"></i> Retour
         </button>
         
@@ -30,16 +30,16 @@
 
     <!-- Contenu principal -->
     <div class="demande-content" id="pdf-content">
-      <!-- En-tête PDF (caché dans l'interface) -->
+      <!-- En-tête PDF -->
       <div class="pdf-header">
         <div class="pdf-logo">
-          <img src="/assets/logo-entreprise.png" alt="Logo" *ngIf="hasLogo">
+          <img src="/images/salfa.jpg" alt="Logo Salafa" *ngIf="hasLogo">
           <div class="entreprise-info" *ngIf="!hasLogo">
-            <h2>NOM ENTREPRISE</h2>
+            <h2>SALAFA</h2>
             <p>Adresse · Téléphone · Email</p>
           </div>
         </div>
-        
+
         <div class="pdf-title">
           <h1>
             {{ demande.type === 'DED' ? "DEMANDE D'ENGAGEMENT DE DEPENSES (DED)" :
@@ -61,6 +61,10 @@
           <div class="info-item">
             <label>Demandeur:</label>
             <span>{{ demande.responsible_pj?.prenom }} {{ demande.responsible_pj?.nom }}</span>
+          </div>
+          <div class="info-item" *ngIf="demande.journal">
+            <label>Journal:</label>
+            <span>{{ demande.journal.nom_journal }} ({{ demande.journal.nom_projet }}) - Numéro: {{ demande.numero_approuve_journal }} - ID: {{ demande.id }}</span>
           </div>
           <div class="info-item">
             <label>Pièces Jointes:</label>
@@ -111,20 +115,20 @@
                            class="budget-tooltip">
                         <div class="tooltip-item">
                           <span>Budget Annuel:</span>
-                          <strong>{{ detail.budget.budget_annuel | number:'1.0-0' }} Ar</strong>
+                          <strong>{{ detail.budget.budget_annuel | number:'1.2-2' }} Ar</strong>
 
                         </div>
                         <div class="tooltip-item">
                           <span>Budget Trimestre:</span>
-                          <strong>{{ getBudgetTrimestre(detail, demande.date) | number:'1.0-0' }} Ar</strong>
+                          <strong>{{ getBudgetTrimestre(detail, demande.date) | number:'1.2-2' }} Ar</strong>
                         </div>
                         <div class="tooltip-item">
                           <span>Montant Ligne:</span>
-                          <strong>{{ detail.amount | number:'1.0-0' }} Ar</strong>
+                          <strong>{{ detail.amount | number:'1.2-2' }} Ar</strong>
                         </div>
                         <div class="tooltip-item">
                           <span>Solde Disponible:</span>
-                          <strong>{{ getSoldeDisponible(detail) | number:'1.0-0' }} Ar</strong>
+                          <strong>{{ getSoldeDisponible(detail) | number:'1.2-2' }} Ar</strong>
                         </div>
                       </div>
                     </div>
@@ -141,9 +145,9 @@
                 </td>
 
                 <td class="amount text-right">
-                  <span *ngIf="demande.type === 'DED' || (demande.type === 'ERD' && i > 0)" 
+                  <span *ngIf="demande.type === 'DED' || (demande.type === 'ERD' && i > 0)"
                         class="debit-amount">
-                    {{ detail.amount | number:'1.0-0' }}
+                    {{ detail.amount | number:'1.2-2' }}
                   </span>
                   <span *ngIf="!(demande.type === 'DED' || (demande.type === 'ERD' && i > 0))" class="no-amount">
                     -
@@ -151,9 +155,9 @@
                 </td>
 
                 <td class="amount text-right">
-                  <span *ngIf="demande.type === 'Recette' || (demande.type === 'ERD' && i === 0)" 
+                  <span *ngIf="demande.type === 'Recette' || (demande.type === 'ERD' && i === 0)"
                         class="credit-amount">
-                    {{ detail.amount | number:'1.0-0' }}
+                    {{ detail.amount | number:'1.2-2' }}
                   </span>
                   <span *ngIf="!(demande.type === 'Recette' || (demande.type === 'ERD' && i === 0))" class="no-amount">
                     -
@@ -172,10 +176,10 @@
                   TOTAUX:
                 </td>
                 <td class="text-right total-amount">
-                  <strong>{{ totalDebit | number:'1.0-0' }}</strong>
+                  <strong>{{ totalDebit | number:'1.2-2' }}</strong>
                 </td>
                 <td class="text-right total-amount">
-                  <strong>{{ totalCredit | number:'1.0-0' }}</strong>
+                  <strong>{{ totalCredit | number:'1.2-2' }}</strong>
                 </td>
               </tr>
 
@@ -186,12 +190,12 @@
                 </td>
 
                 <td class="text-right solde-amount" [ngClass]="{'negative': solde < 0}">
-                  <strong *ngIf="solde < 0">{{ (solde * -1) | number:'1.0-0' }}</strong>
+                  <strong *ngIf="solde < 0">{{ (solde * -1) | number:'1.2-2' }}</strong>
                   <span *ngIf="solde >= 0" class="no-amount">-</span>
                 </td>
 
                 <td class="text-right solde-amount" [ngClass]="{'positive': solde > 0}">
-                  <strong *ngIf="solde > 0">{{ solde | number:'1.0-0' }}</strong>
+                  <strong *ngIf="solde > 0">{{ solde | number:'1.2-2' }}</strong>
                   <span *ngIf="solde <= 0" class="no-amount">-</span>
                 </td>
               </tr>
@@ -206,9 +210,9 @@
       </div>
 
       <!-- Validateurs -->
-      <div class="validators-section">
+      <div class="validators-section" >
         <h3 class="validators-title">VALIDATIONS</h3>
-        
+
         <div class="validators-grid">
           <div *ngFor="let v of displayValidators" class="validator-card">
             <div class="validator-header">
@@ -217,7 +221,7 @@
                 {{ v.statut | titlecase }}
               </span>
             </div>
-            
+
             <div class="signature-container">
               <ng-container *ngIf="v.statut === 'validé' && v.signatureBase64; else placeholderSignature">
                 <img [src]="v.signatureBase64"
@@ -235,6 +239,45 @@
                 </div>
                 <p class="signature-date">En attente</p>
               </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline de Validation -->
+      <div class="timeline-section" *ngIf="validationTimeline && validationTimeline.length > 0 && !isGeneratingPDF && (demande.status === 'en attente' || demande.status === 'approuvée')">
+
+        <div class="timeline-container">
+          <div class="timeline">
+            <div *ngFor="let event of validationTimeline; let i = index; trackBy: trackByEventId"
+                 class="timeline-item"
+                 [ngClass]="{'timeline-item--completed': event.completed, 'timeline-item--current': event.current, 'timeline-item--pending': !event.completed && !event.current}">
+
+              <div class="timeline-marker">
+                <div class="timeline-icon" [ngClass]="event.iconClass">
+                  <i [class]="event.icon"></i>
+                </div>
+              </div>
+
+              <div class="timeline-content">
+                <div class="timeline-header">
+                  <h4 class="timeline-event-title">{{ event.title }}</h4>
+                  <span class="timeline-date">{{ event.date | date:'dd/MM/yyyy à HH:mm' }}</span>
+                </div>
+
+                <div class="timeline-details">
+                  <p class="timeline-description">{{ event.description }}</p>
+                  <div class="timeline-meta" *ngIf="event.validator">
+                    <span class="timeline-validator">
+                      <i class="fas fa-user"></i> {{ event.validator }}
+                    </span>
+                  </div>
+                  <div class="timeline-comment" *ngIf="event.comment">
+                    <i class="fas fa-comment"></i>
+                    <span>{{ event.comment }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -257,6 +300,9 @@
         </button>
       </div>
     </div>
+
+    <!-- Composant PDF caché -->
+    <app-demande-pdf #pdfComp [demande]="demande" [displayValidators]="displayValidators" [montantEnLettres]="montantEnLettres" [hasLogo]="hasLogo" [serverUrl]="serverUrl" [companyInfo]="companyInfo"></app-demande-pdf>
   </div>
 
   <!-- Modal de rejet -->

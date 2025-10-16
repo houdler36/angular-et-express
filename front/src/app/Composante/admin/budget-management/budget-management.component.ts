@@ -1,7 +1,7 @@
 // Fichier: src/app/Composante/admin/budget-management/budget-management.component.ts
 
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BudgetApiService } from '../../../services/budget-api.service';
 import { HttpClientModule } from '@angular/common/http';
@@ -9,7 +9,7 @@ import { HttpClientModule } from '@angular/common/http';
 @Component({
   selector: 'app-budget-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, HttpClientModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './budget-management.component.html',
   styleUrls: ['./budget-management.component.css']
 })

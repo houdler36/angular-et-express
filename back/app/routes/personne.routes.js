@@ -11,7 +11,7 @@ router.use(authJwt.verifyToken);
 router.get("/", async (req, res) => {
     try {
         const personnes = await Personne.findAll({
-            attributes: ['id', 'nom', 'prenom', 'poste']
+            attributes: ['id', 'nom', 'prenom', 'poste', 'matricule']
         });
         res.status(200).send(personnes);
     } catch (error) {

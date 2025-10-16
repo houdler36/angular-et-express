@@ -2,13 +2,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class StatsService {
   // Replace this with the actual URL of your backend API
-  private apiUrl = 'http://localhost:8081/api/stats';
+  private apiUrl = `${environment.apiUrl}/stats`;
 
   constructor(private http: HttpClient) { }
 
