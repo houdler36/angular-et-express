@@ -45,6 +45,9 @@ export interface RecentActivity {
   date: Date;
   demandeId?: number;
   user?: string;
+  icon?: string;
+  text?: string;
+  time?: string;
 }
 
 @Component({
@@ -56,11 +59,12 @@ export interface RecentActivity {
 })
 export class DafDashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
+  private autoRefreshInterval: any;
 
   // Propriétés utilisateur
   currentUserId: number | null = null;
   user: any;
-  
+
   // Données brutes des demandes
   rawDemandesATraiter: any[] = [];
   rawDemandesEnAttente: any[] = [];
@@ -144,6 +148,9 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
     ]
   };
 
+  // Propriétés pour la compatibilité avec le template admin
+  lastUpdate: Date = new Date();
+
   constructor(
     private demandeService: DemandeService,
     private authService: AuthService,
@@ -155,11 +162,9 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.user = this.authService.getCurrentUser();
-    if (!this.user || this.user.role !== 'daf') {
+    if (!this.user || (this.user.role !== 'daf' && this.user.role !== 'rh')) {
       // Redirect to appropriate dashboard based on role
-      if (this.user?.role === 'rh') {
-        this.router.navigate(['/rh/dashboard']);
-      } else if (this.user?.role === 'admin') {
+      if (this.user?.role === 'admin') {
         this.router.navigate(['/admin']);
       } else {
         this.router.navigate(['/dashboard']);
@@ -172,6 +177,9 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -180,7 +188,7 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
    * Actualisation automatique toutes les 30 secondes
    */
   private setupAutoRefresh(): void {
-    setInterval(() => {
+    this.autoRefreshInterval = setInterval(() => {
       if (this.activePage === 'Dashboard' || this.activePage === 'demandesATraiter') {
         this.loadAllDemandes();
       }
@@ -192,7 +200,9 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
    */
   loadAllDemandes(): void {
     this.loadStats();
-    this.loadDemandesATraiter();
+    if (this.user?.role === 'daf') {
+      this.loadDemandesATraiter();
+    }
     this.loadDemandesEnAttente();
     this.loadDemandesFinalisees();
   }
@@ -241,6 +251,10 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
    * Charge les demandes à traiter
    */
   loadDemandesATraiter(): void {
+    if (this.user?.role !== 'daf') {
+      this.loadingATraiter = false;
+      return;
+    }
     this.loadingATraiter = true;
     this.demandeService.getDemandesDAFAValider()
       .pipe(takeUntil(this.destroy$))
@@ -661,7 +675,10 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
         description: 'Nouvelle demande d\'achat soumise',
         date: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
         demandeId: 123,
-        user: 'Jean Dupont'
+        user: 'Jean Dupont',
+        icon: 'fas fa-plus-circle',
+        text: 'Nouvelle demande d\'achat soumise',
+        time: 'Il y a 30 min'
       },
       {
         id: 2,
@@ -669,7 +686,10 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
         description: 'Demande validée par le DAF',
         date: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
         demandeId: 124,
-        user: 'Marie Martin'
+        user: 'Marie Martin',
+        icon: 'fas fa-check-circle',
+        text: 'Demande validée par le DAF',
+        time: 'Il y a 2 h'
       },
       {
         id: 3,
@@ -677,7 +697,10 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
         description: 'Demande rejetée',
         date: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
         demandeId: 125,
-        user: 'Pierre Durand'
+        user: 'Pierre Durand',
+        icon: 'fas fa-times-circle',
+        text: 'Demande rejetée',
+        time: 'Il y a 4 h'
       },
       {
         id: 4,
@@ -685,13 +708,14 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
         description: 'Demande modifiée',
         date: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6 hours ago
         demandeId: 126,
-        user: 'Sophie Leroy'
+        user: 'Sophie Leroy',
+        icon: 'fas fa-edit',
+        text: 'Demande modifiée',
+        time: 'Il y a 6 h'
       }
     ];
     this.loadingActivities = false;
   }
-
-
 
   /**
    * Obtient l'icône pour le type d'activité
@@ -750,5 +774,15 @@ export class DafDashboardComponent implements OnInit, OnDestroy {
       'admin': 'admin'
     };
     return roleMap[role] || role;
+  }
+
+  /**
+   * Scroll to top
+   */
+  scrollToTop(): void {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   }
 }

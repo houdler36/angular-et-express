@@ -13,13 +13,13 @@
     <router-outlet></router-outlet>
   </main>
 </div>
-<div *ngIf="showLogoutDialog" class="dialog-overlay">
+<div *ngIf="showLogoutDialog" class="dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="logout-dialog-title" aria-describedby="logout-dialog-description">
   <div class="dialog-content">
-    <h2>Confirmer la déconnexion</h2>
-    <p>Êtes-vous sûr de vouloir vous déconnecter de votre compte ?</p>
+    <h2 id="logout-dialog-title">Confirmer la déconnexion</h2>
+    <p id="logout-dialog-description">Êtes-vous sûr de vouloir vous déconnecter de votre compte ?</p>
     <div class="dialog-actions">
-      <button class="btn btn-cancel" (click)="onLogoutConfirm(false)">Annuler</button>
-      <button class="btn btn-confirm" (click)="onLogoutConfirm(true)">Confirmer</button>
+      <button class="btn btn-cancel" (click)="onLogoutConfirm(false)" aria-label="Annuler la déconnexion">Annuler</button>
+      <button class="btn btn-confirm" (click)="onLogoutConfirm(true)" aria-label="Confirmer la déconnexion">Confirmer</button>
     </div>
   </div>
 </div>

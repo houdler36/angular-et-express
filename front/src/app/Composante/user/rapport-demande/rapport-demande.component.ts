@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DemandeService } from '../../../services/demande.service';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 @Component({
   selector: 'app-rapport-demande',
@@ -22,6 +24,8 @@ export class RapportdemandeComponent implements OnInit {
   // Propriétés pour le tri
   sortField: string = 'date_approuve';
   sortDirection: 'asc' | 'desc' = 'asc';
+
+  @ViewChild('pdfContent', { static: false }) pdfContent!: ElementRef;
 
   constructor(private demandeService: DemandeService) {}
 
@@ -125,7 +129,7 @@ export class RapportdemandeComponent implements OnInit {
     const headers = [
       'Date Approuvé',
       'ID',
-      'Numéro Journal', 
+      'Numéro Journal',
       'Motif',
       'Type',
       'Encaissement',
@@ -139,8 +143,8 @@ export class RapportdemandeComponent implements OnInit {
       d.numero_journal_approuve || '-',
       d.motif || d.description,
       d.type,
-      (d.type === 'Recette' || d.type === 'ERD') ? this.formatCurrencyForExport(d.montant_total) : '-',
-      d.type === 'DED' ? this.formatCurrencyForExport(d.montant_total) : '-',
+      (d.type === 'Recette' || (d.type === 'ERD' && d.montant_total >= 0)) ? this.formatCurrencyForExport(this.getAbsoluteValue(d.montant_total)) : '-',
+      (d.type === 'DED' || (d.type === 'ERD' && d.montant_total < 0)) ? this.formatCurrencyForExport(this.getAbsoluteValue(d.montant_total)) : '-',
       this.formatCurrencyForExport(d.soldeProgressif)
     ]);
 
@@ -219,16 +223,93 @@ export class RapportdemandeComponent implements OnInit {
     });
   }
 
+  // Méthode pour obtenir la valeur absolue
+  getAbsoluteValue(amount: number | string | null | undefined): number {
+    if (amount === null || amount === undefined) return 0;
+    return Math.abs(Number(amount));
+  }
+
   // ✅ Totaux avec Number()
   getTotalDecaissement(): number {
     return this.demandes
-      .filter(d => d.type === 'DED')
-      .reduce((sum, d) => sum + (Number(d.montant_total) || 0), 0);
+      .filter(d => d.type === 'DED' || (d.type === 'ERD' && Number(d.montant_total) < 0))
+      .reduce((sum, d) => sum + Math.abs(Number(d.montant_total) || 0), 0);
   }
 
   getTotalEncaissement(): number {
     return this.demandes
-      .filter(d => d.type === 'Recette' || d.type === 'ERD')
-      .reduce((sum, d) => sum + (Number(d.montant_total) || 0), 0);
+      .filter(d => d.type === 'Recette' || (d.type === 'ERD' && Number(d.montant_total) >= 0))
+      .reduce((sum, d) => sum + Math.abs(Number(d.montant_total) || 0), 0);
+  }
+
+  // Export vers PDF
+  async exportToPDF() {
+    if (this.demandes.length === 0) {
+      alert('Aucune donnée à exporter');
+      return;
+    }
+
+    if (!this.pdfContent) {
+      console.error('Contenu PDF non disponible');
+      return;
+    }
+
+    try {
+      const canvas = await html2canvas(this.pdfContent.nativeElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+
+      let totalPages = Math.ceil(imgHeight / pageHeight);
+      const lastPageHeight = imgHeight - ((totalPages - 1) * pageHeight);
+      if (totalPages > 1 && lastPageHeight < pageHeight / 2) {
+        totalPages--;
+      }
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) pdf.addPage();
+
+        const yOffset = -page * pageHeight;
+        const remainingHeight = imgHeight - page * pageHeight;
+        const actualHeight = Math.min(pageHeight, remainingHeight);
+
+        pdf.addImage(canvas, 'PNG', 0, yOffset, imgWidth, actualHeight);
+
+        // Add page number
+        pdf.setFontSize(10);
+        pdf.text(`Page ${page + 1}/${totalPages}`, 105, 287, { align: 'center' });
+      }
+
+      const fileName = this.getPDFFileName();
+      pdf.save(fileName);
+
+    } catch (error) {
+      console.error('Erreur lors de la génération du PDF:', error);
+      alert('Erreur lors de la génération du PDF. Veuillez réessayer.');
+    }
+  }
+
+  getPDFFileName(): string {
+    const selectedJournal = this.journals.find(j => j.id_journal === this.selectedJournalId);
+    const journalName = selectedJournal ? selectedJournal.nom_journal.replace(/\s+/g, '_') : 'journal';
+    const date = new Date().toISOString().split('T')[0];
+    return `rapport_demandes_${journalName}_${date}.pdf`;
+  }
+
+  getSelectedJournalName(): string {
+    const selectedJournal = this.journals.find(j => j.id_journal === this.selectedJournalId);
+    return selectedJournal ? selectedJournal.nom_journal : 'N/A';
+  }
+
+  getCurrentDateFormatted(): string {
+    return this.formatDate(new Date().toISOString());
   }
 }

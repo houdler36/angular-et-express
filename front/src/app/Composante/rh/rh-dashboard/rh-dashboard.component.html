@@ -8,7 +8,7 @@
   <aside class="sidebar">
     <div class="header-container">
       <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
-      <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
+      
     </div>
     <nav>
       <a role="button" [class.active]="activePage === 'Accueil'" (click)="setActivePage('Accueil')">
@@ -57,7 +57,6 @@
       <div *ngIf="activePage === 'Accueil'" class="content-section">
         <div class="welcome-header">
           <h1 class="page-title">Bienvenue, {{ currentUser?.username || 'Collaborateur' }} !</h1>
-          <p class="welcome-subtitle">Tableau de bord RH - Gestion des demandes</p>
           <div class="date-display">{{ currentDate | date:'fullDate':'':'fr' }}</div>
         </div>
         
@@ -93,15 +92,7 @@
             </div>
           </div>
 
-          <div class="quick-stat-card" (click)="setActivePage('profil')">
-            <div class="stat-icon profile">
-              <i class="fas fa-user-cog"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ currentUser?.role | uppercase }}</h3>
-              <p>Votre rôle</p>
-            </div>
-          </div>
+          
         </div>
 
         <!-- Actions rapides -->
@@ -211,9 +202,33 @@
       <div *ngIf="activePage === 'Dashboard'" class="content-section">
         <h1 class="page-title">Tableau de Bord</h1>
         <div class="stats-grid">
-          <div class="stat-card"><h3>Demandes à traiter</h3><p class="stat-number">{{ demandesATraiter.length }}</p></div>
-          <div class="stat-card"><h3>Demandes en attente</h3><p class="stat-number">{{ demandesEnAttente.length }}</p></div>
-          <div class="stat-card"><h3>Demandes finalisées</h3><p class="stat-number">{{ demandesFinalisees.length }}</p></div>
+          <div class="stat-card pending">
+            <div class="stat-icon">
+              <i class="fas fa-tasks"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Demandes à traiter</h3>
+              <p class="stat-number">{{ demandesATraiter.length }}</p>
+            </div>
+          </div>
+          <div class="stat-card waiting">
+            <div class="stat-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Demandes en attente</h3>
+              <p class="stat-number">{{ demandesEnAttente.length }}</p>
+            </div>
+          </div>
+          <div class="stat-card approved">
+            <div class="stat-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3>Demandes finalisées</h3>
+              <p class="stat-number">{{ demandesFinalisees.length }}</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -246,44 +261,19 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th (click)="sortData('id', 'demandesATraiter')" class="sortable">
-                  ID
-                  <i *ngIf="isColumnSorted('id', 'demandesATraiter')" class="fas" [class.fa-sort-up]="getSortDirection('id', 'demandesATraiter') === 'asc'" [class.fa-sort-down]="getSortDirection('id', 'demandesATraiter') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('type', 'demandesATraiter')" class="sortable">
-                  Type
-                  <i *ngIf="isColumnSorted('type', 'demandesATraiter')" class="fas" [class.fa-sort-up]="getSortDirection('type', 'demandesATraiter') === 'asc'" [class.fa-sort-down]="getSortDirection('type', 'demandesATraiter') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('demandeur', 'demandesATraiter')" class="sortable">
-                  Demandeur
-                  <i *ngIf="isColumnSorted('demandeur', 'demandesATraiter')" class="fas" [class.fa-sort-up]="getSortDirection('demandeur', 'demandesATraiter') === 'asc'" [class.fa-sort-down]="getSortDirection('demandeur', 'demandesATraiter') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('motif', 'demandesATraiter')" class="sortable">
-                  Motif
-                  <i *ngIf="isColumnSorted('motif', 'demandesATraiter')" class="fas" [class.fa-sort-up]="getSortDirection('motif', 'demandesATraiter') === 'asc'" [class.fa-sort-down]="getSortDirection('motif', 'demandesATraiter') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('montant', 'demandesATraiter')" class="sortable">
-                  Montant Total
-                  <i *ngIf="isColumnSorted('montant', 'demandesATraiter')" class="fas" [class.fa-sort-up]="getSortDirection('montant', 'demandesATraiter') === 'asc'" [class.fa-sort-down]="getSortDirection('montant', 'demandesATraiter') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('statut', 'demandesATraiter')" class="sortable">
-                  Statut
-                  <i *ngIf="isColumnSorted('statut', 'demandesATraiter')" class="fas" [class.fa-sort-up]="getSortDirection('statut', 'demandesATraiter') === 'asc'" [class.fa-sort-down]="getSortDirection('statut', 'demandesATraiter') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('validateur', 'demandesATraiter')" class="sortable">
-                  Validateur actuel
-                  <i *ngIf="isColumnSorted('validateur', 'demandesATraiter')" class="fas" [class.fa-sort-up]="getSortDirection('validateur', 'demandesATraiter') === 'asc'" [class.fa-sort-down]="getSortDirection('validateur', 'demandesATraiter') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('date', 'demandesATraiter')" class="sortable">
-                  Date
-                  <i *ngIf="isColumnSorted('date', 'demandesATraiter')" class="fas" [class.fa-sort-up]="getSortDirection('date', 'demandesATraiter') === 'asc'" [class.fa-sort-down]="getSortDirection('date', 'demandesATraiter') === 'desc'"></i>
-                </th>
+                <th>ID</th>
+                <th>Type</th>
+                <th>demandeur</th>
+                <th>Motif</th>
+                <th>Montant Total</th>
+                <th>Statut</th>
+                <th>Date de soumission</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngIf="getDisplayedData('demandesATraiter').length === 0">
-                <td colspan="9" class="empty-message">Aucune demande à traiter.</td>
+                <td colspan="8" class="empty-message">Aucune demande à traiter.</td>
               </tr>
               <tr *ngFor="let demande of getDisplayedData('demandesATraiter')">
                 <td>{{ demande.id }}</td>
@@ -299,7 +289,6 @@
                     'status-rejected': demande.status === 'rejetée'
                   }">{{ demande.status }}</span>
                 </td>
-                <td>{{ demande.currentValidator || '—' }}</td>
                 <td>{{ demande.date | date:'short':'':'fr' }}</td>
                 <td class="action-buttons">
                   <button class="btn btn-sm secondary" (click)="voirDetails(demande.id)">
@@ -359,35 +348,14 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th (click)="sortData('id', 'demandesEnAttente')" class="sortable">
-                  ID
-                  <i *ngIf="isColumnSorted('id', 'demandesEnAttente')" class="fas" [class.fa-sort-up]="getSortDirection('id', 'demandesEnAttente') === 'asc'" [class.fa-sort-down]="getSortDirection('id', 'demandesEnAttente') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('type', 'demandesEnAttente')" class="sortable">
-                  Type
-                  <i *ngIf="isColumnSorted('type', 'demandesEnAttente')" class="fas" [class.fa-sort-up]="getSortDirection('type', 'demandesEnAttente') === 'asc'" [class.fa-sort-down]="getSortDirection('type', 'demandesEnAttente') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('demandeur', 'demandesEnAttente')" class="sortable">
-                  Demandeur
-                  <i *ngIf="isColumnSorted('demandeur', 'demandesEnAttente')" class="fas" [class.fa-sort-up]="getSortDirection('demandeur', 'demandesEnAttente') === 'asc'" [class.fa-sort-down]="getSortDirection('demandeur', 'demandesEnAttente') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('motif', 'demandesEnAttente')" class="sortable">
-                  Motif
-                  <i *ngIf="isColumnSorted('motif', 'demandesEnAttente')" class="fas" [class.fa-sort-up]="getSortDirection('motif', 'demandesEnAttente') === 'asc'" [class.fa-sort-down]="getSortDirection('motif', 'demandesEnAttente') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('montant', 'demandesEnAttente')" class="sortable">
-                  Montant Total
-                  <i *ngIf="isColumnSorted('montant', 'demandesEnAttente')" class="fas" [class.fa-sort-up]="getSortDirection('montant', 'demandesEnAttente') === 'asc'" [class.fa-sort-down]="getSortDirection('montant', 'demandesEnAttente') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('statut', 'demandesEnAttente')" class="sortable">
-                  Statut
-                  <i *ngIf="isColumnSorted('statut', 'demandesEnAttente')" class="fas" [class.fa-sort-up]="getSortDirection('statut', 'demandesEnAttente') === 'asc'" [class.fa-sort-down]="getSortDirection('statut', 'demandesEnAttente') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('validateur', 'demandesEnAttente')" class="sortable">
-                  Validateur actuel
-                  <i *ngIf="isColumnSorted('validateur', 'demandesEnAttente')" class="fas" [class.fa-sort-up]="getSortDirection('validateur', 'demandesEnAttente') === 'asc'" [class.fa-sort-down]="getSortDirection('validateur', 'demandesEnAttente') === 'desc'"></i>
-                </th>
-                <th>Détails</th>
+                <th>ID</th>
+                <th>Type</th>
+                <th>demandeur</th>
+                <th>Motif</th>
+                <th>Montant Total</th>
+                <th>Statut</th>
+                <th>Date de soumission</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -400,7 +368,7 @@
                 <td>{{ demande.responsible_pj?.nom }} {{ demande.responsible_pj?.prenom }}</td>
                 <td>{{ demande.description || '—' }}</td>
                 <td>{{ demande.montant_total | number:'1.2-2' }}</td>
-                  <td>
+                <td>
                   <span [ngClass]="{
                     'status-badge': true,
                     'status-pending': demande.status === 'en attente',
@@ -408,7 +376,7 @@
                     'status-rejected': demande.status === 'rejetée'
                   }">{{ demande.status }}</span>
                 </td>
-                <td>{{ demande.currentValidator || '—' }}</td>
+                <td>{{ demande.date | date:'short':'':'fr' }}</td>
                 <td>
                   <button (click)="voirDetails(demande.id)" class="btn btn-sm secondary">
                     <i class="fas fa-eye"></i>
@@ -458,35 +426,14 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th (click)="sortData('id', 'demandesApprouvees')" class="sortable">
-                  ID
-                  <i *ngIf="isColumnSorted('id', 'demandesApprouvees')" class="fas" [class.fa-sort-up]="getSortDirection('id', 'demandesApprouvees') === 'asc'" [class.fa-sort-down]="getSortDirection('id', 'demandesApprouvees') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('type', 'demandesApprouvees')" class="sortable">
-                  Type
-                  <i *ngIf="isColumnSorted('type', 'demandesApprouvees')" class="fas" [class.fa-sort-up]="getSortDirection('type', 'demandesApprouvees') === 'asc'" [class.fa-sort-down]="getSortDirection('type', 'demandesApprouvees') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('demandeur', 'demandesApprouvees')" class="sortable">
-                  Demandeur
-                  <i *ngIf="isColumnSorted('demandeur', 'demandesApprouvees')" class="fas" [class.fa-sort-up]="getSortDirection('demandeur', 'demandesApprouvees') === 'asc'" [class.fa-sort-down]="getSortDirection('demandeur', 'demandesApprouvees') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('motif', 'demandesApprouvees')" class="sortable">
-                  Motif
-                  <i *ngIf="isColumnSorted('motif', 'demandesApprouvees')" class="fas" [class.fa-sort-up]="getSortDirection('motif', 'demandesApprouvees') === 'asc'" [class.fa-sort-down]="getSortDirection('motif', 'demandesApprouvees') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('montant', 'demandesApprouvees')" class="sortable">
-                  Montant Total
-                  <i *ngIf="isColumnSorted('montant', 'demandesApprouvees')" class="fas" [class.fa-sort-up]="getSortDirection('montant', 'demandesApprouvees') === 'asc'" [class.fa-sort-down]="getSortDirection('montant', 'demandesApprouvees') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('statut', 'demandesApprouvees')" class="sortable">
-                  Statut
-                  <i *ngIf="isColumnSorted('statut', 'demandesApprouvees')" class="fas" [class.fa-sort-up]="getSortDirection('statut', 'demandesApprouvees') === 'asc'" [class.fa-sort-down]="getSortDirection('statut', 'demandesApprouvees') === 'desc'"></i>
-                </th>
-                <th (click)="sortData('validateur', 'demandesApprouvees')" class="sortable">
-                  Validateur final
-                  <i *ngIf="isColumnSorted('validateur', 'demandesApprouvees')" class="fas" [class.fa-sort-up]="getSortDirection('validateur', 'demandesApprouvees') === 'asc'" [class.fa-sort-down]="getSortDirection('validateur', 'demandesApprouvees') === 'desc'"></i>
-                </th>
-                <th>Détails</th>
+                <th>ID</th>
+                <th>Type</th>
+                <th>demandeur</th>
+                <th>Motif</th>
+                <th>Montant Total</th>
+                <th>Statut</th>
+                <th>Date de soumission</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -499,7 +446,7 @@
                 <td>{{ demande.responsible_pj?.nom }} {{ demande.responsible_pj?.prenom }}</td>
                 <td>{{ demande.description || '—' }}</td>
                 <td>{{ demande.montant_total | number:'1.2-2' }}</td>
-                  <td>
+                <td>
                   <span [ngClass]="{
                     'status-badge': true,
                     'status-pending': demande.status === 'en attente',
@@ -507,7 +454,7 @@
                     'status-rejected': demande.status === 'rejetée'
                   }">{{ demande.status }}</span>
                 </td>
-                <td>{{ demande.finalValidatorName || '—' }}</td>
+                <td>{{ demande.date | date:'short':'':'fr' }}</td>
                 <td>
                   <button (click)="voirDetails(demande.id)" class="btn btn-sm secondary">
                     <i class="fas fa-eye"></i>

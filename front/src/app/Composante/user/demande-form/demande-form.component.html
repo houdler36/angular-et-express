@@ -1,6 +1,6 @@
 <div class="form-background">
   <div class="form-container">
-    <h1 class="form-title">Formulaire de Demande</h1>
+    <h1 class="form-title">{{ isEditMode ? 'Modifier la Demande' : 'Formulaire de Demande' }}</h1>
 
     <form [formGroup]="demandeForm" (ngSubmit)="onSubmit()" class="form">
       <div class="form-grid">
@@ -15,7 +15,7 @@
 
         <div class="form-group">
           <label for="date" class="form-label" [class.text-red-500]="isInvalid('date')">Date de la demande</label>
-          <input type="datetime-local" id="date" formControlName="date" [class.invalid]="isInvalid('date')" class="form-input" />
+          <input type="datetime-local" id="date" formControlName="date" [class.invalid]="isInvalid('date')" class="form-input" readonly />
           <div *ngIf="isInvalid('date')" class="form-error">La date est requise.</div>
         </div>
 
@@ -166,7 +166,7 @@
 
       <div class="form-footer">
         <span class="total-amount">Montant Total: {{ totalAmount | number:'1.2-2' }} Ariary</span>
-        <button type="submit" class="btn-submit">Soumettre la demande</button>
+        <button type="submit" class="btn-submit">{{ isEditMode ? 'Mettre à jour la demande' : 'Soumettre la demande' }}</button>
       </div>
     </form>
   </div>

@@ -277,10 +277,10 @@ exports.findAllUserDemandes = async (req, res) => {
 exports.getDemandesDAFAValider = async (req, res) => {
     const userId = Number(req.userId);
     try {
-        // Vérifier si l'utilisateur est bien le DAF
+        // Vérifier si l'utilisateur est bien le DAF ou RH
         const dafUser = await db.user.findByPk(userId);
-        if (!dafUser || dafUser.role !== 'daf') {
-            return res.status(403).send({ message: "Seul le DAF peut accéder à cette ressource." });
+        if (!dafUser || (dafUser.role !== 'daf' && dafUser.role !== 'rh')) {
+            return res.status(403).send({ message: "Seul le DAF ou RH peut accéder à cette ressource." });
         }
 
         // Récupérer les demandes avec montant supérieur au seuil DAF
@@ -722,11 +722,57 @@ exports.updatePjStatus = async (req, res) => {
 // --- Mettre à jour une demande ─────────────────────────────────────────
 exports.update = async (req, res) => {
     const id = req.params.id;
+    const { details, ...demandeData } = req.body;
+
+    let transaction;
     try {
-        const [num] = await db.demande.update(req.body, { where: { id } });
-        if (num === 1) res.send({ message: "Demande mise à jour avec succès." });
-        else res.send({ message: `Impossible de mettre à jour la demande ${id}.` });
+        transaction = await db.sequelize.transaction();
+
+        // Vérifier que la demande existe
+        const demande = await db.demande.findByPk(id, { transaction });
+        if (!demande) {
+            await transaction.rollback();
+            return res.status(404).send({ message: `Demande ${id} introuvable.` });
+        }
+
+        // Mettre à jour la demande principale
+        await demande.update(demandeData, { transaction });
+
+        // Si des détails sont fournis, les mettre à jour
+        if (details && Array.isArray(details)) {
+            // Supprimer les anciens détails
+            await db.demande_detail.destroy({
+                where: { demande_id: id },
+                transaction
+            });
+
+            // Créer les nouveaux détails
+            const detailsAvecDemandeId = details.map(d => ({ ...d, demande_id: id }));
+            await db.demande_detail.bulkCreate(detailsAvecDemandeId, { transaction });
+        }
+
+        await transaction.commit();
+
+        // Retourner la demande mise à jour
+        const demandeMiseAJour = await db.demande.findByPk(id, {
+            include: [
+                { model: db.demande_detail, as: 'details' },
+                {
+                    model: db.demande_validation,
+                    as: 'validations',
+                    include: [{
+                        model: db.user,
+                        as: 'user',
+                        attributes: ['id', 'username', 'role']
+                    }]
+                }
+            ]
+        });
+
+        res.send(demandeMiseAJour);
     } catch (err) {
+        if (transaction && !transaction.finished) await transaction.rollback();
+        console.error(err);
         res.status(500).send({ message: `Erreur lors de la mise à jour de la demande ${id}` });
     }
 };

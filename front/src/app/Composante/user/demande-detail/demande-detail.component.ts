@@ -135,6 +135,7 @@ export class DemandeDetailComponent implements OnInit {
   displayValidators: DemandeValidation[] = [];
   showDeleteConfirmModal = false;
   showRejectModal = false;
+  showApproveModal = false;
   rejectReason = '';
   montantEnLettres = '';
 
@@ -632,7 +633,16 @@ export class DemandeDetailComponent implements OnInit {
   }
 
   approveDemande(): void {
+    this.showApproveModal = true;
+  }
+
+  confirmApprove(): void {
+    this.showApproveModal = false;
     this.validateCurrentTour();
+  }
+
+  cancelApprove(): void {
+    this.showApproveModal = false;
   }
 
   getBudgetTrimestre(detail: DemandeDetail, demandeDate: string): number {

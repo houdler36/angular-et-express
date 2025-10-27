@@ -215,30 +215,22 @@
 
         <div class="validators-grid">
           <div *ngFor="let v of displayValidators" class="validator-card">
-            <div class="validator-header">
-              <h4>{{ v.user?.username || 'Validateur' }}</h4>
-              <span class="validator-badge" [ngClass]="'status-' + v.statut">
-                {{ v.statut | titlecase }}
-              </span>
-            </div>
+            <div *ngIf="v.user_id > 0" class="validator-content">
+              <div class="validator-header">
+                <h4>{{ v.user?.username || 'Validateur' }}</h4>
+                <span class="validator-badge" [ngClass]="'status-' + v.statut">
+                  {{ v.statut | titlecase }}
+                </span>
+              </div>
 
-            <div class="signature-container">
-              <ng-container *ngIf="v.statut === 'validé' && v.signatureBase64; else placeholderSignature">
-                <img [src]="v.signatureBase64"
-                     alt="Signature de {{ v.user?.username }}"
-                     class="signature-image">
-                <p class="signature-date" *ngIf="v.date_validation">
-                  Le {{ v.date_validation | date:'dd/MM/yyyy' }}
+              <div class="validator-info">
+                <p class="validator-date" *ngIf="v.date_validation">
+                  Validé le {{ v.date_validation | date:'dd/MM/yyyy' }}
                 </p>
-              </ng-container>
-
-              <ng-template #placeholderSignature>
-                <div class="signature-placeholder">
-                  <i class="fas fa-pen"></i>
-                  <span>Signature</span>
-                </div>
-                <p class="signature-date">En attente</p>
-              </ng-template>
+                <p class="validator-pending" *ngIf="!v.date_validation">
+                  En attente de validation
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -339,6 +331,41 @@
       <div class="modal-footer">
         <button class="btn-cancel" (click)="cancelDelete()">Annuler</button>
         <button class="btn-confirm-delete" (click)="confirmDelete()">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal d'approbation -->
+  <div *ngIf="showApproveModal" class="modal-overlay">
+    <div class="modal-content approve-modal">
+      <div class="modal-header approve-header">
+        <div class="modal-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <h3>Confirmer l'approbation</h3>
+      </div>
+      <div class="modal-body">
+        <p class="approve-message">Êtes-vous sûr de vouloir approuver cette demande ?</p>
+        <div class="approve-details">
+          <div class="detail-item">
+            <span class="label">Type:</span>
+            <span class="value">{{ demande?.type }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Montant:</span>
+            <span class="value">{{ totalDebit | number:'1.2-2' }} Ar</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Demandeur:</span>
+            <span class="value">{{ demande?.responsible_pj?.prenom }} {{ demande?.responsible_pj?.nom }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer approve-footer">
+        <button class="btn-cancel-approve" (click)="cancelApprove()">Annuler</button>
+        <button class="btn-confirm-approve" (click)="confirmApprove()">
+          <i class="fas fa-check"></i> Approuver
+        </button>
       </div>
     </div>
   </div>

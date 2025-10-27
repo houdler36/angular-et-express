@@ -1,90 +1,141 @@
-<link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
-/>
-
-<div class="daf-dashboard">
-  <aside class="sidebar" [class.collapsed]="sidebarCollapsed" [class.active-dashboard]="activePage === 'Dashboard'">
+<div class="flex-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
     <div class="header-container">
-      <button class="sidebar-toggle" (click)="toggleSidebar()" [title]="sidebarCollapsed ? 'Développer la sidebar' : 'Réduire la sidebar'">
-        <i class="fas" [class]="sidebarCollapsed ? 'fa-chevron-right' : 'fa-chevron-left'"></i>
-      </button>
-      <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo" />
-
+      <img src="/images/salafan.jpg" alt="Logo SALFA" class="header-logo">
+      <h6 class="header-title">Sampan'Asa Loterana momba ny FAhasalamana</h6>
     </div>
 
     <nav>
       <a role="button" [class.active]="activePage === 'Dashboard'" (click)="setActivePage('Dashboard')">
-        <i class="fas fa-home"></i> <span class="hidden-mobile">Tableau de Bord</span>
+        <i class="fas fa-chart-line"></i>
+        <span class="hidden-mobile">Tableau de Bord</span>
       </a>
-      <hr class="sidebar-divider">
-      <a role="button" [class.active]="activePage === 'demandesATraiter'" (click)="setActivePage('demandesATraiter')">
-        <i class="fas fa-tasks"></i> <span class="hidden-mobile">Demandes à traiter</span>
+      <a role="button" *ngIf="user?.role === 'daf'" [class.active]="activePage === 'demandesATraiter'" (click)="setActivePage('demandesATraiter')">
+        <i class="fas fa-tasks"></i>
+        <span class="hidden-mobile">Demandes à traiter</span>
       </a>
       <a role="button" [class.active]="activePage === 'demandesEnAttente'" (click)="setActivePage('demandesEnAttente')">
-        <i class="fas fa-hourglass-half"></i> <span class="hidden-mobile">Demandes en attente</span>
+        <i class="fas fa-hourglass-half"></i>
+        <span class="hidden-mobile">Demandes en attente</span>
       </a>
       <a role="button" [class.active]="activePage === 'demandesFinalisees'" (click)="setActivePage('demandesFinalisees')">
-        <i class="fas fa-check-circle"></i> <span class="hidden-mobile">Demandes finalisées</span>
+        <i class="fas fa-check-circle"></i>
+        <span class="hidden-mobile">Demandes finalisées</span>
       </a>
-      <hr class="sidebar-divider">
       <a role="button" [class.active]="activePage === 'rapports'" (click)="setActivePage('rapports')">
-        <i class="fas fa-chart-bar"></i> <span class="hidden-mobile">Rapports</span>
+        <i class="fas fa-chart-bar"></i>
+        <span class="hidden-mobile">Rapports</span>
       </a>
-      <hr class="sidebar-divider">
       <a role="button" [class.active]="activePage === 'Profil'" (click)="setActivePage('Profil')">
-        <i class="fas fa-user-circle"></i> <span class="hidden-mobile">Mon profil</span>
+        <i class="fas fa-user-circle"></i>
+        <span class="hidden-mobile">Mon profil</span>
       </a>
-      <hr class="sidebar-divider">
       <a role="button" (click)="logout()">
-        <i class="fas fa-sign-out-alt"></i> <span class="hidden-mobile">Déconnexion</span>
+        <i class="fas fa-sign-out-alt"></i>
+        <span class="hidden-mobile">Déconnexion</span>
       </a>
     </nav>
   </aside>
 
+  <!-- Contenu -->
   <main class="main-content">
     <div class="card">
-
-      <!-- Tableau de Bord -->
-      <section *ngIf="activePage === 'Dashboard'" class="content-section">
-        <h1 class="page-title">Tableau de Bord DAF</h1>
-        <p class="welcome-message">Bienvenue sur votre tableau de bord DAF. Voici un aperçu de vos demandes.</p>
-        <div class="stats-grid">
-          <div class="stat-card success">
-            <i class="fas fa-tasks stat-icon"></i>
-            <h3>Demandes à traiter</h3>
-            <p class="stat-number">{{ demandesATraiter.length }}</p>
-          </div>
-          <div class="stat-card warning">
-            <i class="fas fa-hourglass-half stat-icon"></i>
-            <h3>Demandes en attente</h3>
-            <p class="stat-number">{{ demandesEnAttente.length }}</p>
-          </div>
-          <div class="stat-card info">
-            <i class="fas fa-check-circle stat-icon"></i>
-            <h3>Demandes finalisées</h3>
-            <p class="stat-number">{{ demandesFinalisees.length }}</p>
-          </div>
+      <div *ngIf="activePage === 'Dashboard'">
+        <div class="dashboard-header">
+          <h1>📊 Tableau de Bord DAF</h1>
+          <div class="last-update">Dernière mise à jour: {{ lastUpdate | date:'dd/MM/yyyy HH:mm' }}</div>
         </div>
 
+        <!-- Statistiques principales -->
+        <div class="stats-grid">
+          <div class="stat-card success">
+            <div class="stat-icon"><i class="fas fa-tasks"></i></div>
+            <div class="stat-content">
+              <h3>Demandes à traiter</h3>
+              <p class="stat-number">{{ demandesATraiter.length }}</p>
+              <div class="stat-actions">
+                <button class="action-btn" (click)="setActivePage('demandesATraiter')">
+                  <i class="fas fa-cog"></i> Gérer
+                </button>
+              </div>
+            </div>
+          </div>
 
+          <div class="stat-card warning">
+            <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+            <div class="stat-content">
+              <h3>Demandes en attente</h3>
+              <p class="stat-number">{{ demandesEnAttente.length }}</p>
+              <div class="stat-actions">
+                <button class="action-btn" (click)="setActivePage('demandesEnAttente')">
+                  <i class="fas fa-cog"></i> Gérer
+                </button>
+              </div>
+            </div>
+          </div>
 
-        <!-- Activités récentes -->
-        <div class="recent-activities">
-          <h3>Activités récentes</h3>
-          <div *ngIf="loadingActivities" class="loading">Chargement...</div>
-          <div *ngFor="let activity of recentActivities" class="activity-item" [ngClass]="getActivityClass(activity.type)">
-            <i [class]="getActivityIcon(activity.type)"></i>
-            <div class="activity-content">
-              <p>{{ activity.description }}</p>
-              <small>{{ formatRelativeTime(activity.date) }}</small>
+          <div class="stat-card info">
+            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-content">
+              <h3>Demandes finalisées</h3>
+              <p class="stat-number">{{ demandesFinalisees.length }}</p>
+              <div class="stat-actions">
+                <button class="action-btn" (click)="setActivePage('demandesFinalisees')">
+                  <i class="fas fa-cog"></i> Gérer
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+
+        <!-- Résumé des activités récentes -->
+        <div class="summary-section">
+          <div class="summary-card">
+            <h3>Activités Récentes</h3>
+            <div class="activities-list">
+              <div class="activity-item" *ngFor="let activity of recentActivities">
+                <div class="activity-icon" [ngClass]="activity.type">
+                  <i [class]="activity.icon"></i>
+                </div>
+                <div class="activity-content">
+                  <p class="activity-text">{{ activity.text }}</p>
+                  <span class="activity-time">{{ activity.time }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <h3>Statut du Système</h3>
+            <div class="system-status">
+              <div class="status-item">
+                <span class="status-label">Base de données</span>
+                <span class="status-indicator connected"></span>
+                <span class="status-text">Connectée</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Services API</span>
+                <span class="status-indicator connected"></span>
+                <span class="status-text">Opérationnels</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Sécurité</span>
+                <span class="status-indicator connected"></span>
+                <span class="status-text">Active</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Sauvegarde</span>
+                <span class="status-indicator warning"></span>
+                <span class="status-text">Planifiée</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- Demandes à Traiter -->
-      <section *ngIf="activePage === 'demandesATraiter'" class="content-section">
+      <div *ngIf="activePage === 'demandesATraiter'">
         <h2 class="page-title">Demandes à traiter (DAF)</h2>
         <div class="filters-container" *ngIf="!loadingATraiter">
           <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
@@ -173,10 +224,10 @@
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
 
       <!-- Demandes en Attente -->
-      <section *ngIf="activePage === 'demandesEnAttente'" class="content-section">
+      <div *ngIf="activePage === 'demandesEnAttente'">
         <h2 class="page-title">Demandes en attente (DAF)</h2>
         <div class="filters-container" *ngIf="!loadingEnAttente">
           <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
@@ -248,10 +299,10 @@
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
 
       <!-- Demandes Finalisées -->
-      <section *ngIf="activePage === 'demandesFinalisees'" class="content-section">
+      <div *ngIf="activePage === 'demandesFinalisees'">
         <h2 class="page-title">Demandes finalisées (DAF)</h2>
         <div class="filters-container" *ngIf="!loadingFinalisees">
           <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
@@ -323,16 +374,16 @@
             </tbody>
           </table>
         </div>
-      </section>
+      </div>
 
       <!-- Rapports -->
-      <section *ngIf="activePage === 'rapports'" class="content-section">
+      <div *ngIf="activePage === 'rapports'">
         <h2 class="page-title">Rapports (DAF)</h2>
         <app-rapport-projet></app-rapport-projet>
-      </section>
+      </div>
 
       <!-- Profil -->
-      <section *ngIf="activePage === 'Profil' && user" class="content-section profile-section">
+      <div *ngIf="activePage === 'Profil' && user" class="profile-section">
         <h2 class="page-title">Mon profil</h2>
         <div class="profile-details">
           <p><strong>Nom d'utilisateur :</strong> {{ user.username }}</p>
@@ -344,8 +395,13 @@
             Changer mon mot de passe
           </button>
         </div>
-      </section>
+      </div>
 
     </div>
   </main>
 </div>
+
+<!-- Scroll to top -->
+<button (click)="scrollToTop()" class="scroll-to-top" title="Remonter en haut">
+  <i class="fas fa-arrow-up"></i>
+</button>

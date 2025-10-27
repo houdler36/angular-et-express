@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { TokenStorageService } from './services/token-storage.service';
-import { Subscription } from 'rxjs'; 
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -58,6 +58,18 @@ export class AppComponent implements OnInit, OnDestroy {
       this.router.navigate(['/login']);
     } else {
       console.log("[AppComponent] Logout annulé.");
+    }
+  }
+
+  // Gestionnaire d'événements clavier pour le dialogue
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent): void {
+    if (this.showLogoutDialog) {
+      if (event.key === 'Escape') {
+        this.onLogoutConfirm(false); // Annuler avec ESC
+      } else if (event.key === 'Enter') {
+        this.onLogoutConfirm(true); // Confirmer avec Enter
+      }
     }
   }
 }

@@ -37,6 +37,17 @@ export class DemandeFormComponent implements OnInit {
   budgetsParJournal: any[] = [];
   currentUserId: number | null = null;
 
+  // Mode édition
+  isEditMode = false;
+  editDemandeId: number | null = null;
+
+  // Méthode pour fermer le modal
+  closeModal(): void {
+    this.showModal = false;
+    this.successMessage = null;
+    this.errorMessage = null;
+  }
+
   constructor(
     private fb: FormBuilder,
     private demandeService: DemandeService,
@@ -44,10 +55,21 @@ export class DemandeFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router
   ) {
+    // Fonction pour obtenir la date et l'heure locales actuelles au format YYYY-MM-DDTHH:MM
+    const getCurrentLocalDateTime = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
     // Initialisation du formulaire avec des valeurs par défaut et des validateurs
     this.demandeForm = this.fb.group({
       type: ['DED'], // Type de demande par défaut
-      date: [new Date().toISOString(), Validators.required],
+      date: [getCurrentLocalDateTime(), Validators.required],
       journal_id: [null, Validators.required],
       description: ['', Validators.required],
       resp_pj_id: [null, Validators.required],
@@ -62,6 +84,14 @@ export class DemandeFormComponent implements OnInit {
     // Récupérer l'ID de l'utilisateur actuel
     const user = this.tokenStorageService.getUser();
     if (user && user.id) this.currentUserId = user.id;
+
+    // Vérifier si on est en mode édition
+    const idFromRoute = this.route.snapshot.paramMap.get('id');
+    if (idFromRoute) {
+      this.isEditMode = true;
+      this.editDemandeId = +idFromRoute;
+      this.loadDemandeForEdit(this.editDemandeId);
+    }
 
     // S'abonner aux query params pour récupérer les données de la demande précédente (si une ERD est créée)
     this.route.queryParams.subscribe(params => {
@@ -332,7 +362,7 @@ export class DemandeFormComponent implements OnInit {
       this.calculateTotal();
       isFormValid = isFormValid && this.totalAmount === this.details.controls.reduce((acc, d) => acc + (parseFloat(d.get('amount')?.value) || 0), 0);
     }
-    
+
     if (isFormValid) {
       const dataToSend = {
         userId: this.currentUserId,
@@ -340,32 +370,49 @@ export class DemandeFormComponent implements OnInit {
         montant_total: this.totalAmount
       };
 
-      this.demandeService.createDemande(dataToSend).subscribe({
-        next: () => {
-          this.successMessage = 'Demande soumise avec succès !';
-          this.errorMessage = null;
-          this.showModal = true;
-
-          const dedId = this.demandeForm.get('dedId')?.value;
-          if (dedId) {
-            this.demandeService.updateDedStatus(dedId, 'oui').subscribe({
-              next: () => console.log(`Ancien DED ${dedId} mis à jour en pj_status = oui`),
-              error: (err: any) => console.error('Erreur lors de la mise à jour du DED', err)
-            });
+      if (this.isEditMode && this.editDemandeId) {
+        // Mode édition : mettre à jour la demande
+        this.demandeService.updateDemande(this.editDemandeId, dataToSend).subscribe({
+          next: () => {
+            this.successMessage = 'Demande mise à jour avec succès !';
+            this.errorMessage = null;
+            this.showModal = true;
+            // Rediriger vers la liste des demandes après mise à jour
+            setTimeout(() => this.router.navigate(['/demandes']), 2000);
+          },
+          error: (err: any) => {
+            this.errorMessage = err.message || 'Une erreur est survenue lors de la mise à jour.';
+            this.successMessage = null;
+            this.showModal = true;
           }
+        });
+      } else {
+        // Mode création : créer une nouvelle demande
+        this.demandeService.createDemande(dataToSend).subscribe({
+          next: () => {
+            this.successMessage = 'Demande soumise avec succès !';
+            this.errorMessage = null;
+            this.showModal = true;
 
-          this.resetForm();
-        },
-        error: (err: any) => {
-          this.errorMessage = err.message || 'Une erreur est survenue lors de la soumission.';
-          this.successMessage = null;
-          this.showModal = true;
-        }
-      });
-    } else {
-      this.errorMessage = 'Veuillez remplir correctement tous les champs obligatoires.';
-      this.successMessage = null;
-      this.showModal = true;
+            const dedId = this.demandeForm.get('dedId')?.value;
+            if (dedId) {
+              this.demandeService.updateDedStatus(dedId, 'oui').subscribe({
+                next: () => {
+                  console.log('Statut DED mis à jour');
+                },
+                error: (err: any) => {
+                  console.error('Erreur lors de la mise à jour du statut DED', err);
+                }
+              });
+            }
+          },
+          error: (err: any) => {
+            this.errorMessage = err.message || 'Une erreur est survenue lors de la soumission.';
+            this.successMessage = null;
+            this.showModal = true;
+          }
+        });
+      }
     }
   }
 
@@ -373,9 +420,20 @@ export class DemandeFormComponent implements OnInit {
    * Réinitialise le formulaire à son état initial.
    */
   resetForm(): void {
+    // Fonction pour obtenir la date et l'heure locales actuelles au format YYYY-MM-DDTHH:MM
+    const getCurrentLocalDateTime = () => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
     this.demandeForm.reset({
       type: 'DED',
-      date: new Date().toISOString(),
+      date: getCurrentLocalDateTime(),
       pj_status: 'oui',
       dedId: null
     });
@@ -385,11 +443,44 @@ export class DemandeFormComponent implements OnInit {
   }
 
   /**
-   * Ferme le modal d'information.
+   * Charge les données de la demande pour l'édition.
    */
-  closeModal(): void {
-    this.showModal = false;
-    this.successMessage = null;
-    this.errorMessage = null;
+  loadDemandeForEdit(demandeId: number): void {
+    this.demandeService.getDemandeById(demandeId).subscribe({
+      next: (demande: any) => {
+        // Remplir le formulaire avec les données existantes
+        this.demandeForm.patchValue({
+          type: demande.type,
+          date: demande.date,
+          journal_id: demande.journal_id,
+          description: demande.description,
+          resp_pj_id: demande.resp_pj_id,
+          pj_status: demande.pj_status,
+          expected_justification_date: demande.expected_justification_date,
+          dedId: demande.dedId
+        });
+
+        // Charger les détails
+        this.details.clear();
+        demande.details.forEach((detail: any) => {
+          const detailForm = this.createDetail();
+          detailForm.patchValue(detail);
+          this.details.push(detailForm);
+        });
+
+        // Calculer le total
+        this.calculateTotal();
+
+        // Charger les budgets pour le journal
+        if (demande.journal_id) {
+          this.onJournalChange(demande.journal_id);
+        }
+      },
+      error: (err: any) => {
+        console.error('Erreur lors du chargement de la demande', err);
+        this.errorMessage = 'Erreur lors du chargement de la demande.';
+        this.showModal = true;
+      }
+    });
   }
 }

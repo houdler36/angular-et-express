@@ -36,38 +36,7 @@ export class AdminDashboardComponent implements OnInit {
   totalBudget: number = 0;
   
   // Activités récentes
-  recentActivities = [
-    { 
-      type: 'success', 
-      icon: 'fas fa-user-plus', 
-      text: 'Nouvel utilisateur créé: Jean Dupont', 
-      time: 'Il y a 5 min' 
-    },
-    { 
-      type: 'info', 
-      icon: 'fas fa-user-tie', 
-      text: 'Responsable Marie Lambert modifié', 
-      time: 'Il y a 15 min' 
-    },
-    { 
-      type: 'warning', 
-      icon: 'fas fa-book', 
-      text: 'Nouvelle entrée dans le journal des transactions', 
-      time: 'Il y a 1 heure' 
-    },
-    { 
-      type: 'info', 
-      icon: 'fas fa-wallet', 
-      text: 'Budget du projet santé mis à jour', 
-      time: 'Il y a 2 heures' 
-    },
-    { 
-      type: 'success', 
-      icon: 'fas fa-users', 
-      text: '3 nouveaux utilisateurs ajoutés', 
-      time: 'Il y a 3 heures' 
-    }
-  ];
+  recentActivities: any[] = [];
 
   constructor(private statsService: StatsService, private authService: AuthService, private router: Router) {}
 
@@ -103,6 +72,25 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Échec du chargement des statistiques du tableau de bord', err);
+      }
+    });
+
+    // Charger les activités récentes
+    this.statsService.getRecentActivities().subscribe({
+      next: (activities: any[]) => {
+        this.recentActivities = activities;
+      },
+      error: (err) => {
+        console.error('Échec du chargement des activités récentes', err);
+        // Fallback avec des données statiques si l'API échoue
+        this.recentActivities = [
+          {
+            type: 'info',
+            icon: 'fas fa-info-circle',
+            text: 'Aucune activité récente trouvée',
+            time: 'N/A'
+          }
+        ];
       }
     });
   }

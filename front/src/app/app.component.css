@@ -11,6 +11,7 @@
   align-items: center;
   z-index: 1000;
   animation: fadeIn 0.3s ease-out;
+  backdrop-filter: blur(2px); /* Effet de flou pour un look moderne */
 }
 
 /* Styles du contenu de la modale */
@@ -65,12 +66,22 @@ p {
 }
 
 .btn-confirm {
-  background-color: #e74c3c;
+  background-color: #2196f3;
   color: #ffffff;
 }
 
 .btn-confirm:hover {
-  background-color: #c0392b;
+  background-color: #1976d2;
+}
+
+/* Focus styles for accessibility */
+.btn:focus {
+  outline: 2px solid #4a90e2;
+  outline-offset: 2px;
+}
+
+.btn-confirm:focus {
+  outline-color: #2196f3;
 }
 
 /* Animations */

@@ -156,45 +156,20 @@
 
       <div class="validators-grid">
         <div *ngFor="let i of [0,1,2,3]" class="validator-card">
-          <ng-container *ngIf="displayValidators[i] && displayValidators[i].user_id > 0">
-            <div class="validator-header">
-              <h4>{{ displayValidators[i].user?.username || 'Validateur' }}</h4>
-              <span class="validator-role" *ngIf="displayValidators[i].user?.role">{{ displayValidators[i].user?.role }}</span>
-              <span class="validator-badge" [ngClass]="'status-' + displayValidators[i].statut">
-                {{ displayValidators[i].statut | titlecase }}
-              </span>
-            </div>
+          <div class="signature-container">
+            <h4 *ngIf="displayValidators[i] && displayValidators[i].user_id > 0">{{ displayValidators[i].user?.username || 'Validateur' }}</h4>
+            <ng-container *ngIf="displayValidators[i] && displayValidators[i].statut === 'validé' && displayValidators[i].signatureBase64; else placeholderSignature">
+              <img [src]="displayValidators[i].signatureBase64"
+                   alt="Signature de {{ displayValidators[i].user?.username }}"
+                   class="signature-image">
+            </ng-container>
 
-            <div class="signature-container">
-              <ng-container *ngIf="displayValidators[i].statut === 'validé' && displayValidators[i].signatureBase64; else placeholderSignature">
-                <img [src]="displayValidators[i].signatureBase64"
-                     alt="Signature de {{ displayValidators[i].user?.username }}"
-                     class="signature-image">
-                <p class="signature-date" *ngIf="displayValidators[i].date_validation">
-                  Le {{ displayValidators[i].date_validation | date:'dd/MM/yyyy' }}
-                </p>
-              </ng-container>
-
-              <ng-template #placeholderSignature>
-                <div class="signature-placeholder">
-                  <i class="fas fa-pen"></i>
-                  <span>Signature</span>
-                </div>
-                <p class="signature-date">En attente</p>
-              </ng-template>
-            </div>
-          </ng-container>
-
-          <ng-container *ngIf="displayValidators[i] && displayValidators[i].user_id <= 0">
-            <div class="validator-header">
-              <!-- Empty header for placeholder -->
-            </div>
-            <div class="signature-container">
-              <div class="signature-placeholder-empty">
-                <!-- Empty frame for signature -->
+            <ng-template #placeholderSignature>
+              <div class="signature-placeholder">
+                <!-- Placeholder for signature -->
               </div>
-            </div>
-          </ng-container>
+            </ng-template>
+          </div>
         </div>
       </div>
     </div>

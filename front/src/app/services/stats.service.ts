@@ -20,4 +20,12 @@ export class StatsService {
   getDashboardStats(): Observable<any> {
     return this.http.get<any>(this.apiUrl);
   }
+
+  /**
+   * Fetches recent activities from the backend API.
+   * @returns An Observable containing the JSON data for the activities.
+   */
+  getRecentActivities(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/activities`);
+  }
 }

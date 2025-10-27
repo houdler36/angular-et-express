@@ -100,16 +100,104 @@
     <p>{{ errorMessage }}</p>
   </div>
 
+  <!-- Contenu PDF caché -->
+  <div #pdfContent *ngIf="demandes.length > 0" class="pdf-content" style="position: absolute; left: -9999px; top: -9999px;">
+    <div class="pdf-header">
+      <div class="pdf-logo">
+        <img src="/images/salafan.jpg" alt="Logo Salafa" style="max-width: 100px;">
+        <div class="entreprise-info">
+          <h2>SALFA</h2>
+          <p>Adresse · Téléphone · Email</p>
+        </div>
+      </div>
+      <div class="pdf-title">
+        <h1>Rapport des demandes approuvées</h1>
+        <div class="pdf-reference">
+          <strong>Journal:</strong> {{ getSelectedJournalName() }}<br>
+          <strong>Période:</strong> {{ formatDate(startDate) }} - {{ formatDate(endDate) }}
+        </div>
+      </div>
+    </div>
+
+    <div class="pdf-stats">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Nombre de demandes:</span>
+          <span class="stat-value">{{ demandes.length }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total Encaissements:</span>
+          <span class="stat-value">{{ formatCurrency(getTotalEncaissement()) }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Total Décaissements:</span>
+          <span class="stat-value">{{ formatCurrency(getTotalDecaissement()) }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Solde Final:</span>
+          <span class="stat-value">{{ formatCurrency(getEtatSolde()) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pdf-table">
+      <table class="pdf-rapport-table">
+        <thead>
+          <tr>
+            <th>Date Approuvé</th>
+            <th>ID</th>
+            <th>Numéro Journal</th>
+            <th>Motif</th>
+            <th>Type</th>
+            <th>Encaissement</th>
+            <th>Décaissement</th>
+            <th>Solde Progressif</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let demande of demandes">
+            <td>{{ formatDateTime(demande.date_approuve) }}</td>
+            <td>{{ demande.id }}</td>
+            <td>{{ demande.numero_journal_approuve || '-' }}</td>
+            <td>{{ demande.motif || demande.description }}</td>
+            <td>{{ demande.type }}</td>
+            <td>{{ (demande.type === 'Recette' || (demande.type === 'ERD' && demande.montant_total >= 0)) ? formatCurrency(getAbsoluteValue(demande.montant_total)) : '-' }}</td>
+            <td>{{ demande.type === 'DED' || (demande.type === 'ERD' && demande.montant_total < 0) ? formatCurrency(getAbsoluteValue(demande.montant_total)) : '-' }}</td>
+            <td>{{ formatCurrency(demande.soldeProgressif) }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="5" class="text-center">Totaux</th>
+            <th>{{ formatCurrency(getTotalEncaissement()) }}</th>
+            <th>{{ formatCurrency(getTotalDecaissement()) }}</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="pdf-footer">
+      <p>Rapport généré le {{ getCurrentDateFormatted() }}</p>
+    </div>
+  </div>
+
   <!-- Tableau des demandes -->
   <div *ngIf="demandes.length > 0" class="table-container">
     <div class="table-header">
       <h3>Détail des opérations</h3>
-      <button class="btn-export" (click)="exportToExcel()">
-        <span class="btn-icon">📥</span>
-        Exporter
-      </button>
+      <div class="export-buttons">
+        <button class="btn-export" (click)="exportToExcel()">
+          <span class="btn-icon">📊</span>
+          Excel
+        </button>
+        <button class="btn-export btn-pdf" (click)="exportToPDF()">
+          <span class="btn-icon">📄</span>
+          PDF
+        </button>
+      </div>
     </div>
-    
+
     <div class="table-scroll">
       <table class="rapport-table">
         <thead>
@@ -164,10 +252,10 @@
               </span>
             </td>
             <td class="text-right encaissement">
-              {{ (demande.type === 'Recette' || demande.type === 'ERD') ? formatCurrency(demande.montant_total) : '-' }}
+              {{ (demande.type === 'Recette' || (demande.type === 'ERD' && demande.montant_total >= 0)) ? formatCurrency(getAbsoluteValue(demande.montant_total)) : '-' }}
             </td>
             <td class="text-right decaissement">
-              {{ demande.type === 'DED' ? formatCurrency(demande.montant_total) : '-' }}
+              {{ demande.type === 'DED' || (demande.type === 'ERD' && demande.montant_total < 0) ? formatCurrency(getAbsoluteValue(demande.montant_total)) : '-' }}
             </td>
             <td class="text-right solde" [class.negative]="demande.soldeProgressif < 0">
               {{ formatCurrency(demande.soldeProgressif) }}
