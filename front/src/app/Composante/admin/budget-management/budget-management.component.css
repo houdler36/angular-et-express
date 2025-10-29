@@ -181,8 +181,149 @@ tbody tr:hover {
 /* Cellule de reste en alerte (couleur forte) */
 .alert-cell {
   font-weight: bold;
-  color: #c0392b; 
+  color: #c0392b;
   background-color: #fceae9 !important;
+}
+
+/* Styles pour les boutons d'actions */
+.edit-button {
+  background-color: #2ecc71;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-right: 0.5rem;
+}
+
+.edit-button:hover {
+  background-color: #27ae60;
+}
+
+.delete-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.delete-button:hover {
+  background-color: #c0392b;
+}
+
+/* Style pour le bouton Annuler */
+.cancel-button {
+  background-color: #95a5a6;
+  color: white;
+  border: none;
+  padding: 1rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  align-self: flex-start;
+  margin-left: 1rem;
+}
+
+.cancel-button:hover {
+  background-color: #7f8c8d;
+}
+
+/* Styles pour la modal de suppression */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.delete-modal {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+}
+
+.delete-modal-header {
+  background-color: #e74c3c;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+}
+
+.delete-modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.delete-modal-body {
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.delete-modal-body p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.warning-text {
+  color: #e74c3c;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.delete-modal-footer {
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cancel-modal-button {
+  background-color: #95a5a6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  flex: 1;
+}
+
+.cancel-modal-button:hover {
+  background-color: #7f8c8d;
+}
+
+.confirm-delete-button {
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  flex: 1;
+}
+
+.confirm-delete-button:hover {
+  background-color: #c0392b;
 }
 /* ... (Début des styles inchangés) ... */
 

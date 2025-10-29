@@ -2,8 +2,8 @@
 <p>Ajoutez un nouveau budget et suivez ses montants annuels et trimestriels.</p>
 <hr class="divider">
 
-<form (ngSubmit)="addBudget()" class="form-container" #budgetForm="ngForm">
-  <h2>Ajouter un nouveau budget</h2>
+<form (ngSubmit)="submitBudget()" class="form-container" #budgetForm="ngForm">
+  <h2>{{ isEditMode ? 'Modifier le budget' : 'Ajouter un nouveau budget' }}</h2>
   <div class="form-group">
     <label for="codeBudget">Code du budget</label>
     <input id="codeBudget" type="text" [(ngModel)]="newBudget.code_budget" name="code_budget" required>
@@ -44,7 +44,8 @@
     La somme des budgets trimestriels ({{ sumTrimestres | number:'1.2-2' }}) ne doit pas dépasser le budget annuel ({{ newBudget.budget_annuel | number:'1.2-2' }}).
   </div>
 
-  <button type="submit" [disabled]="!budgetForm.valid || isBudgetInvalid">Ajouter le budget</button>
+  <button type="submit" [disabled]="!budgetForm.valid || isBudgetInvalid">{{ isEditMode ? 'Modifier le budget' : 'Ajouter le budget' }}</button>
+  <button type="button" *ngIf="isEditMode" (click)="resetForm()" class="cancel-button">Annuler</button>
 </form>
 
 <hr class="divider">
@@ -85,6 +86,7 @@
         
         <th *ngIf="!showReste">Budget T4</th>
         <th *ngIf="showReste">Reste T4</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -93,7 +95,7 @@
         <td>{{ budget.code_budget }}</td>
         <td>{{ budget.description }}</td>
         <td>{{ budget.annee_fiscale }}</td>
-        
+
         <td *ngIf="!showReste">{{ budget.budget_annuel | number:'1.2-2' }}</td>
         <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_budget <= 0}">{{ budget.reste_budget | number:'1.2-2' }}</td>
 
@@ -108,12 +110,33 @@
 
         <td *ngIf="!showReste">{{ budget.budget_trimestre_4 | number:'1.2-2' }}</td>
         <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_4 <= 0}">{{ budget.reste_trimestre_4 | number:'1.2-2' }}</td>
+        <td>
+          <button (click)="editBudget(budget)" class="edit-button">✏️ Modifier</button>
+          <button (click)="deleteBudget(budget.id_budget)" class="delete-button">🗑️ Supprimer</button>
+        </td>
       </tr>
       <tr *ngIf="budgetsAffiches.length === 0">
-        <td colspan="8" style="text-align: center;">
+        <td colspan="9" style="text-align: center;">
           Aucun budget trouvé pour l'année {{ selectedYear }} correspondant à la recherche *{{ searchTerm }}*.
         </td>
       </tr>
     </tbody>
   </table>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div *ngIf="showDeleteModal" class="delete-modal-overlay" (click)="closeDeleteModal()">
+  <div class="delete-modal" (click)="$event.stopPropagation()">
+    <div class="delete-modal-header">
+      <h3>Confirmation de suppression</h3>
+    </div>
+    <div class="delete-modal-body">
+      <p>Êtes-vous sûr de vouloir supprimer ce budget ?</p>
+      <p class="warning-text">Cette action est irréversible.</p>
+    </div>
+    <div class="delete-modal-footer">
+      <button (click)="closeDeleteModal()" class="cancel-modal-button">Annuler</button>
+      <button (click)="confirmDelete()" class="confirm-delete-button">Supprimer</button>
+    </div>
+  </div>
 </div>

@@ -1,26 +1,13 @@
-# TODO: Improve Logout Popup and Make it Standard
+# TODO: Add Delete and Modify Buttons to Budget-Management Component
 
-## Current State
-- Logout popup exists in app.component with confirmation dialog
-- Basic styling and animations present
-- Confirmation with "Confirmer" and "Annuler" buttons
+## Steps to Complete
 
-## Improvements Made
-- [x] Add accessibility features (ARIA labels, keyboard navigation)
-- [x] Improve responsiveness and design consistency
-- [x] Add keyboard support (ESC to cancel, Enter to confirm)
-- [x] Enhance visual design for better UX
-- [x] Ensure WCAG compliance
-- [x] Add focus management (trap focus in dialog)
-- [x] Improve error handling and user feedback
-
-## Files to Edit
-- front/src/app/app.component.ts: Add keyboard listeners, focus management
-- front/src/app/app.component.html: Add ARIA attributes, improve structure
-- front/src/app/app.component.css: Enhance styles for better accessibility and design
-
-## Followup Steps
-- Test accessibility with screen readers
-- Verify keyboard navigation
-- Check on different devices/browsers
-- Ensure no regressions in existing functionality
+- [x] Add "Actions" column to the budget table in budget-management.component.html with Edit and Delete buttons for each row.
+- [x] Add properties in budget-management.component.ts: `isEditMode: boolean = false;` and `selectedBudgetId: number | null = null;`.
+- [x] Add `editBudget(budget: any)` method to populate the form with selected budget data, set edit mode, and update button text.
+- [x] Add `updateBudget()` method to call the update API, reload budgets, and reset form.
+- [x] Add `deleteBudget(id: number)` method with confirmation to call delete API and reload budgets.
+- [x] Modify `addBudget()` to handle both add and update based on `isEditMode`.
+- [x] Update form button text in HTML to show "Modifier le budget" when in edit mode, otherwise "Ajouter le budget".
+- [x] Ensure `resetForm()` resets edit mode and selected ID.
+- [x] Test the functionality: add, edit, delete budgets.

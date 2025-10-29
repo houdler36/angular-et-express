@@ -32,8 +32,12 @@ export class BudgetManagementComponent implements OnInit {
   selectedYear: number = this.currentYear;
   isBudgetInvalid: boolean = false;
   sumTrimestres: number = 0;
-  showReste: boolean = false; 
-  searchTerm: string = ''; 
+  showReste: boolean = false;
+  searchTerm: string = '';
+  isEditMode: boolean = false;
+  selectedBudgetId: number | null = null;
+  showDeleteModal: boolean = false;
+  budgetToDelete: number | null = null;
 
   constructor(private budgetApiService: BudgetApiService) {}
 
@@ -136,5 +140,75 @@ export class BudgetManagementComponent implements OnInit {
     };
     this.isBudgetInvalid = false;
     this.sumTrimestres = 0;
+    this.isEditMode = false;
+    this.selectedBudgetId = null;
+  }
+
+  editBudget(budget: any) {
+    this.newBudget = { ...budget };
+    this.isEditMode = true;
+    this.selectedBudgetId = budget.id_budget;
+    this.checkBudgetValidity();
+  }
+
+  updateBudget() {
+    if (this.isBudgetInvalid || !this.selectedBudgetId) {
+      console.error('Validation échouée ou ID manquant.');
+      return;
+    }
+
+    const budgetToSend = {
+      ...this.newBudget,
+      budget_annuel: Number(this.newBudget.budget_annuel) || 0,
+      budget_trimestre_1: Number(this.newBudget.budget_trimestre_1) || 0,
+      budget_trimestre_2: Number(this.newBudget.budget_trimestre_2) || 0,
+      budget_trimestre_3: Number(this.newBudget.budget_trimestre_3) || 0,
+      budget_trimestre_4: Number(this.newBudget.budget_trimestre_4) || 0,
+      annee_fiscale: Number(this.newBudget.annee_fiscale)
+    };
+
+    this.budgetApiService.updateBudget(this.selectedBudgetId, budgetToSend).subscribe({
+      next: (res) => {
+        console.log('Budget modifié avec succès', res);
+        this.loadBudgets();
+        this.resetForm();
+      },
+      error: (e) => console.error('Erreur lors de la modification du budget', e)
+    });
+  }
+
+  openDeleteModal(id: number) {
+    this.budgetToDelete = id;
+    this.showDeleteModal = true;
+  }
+
+  closeDeleteModal() {
+    this.showDeleteModal = false;
+    this.budgetToDelete = null;
+  }
+
+  confirmDelete() {
+    if (this.budgetToDelete) {
+      this.budgetApiService.deleteBudget(this.budgetToDelete).subscribe({
+        next: (res) => {
+          console.log('Budget supprimé avec succès', res);
+          this.loadBudgets();
+          this.closeDeleteModal();
+        },
+        error: (e) => console.error('Erreur lors de la suppression du budget', e)
+      });
+    }
+  }
+
+  deleteBudget(id: number) {
+    this.openDeleteModal(id);
+  }
+
+  submitBudget() {
+    if (this.isEditMode) {
+      this.updateBudget();
+    } else {
+      this.addBudget();
+    }
   }
 }
