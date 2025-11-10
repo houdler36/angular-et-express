@@ -45,7 +45,7 @@ export class RhDashboardComponent implements OnInit {
   loadingATraiter = false;
   loadingEnAttente = false;
   loadingFinalisees = false;
-  activePage: string = 'demandesEnAttente';
+  activePage: string = 'Accueil';
 
   // ------------------ Remplaçant RH ------------------
   autresRH: any[] = [];

@@ -123,7 +123,8 @@ export class DemandeDetailComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   finalValidatorName: string | null = null;
-  serverUrl = 'http://192.168.88.42:8081';
+  serverUrl = 'http://localhost:8081'; // Utilise l'interface locale (localhost)
+  //serverUrl = 'http://192.168.88.253:8081';
   hasLogo = false;
   isGeneratingPDF = false;
   companyInfo = 'SALAFA - Adresse · Téléphone · Email';

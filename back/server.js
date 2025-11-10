@@ -7,14 +7,14 @@ const db = require('./app/Models');
 const app = express();
 const HOST = '0.0.0.0'; // écoute sur toutes les interfaces réseau
 
-/* ======================
+/* ====================
    CONFIG CORS
 ====================== */
 const corsOptions = {
   origin: [
   'http://localhost:4200',
   'http://localhost:8081',
-  'http://192.168.88.42:4200'  // <-- remplace par ton IP locale
+ // 'http://192.168.88.253:4200'  // <-- remplace par ton IP locale
 ],
 
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
@@ -27,15 +27,15 @@ app.use(cors(corsOptions));
 // Répondre aux requêtes preflight
 app.options('*', cors(corsOptions));
 
-/* ======================
+/* =====================
    BODY PARSER
-====================== */
+==================== */
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-/* ======================
+/* =====================
    ROUTES
-====================== */
+===================== */
 app.get('/', (req, res) => {
   res.json({ message: 'API Houlder fonctionnelle' });
 });

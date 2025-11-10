@@ -137,29 +137,6 @@
       <!-- Demandes à Traiter -->
       <div *ngIf="activePage === 'demandesATraiter'">
         <h2 class="page-title">Demandes à traiter (DAF)</h2>
-        <div class="filters-container" *ngIf="!loadingATraiter">
-          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
-          <select [(ngModel)]="filters.type" (change)="onSearch()">
-            <option value="">Tous types</option>
-            <option value="Achat">Achat</option>
-            <option value="Service">Service</option>
-          </select>
-          <select [(ngModel)]="filters.statut" (change)="onSearch()">
-            <option value="">Tous statuts</option>
-            <option value="en attente">En attente</option>
-            <option value="approuvée">Approuvée</option>
-            <option value="rejetée">Rejetée</option>
-          </select>
-          <input type="date" [(ngModel)]="filters.dateDebut" (change)="onSearch()" placeholder="Date début">
-          <input type="date" [(ngModel)]="filters.dateFin" (change)="onSearch()" placeholder="Date fin">
-          <select [(ngModel)]="pageSize" (change)="changePageSize(pageSize)">
-            <option value="5">5 par page</option>
-            <option value="10">10 par page</option>
-            <option value="20">20 par page</option>
-          </select>
-          <button (click)="resetFilters()" class="btn btn-sm secondary">Réinitialiser</button>
-          <button (click)="exportToCSV()" class="btn btn-sm primary">Exporter CSV</button>
-        </div>
         <p *ngIf="loadingATraiter" class="loading-text">Chargement...</p>
 
         <div class="table-container" *ngIf="!loadingATraiter">
@@ -228,8 +205,8 @@
 
       <!-- Demandes en Attente -->
       <div *ngIf="activePage === 'demandesEnAttente'">
-        <h2 class="page-title">Demandes en attente (DAF)</h2>
-        <div class="filters-container" *ngIf="!loadingEnAttente">
+        <h2 class="page-title">Demandes en attente</h2>
+        <!--div class="filters-container" *ngIf="!loadingEnAttente">
           <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
           <select [(ngModel)]="filters.type" (change)="onSearch()">
             <option value="">Tous types</option>
@@ -246,7 +223,7 @@
           <input type="date" [(ngModel)]="filters.dateFin" (change)="onSearch()" placeholder="Date fin">
           <button (click)="resetFilters()" class="btn btn-sm secondary">Réinitialiser</button>
           <button (click)="exportToCSV()" class="btn btn-sm primary">Exporter CSV</button>
-        </div>
+        </div-->
         <p *ngIf="loadingEnAttente" class="loading-text">Chargement...</p>
 
         <div class="table-container" *ngIf="!loadingEnAttente">
@@ -304,24 +281,6 @@
       <!-- Demandes Finalisées -->
       <div *ngIf="activePage === 'demandesFinalisees'">
         <h2 class="page-title">Demandes finalisées (DAF)</h2>
-        <div class="filters-container" *ngIf="!loadingFinalisees">
-          <input type="text" placeholder="Rechercher..." [(ngModel)]="searchTerm" (input)="onSearch()">
-          <select [(ngModel)]="filters.type" (change)="onSearch()">
-            <option value="">Tous types</option>
-            <option value="Achat">Achat</option>
-            <option value="Service">Service</option>
-          </select>
-          <select [(ngModel)]="filters.statut" (change)="onSearch()">
-            <option value="">Tous statuts</option>
-            <option value="en attente">En attente</option>
-            <option value="approuvée">Approuvée</option>
-            <option value="rejetée">Rejetée</option>
-          </select>
-          <input type="date" [(ngModel)]="filters.dateDebut" (change)="onSearch()" placeholder="Date début">
-          <input type="date" [(ngModel)]="filters.dateFin" (change)="onSearch()" placeholder="Date fin">
-          <button (click)="resetFilters()" class="btn btn-sm secondary">Réinitialiser</button>
-          <button (click)="exportToCSV()" class="btn btn-sm primary">Exporter CSV</button>
-        </div>
         <p *ngIf="loadingFinalisees" class="loading-text">Chargement...</p>
 
         <div class="table-container" *ngIf="!loadingFinalisees">

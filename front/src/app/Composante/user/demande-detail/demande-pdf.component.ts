@@ -97,7 +97,8 @@ export class DemandePdfComponent implements OnInit {
   @Input() displayValidators: DemandeValidation[] = [];
   @Input() montantEnLettres: string = '';
   @Input() hasLogo: boolean = true;
-  @Input() serverUrl: string = 'http://192.168.88.42:8081';
+  @Input() serverUrl: string = 'http://localhost:8081';
+  //@Input() serverUrl: string = 'http://192.168.88.253:8081';
   @Input() companyInfo: string = 'SALAFA - Adresse · Téléphone · Email';
 
   @ViewChild('pdfContent', { static: false }) pdfContent!: ElementRef;

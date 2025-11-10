@@ -111,8 +111,8 @@
         <td *ngIf="!showReste">{{ budget.budget_trimestre_4 | number:'1.2-2' }}</td>
         <td *ngIf="showReste" [ngClass]="{'alert-cell': budget.reste_trimestre_4 <= 0}">{{ budget.reste_trimestre_4 | number:'1.2-2' }}</td>
         <td>
-          <button (click)="editBudget(budget)" class="edit-button">✏️ Modifier</button>
-          <button (click)="deleteBudget(budget.id_budget)" class="delete-button">🗑️ Supprimer</button>
+          <button (click)="editBudget(budget)" class="edit-button">✎</button>
+          <button (click)="deleteBudget(budget.id_budget)" class="delete-button">✖</button>
         </td>
       </tr>
       <tr *ngIf="budgetsAffiches.length === 0">
